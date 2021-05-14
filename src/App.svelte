@@ -2,7 +2,7 @@
 	import Main from './Main.svelte';
 </script>
 
-<style lang='scss'>
+<style type='text/scss'>
 </style>
 
 <div class='stand-alone-page'>

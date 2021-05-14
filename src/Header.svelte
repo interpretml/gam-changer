@@ -48,7 +48,7 @@
   }
 
   .icon {
-    font-size: 1.5rem;
+    font-size: 1.7rem;
     display: flex;
     align-items: center;
     color: white;
