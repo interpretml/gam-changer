@@ -63,14 +63,29 @@
     let addictiveData = [];
 
     // Add the left bound
-    addictiveData.push({x: xMin, y: featureData.addictive[0]});
+    addictiveData.push({
+      sx: xMin,
+      sy: featureData.addictive[0],
+      tx: featureData.binEdge[0],
+      ty: featureData.addictive[1]
+    });
 
-    for (let i = 0; i < featureData.binEdge.length; i++) {
+    for (let i = 0; i < featureData.binEdge.length - 1; i++) {
       addictiveData.push({
-        x: featureData.binEdge[i],
-        y: featureData.addictive[i + 1]
-      })
+        sx: featureData.binEdge[i],
+        sy: featureData.addictive[i + 1],
+        tx: featureData.binEdge[i + 1],
+        ty: featureData.addictive[i + 2],
+      });
     }
+
+    // Add the right bound
+    addictiveData.push({
+      sx: featureData.binEdge[featureData.binEdge.length - 1],
+      sy: featureData.addictive[featureData.binEdge.length],
+      tx: xMax,
+      ty: featureData.addictive[featureData.binEdge.length + 1]
+    });
 
     console.log(addictiveData);
 
@@ -83,16 +98,18 @@
     let lineChartContent = lineChart.append('g')
       .attr('class', 'line-chart-content-group')
       .attr('transform', `translate(${yAxisWidth}, 0)`);
-    
-    lineChartContent.selectAll('circle')
+
+    // We draw the shape function with many line segments (path)
+    lineChartContent.selectAll('path')
       .data(addictiveData)
-      .join('circle')
-      .attr('class', 'addictive-circle')
-      .attr('cx', d => xScale(d.x))
-      .attr('cy', d => yScale(d.y))
-      .attr('r', 1)
-      .style('fill', 'skyblue')
-      .style('opacity', 0.9);
+      .join('path')
+      .attr('class', 'addictive-line-segment')
+      .attr('d', d => {
+        return `M ${xScale(d.sx)}, ${yScale(d.sy)} L ${xScale(d.tx)} ${yScale(d.sy)} L ${xScale(d.tx)}, ${yScale(d.ty)}`;
+      })
+      .style('stroke', 'navy')
+      .style('stroke-width', 2)
+      .style('fill', 'none');
 
     // Draw the line chart X axis
     let xAxisGroup = lineChart.append('g')
@@ -117,8 +134,6 @@
       .text('score')
       .style('fill', 'black');
 
-    // content.append('circle')
-    //   .attr('r', 100);
   }
 
   $: featureData && drawFeature(featureData);
@@ -155,7 +170,7 @@
   }
 
   :global(.explain-panel .y-axis-text) {
-    font-size: 0.9rem;
+    font-size: 1rem;
     text-anchor: middle;
     dominant-baseline: text-bottom;
   }
