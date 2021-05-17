@@ -17,6 +17,85 @@
   const defaultFont = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;';
 
   /**
+   * Create rectangles in SVG path format tracing the standard deviations at each
+   * point in the model. 
+   * @param featureData
+   */
+  const createConfidenceData = (featureData, xMin, xMax, xScale) => {
+    let startPointTop = {x: xMin, y: featureData.addictive[0] + featureData.error[0]};
+
+    let confidenceData = [];
+
+    // Left bound
+    confidenceData.push({
+      x1: startPointTop.x,
+      y1: startPointTop.y,
+      x2: featureData.binEdge[0],
+      y2: featureData.addictive[0] - featureData.error[0]
+    })
+
+    for (let i = 0; i < featureData.binEdge.length - 1; i++) {
+      let curValue = featureData.addictive[i + 1];
+      let curError = featureData.error[i + 1];
+
+      confidenceData.push({
+        x1: featureData.binEdge[i],
+        y1: curValue + curError,
+        x2: featureData.binEdge[i + 1],
+        y2: curValue - curError
+      });
+    }
+
+    // Right bound
+    confidenceData.push({
+      x1: featureData.binEdge[featureData.binEdge.length - 1],
+      y1: featureData.addictive[featureData.binEdge.length] + featureData.error[featureData.binEdge.length],
+      x2: xMax,
+      y2: featureData.addictive[featureData.binEdge.length] - featureData.error[featureData.binEdge.length]
+    });
+
+    return confidenceData;
+  }
+
+  /**
+   * Create line segments (path) to trace the addictive term at each bin in the
+   * model.
+   * @param featureData
+   * @param xMin
+   * @param xMax
+   */
+  const createAddictiveData = (featureData, xMin, xMax) => {
+    let addictiveData = [];
+
+    // Add the left bound
+    addictiveData.push({
+      sx: xMin,
+      sy: featureData.addictive[0],
+      tx: featureData.binEdge[0],
+      ty: featureData.addictive[1]
+    });
+
+    for (let i = 0; i < featureData.binEdge.length - 1; i++) {
+      addictiveData.push({
+        sx: featureData.binEdge[i],
+        sy: featureData.addictive[i + 1],
+        tx: featureData.binEdge[i + 1],
+        ty: featureData.addictive[i + 2],
+      });
+    }
+
+    // Add the right bound
+    addictiveData.push({
+      sx: featureData.binEdge[featureData.binEdge.length - 1],
+      sy: featureData.addictive[featureData.binEdge.length],
+      tx: xMax,
+      ty: featureData.addictive[featureData.binEdge.length]
+    });
+
+    return addictiveData;
+  }
+
+  /**
    * Draw the plot in the SVG component
    * @param featureData
    */
@@ -59,37 +138,19 @@
       .domain(scoreRange)
       .range([lineChartHeight, 0]);
 
+    let heightScale = d3.scaleLinear()
+      .domain(scoreRange)
+      .range([0, lineChartHeight]);
+
     // Create a data array by combining the bin edge and addictive terms
-    let addictiveData = [];
-
-    // Add the left bound
-    addictiveData.push({
-      sx: xMin,
-      sy: featureData.addictive[0],
-      tx: featureData.binEdge[0],
-      ty: featureData.addictive[1]
-    });
-
-    for (let i = 0; i < featureData.binEdge.length - 1; i++) {
-      addictiveData.push({
-        sx: featureData.binEdge[i],
-        sy: featureData.addictive[i + 1],
-        tx: featureData.binEdge[i + 1],
-        ty: featureData.addictive[i + 2],
-      });
-    }
-
-    // Add the right bound
-    addictiveData.push({
-      sx: featureData.binEdge[featureData.binEdge.length - 1],
-      sy: featureData.addictive[featureData.binEdge.length],
-      tx: xMax,
-      ty: featureData.addictive[featureData.binEdge.length + 1]
-    });
+    let addictiveData = createAddictiveData(featureData, xMin, xMax);
 
     console.log(addictiveData);
 
     console.log(xMin, xMax, yExtent);
+
+    // Create the confidence interval region
+    let confidenceData = createConfidenceData(featureData, xMin, xMax, xScale);
 
     // Draw the line chart
     let lineChart = content.append('g')
@@ -98,6 +159,12 @@
     let lineChartContent = lineChart.append('g')
       .attr('class', 'line-chart-content-group')
       .attr('transform', `translate(${yAxisWidth}, 0)`);
+
+    let confidenceGroup = lineChartContent.append('g')
+      .attr('class', 'line-chart-confidence-group');
+
+    let lineGroup = lineChartContent.append('g')
+      .attr('class', 'line-chart-line-group');
 
     // We draw the shape function with many line segments (path)
     lineChartContent.selectAll('path')
@@ -110,6 +177,17 @@
       .style('stroke', 'navy')
       .style('stroke-width', 2)
       .style('fill', 'none');
+
+    // Draw the underlying confidence interval
+    confidenceGroup.selectAll('rect')
+      .data(confidenceData)
+      .join('rect')
+      .attr('x', d => xScale(d.x1))
+      .attr('y', d => yScale(d.y1))
+      .attr('width', d => xScale(d.x2) - xScale(d.x1))
+      .attr('height', d => yScale(d.y2) - yScale(d.y1))
+      .style('fill', 'navy')
+      .style('opacity', 0.08);
 
     // Draw the line chart X axis
     let xAxisGroup = lineChart.append('g')
@@ -173,6 +251,11 @@
     font-size: 1rem;
     text-anchor: middle;
     dominant-baseline: text-bottom;
+  }
+
+  :global(.explain-panel .addictive-line-segment) {
+    stroke-linejoin: round;
+    stroke-linecap: round;
   }
 
 </style>
