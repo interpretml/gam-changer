@@ -61,7 +61,10 @@
 
   <div class='content'>
     <div class='feature-window'>
-      <ContinuousGlobalExplain featureData={data === null ? null : data.features[1]} />
+      <ContinuousGlobalExplain
+        featureData = {data === null ? null : data.features[1]}
+        scoreRange = {data === null ? null : data.scoreRange}
+      />
     </div>
   </div>
   
