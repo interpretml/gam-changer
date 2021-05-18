@@ -8,7 +8,7 @@
 
   // Visualization constants
   const svgPadding = {
-    top: 30, right: 15, bottom: 20, left: 20
+    top: 30, right: 20, bottom: 20, left: 20
   };
   const densityHeight = 120;
   const width = 600;
@@ -21,10 +21,10 @@
 
   /**
    * Create rectangles in SVG path format tracing the standard deviations at each
-   * point in the model. 
+   * point in the model.
    * @param featureData
    */
-  const createConfidenceData = (featureData, xMin, xMax, xScale) => {
+  const createConfidenceData = (featureData, xMin, xMax) => {
     let startPointTop = {x: xMin, y: featureData.addictive[0] + featureData.error[0]};
 
     let confidenceData = [];
@@ -35,7 +35,7 @@
       y1: startPointTop.y,
       x2: featureData.binEdge[0],
       y2: featureData.addictive[0] - featureData.error[0]
-    })
+    });
 
     for (let i = 0; i < featureData.binEdge.length - 1; i++) {
       let curValue = featureData.addictive[i + 1];
@@ -58,7 +58,7 @@
     });
 
     return confidenceData;
-  }
+  };
 
   /**
    * Create line segments (path) to trace the addictive term at each bin in the
@@ -96,7 +96,7 @@
     });
 
     return addictiveData;
-  }
+  };
 
   /**
    * Draw the plot in the SVG component
@@ -151,10 +151,6 @@
       .domain(scoreRange)
       .range([lineChartHeight, 0]);
 
-    let heightScale = d3.scaleLinear()
-      .domain(scoreRange)
-      .range([0, lineChartHeight]);
-
     // Create a data array by combining the bin edge and addictive terms
     let addictiveData = createAddictiveData(featureData, xMin, xMax);
 
@@ -163,7 +159,7 @@
     console.log(xMin, xMax, yExtent);
 
     // Create the confidence interval region
-    let confidenceData = createConfidenceData(featureData, xMin, xMax, xScale);
+    let confidenceData = createConfidenceData(featureData, xMin, xMax);
     
     // Draw the line chart
     let lineChart = content.append('g')
@@ -180,7 +176,7 @@
       .attr('class', 'line-chart-line-group');
 
     // We draw the shape function with many line segments (path)
-    lineChartContent.selectAll('path')
+    lineGroup.selectAll('path')
       .data(addictiveData)
       .join('path')
       .attr('class', 'addictive-line-segment')
@@ -225,7 +221,7 @@
       .text('score')
       .style('fill', 'black');
 
-  }
+  };
 
   $: featureData && drawFeature(featureData);
 
