@@ -47,7 +47,7 @@
 
   .feature-window {
     width: 600px;
-    height: 424px;
+    height: 437px;
     border: 1px solid $gray-border;
     margin: auto;
   }

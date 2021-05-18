@@ -8,11 +8,14 @@
 
   // Visualization constants
   const svgPadding = {
-    top: 40, right: 20, bottom: 20, left: 20
+    top: 30, right: 15, bottom: 20, left: 20
   };
   const densityHeight = 120;
   const width = 600;
   const height = 400;
+
+  // Show some hidden elements for development
+  const showRuler = false;
 
   const defaultFont = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;';
 
@@ -104,7 +107,17 @@
     let svgSelect = d3.select(svg);
 
     // Set svg viewBox (3:2 WH ratio)
-    svgSelect.attr('viewBox', '0 0 600 400');
+    svgSelect.attr('viewBox', '0 0 600 400')
+      .attr('preserveAspectRatio', 'xMinYMin meet');
+
+    // Draw a border for the svg
+    svgSelect.append('rect')
+      .attr('class', 'border')
+      .classed('hidden', !showRuler)
+      .attr('width', 600)
+      .attr('height', 400)
+      .style('fill', 'none')
+      .style('stroke', 'pink');
 
     // Some constant lengths of different elements
     const yAxisWidth = 30;
@@ -151,7 +164,7 @@
 
     // Create the confidence interval region
     let confidenceData = createConfidenceData(featureData, xMin, xMax, xScale);
-
+    
     // Draw the line chart
     let lineChart = content.append('g')
       .attr('class', 'line-chart-group');
@@ -207,7 +220,7 @@
 
     yAxisGroup.append('g')
       .attr('class', 'y-axis-text')
-      .attr('transform', `translate(${-yAxisWidth - 7}, ${lineChartHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth - 3}, ${lineChartHeight / 2}) rotate(-90)`)
       .append('text')
       .text('score')
       .style('fill', 'black');
@@ -256,6 +269,10 @@
   :global(.explain-panel .addictive-line-segment) {
     stroke-linejoin: round;
     stroke-linecap: round;
+  }
+
+  :global(.explain-panel .hidden) {
+    display: none;
   }
 
 </style>
