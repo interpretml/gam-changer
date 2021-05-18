@@ -8,14 +8,20 @@
 
   // Visualization constants
   const svgPadding = {
-    top: 30, right: 20, bottom: 20, left: 20
+    top: 30, right: 20, bottom: 20, left: 25
   };
-  const densityHeight = 120;
+  const densityHeight = 100;
   const width = 600;
   const height = 400;
 
   // Show some hidden elements for development
   const showRuler = false;
+
+  // Colors
+  const lineColor = 'hsl(222, 80%, 30%)';
+  const confidenceColor = 'hsl(222, 80%, 96%)';
+  const histColor = 'hsl(222, 10%, 93%)';
+  const histAxisColor = 'hsl(222, 10%, 70%)';
 
   const defaultFont = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;';
 
@@ -124,7 +130,7 @@
     const xAxisHeight = 30;
 
     const lineChartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
-    const lineChartHeight = height - svgPadding.top - svgPadding.bottom - xAxisHeight - densityHeight;
+    const lineChartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
 
     let content = svgSelect.append('g')
       .attr('class', 'content')
@@ -160,6 +166,11 @@
 
     // Create the confidence interval region
     let confidenceData = createConfidenceData(featureData, xMin, xMax);
+
+    // Create histogram chart group
+    let histChart = content.append('g')
+      .attr('class', 'hist-chart-group')
+      .attr('transform', `translate(${yAxisWidth}, ${lineChartHeight})`);
     
     // Draw the line chart
     let lineChart = content.append('g')
@@ -183,7 +194,7 @@
       .attr('d', d => {
         return `M ${xScale(d.sx)}, ${yScale(d.sy)} L ${xScale(d.tx)} ${yScale(d.sy)} L ${xScale(d.tx)}, ${yScale(d.ty)}`;
       })
-      .style('stroke', 'navy')
+      .style('stroke', lineColor)
       .style('stroke-width', 2)
       .style('fill', 'none');
 
@@ -195,8 +206,7 @@
       .attr('y', d => yScale(d.y1))
       .attr('width', d => xScale(d.x2) - xScale(d.x1))
       .attr('height', d => yScale(d.y2) - yScale(d.y1))
-      .style('fill', 'navy')
-      .style('opacity', 0.08);
+      .style('fill', confidenceColor);
 
     // Draw the line chart X axis
     let xAxisGroup = lineChart.append('g')
@@ -216,10 +226,69 @@
 
     yAxisGroup.append('g')
       .attr('class', 'y-axis-text')
-      .attr('transform', `translate(${-yAxisWidth - 3}, ${lineChartHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth - 5}, ${lineChartHeight / 2}) rotate(-90)`)
       .append('text')
       .text('score')
       .style('fill', 'black');
+
+    // Draw the histograms at the bottom
+    let histData = [];
+    
+    // Transform the count to frequency (percentage)
+    let histCountSum = d3.sum(featureData.histCount);
+    let histFrequency = featureData.histCount.map(d => d / histCountSum);
+
+    for (let i = 0; i < histFrequency.length; i++) {
+      histData.push({
+        x1: featureData.histEdge[i],
+        x2: featureData.histEdge[i + 1],
+        height: histFrequency[i]
+      });
+    }
+
+    let histYScale = d3.scaleLinear()
+      .domain(d3.extent(histFrequency))
+      .range([0, densityHeight]);
+
+    histChart.selectAll('rect')
+      .data(histData)
+      .join('rect')
+      .attr('class', 'hist-rect')
+      .attr('x', d => xScale(d.x1))
+      .attr('y', 0)
+      .attr('width', d => xScale(d.x2) - xScale(d.x1))
+      .attr('height', d => histYScale(d.height))
+      .style('fill', histColor);
+    
+    // Draw a Y axis for the histogram chart
+    // let yAxisHistGroup = histChart.append('g')
+    //   .attr('class', 'y-axis');
+    //   // .attr('transform', `translate(0, 0)`);
+
+    let yAxisHistGroup = lineChart.append('g')
+      .attr('class', 'y-axis')
+      .attr('transform', `translate(${yAxisWidth}, ${lineChartHeight})`);
+    
+    yAxisHistGroup.call(
+      d3.axisLeft(histYScale)
+        .ticks(2)
+    );
+
+    yAxisHistGroup.attr('font-family', defaultFont);
+
+    yAxisHistGroup.selectAll('text')
+      .style('fill', histAxisColor);
+
+    yAxisHistGroup.selectAll('path,line')
+      .style('stroke', histAxisColor);
+
+    yAxisHistGroup.append('g')
+      .attr('class', 'y-axis-text')
+      .attr('transform', `translate(${-yAxisWidth - 5}, ${densityHeight / 2}) rotate(-90)`)
+      .append('text')
+      .text('density')
+      .style('fill', histAxisColor);
+
 
   };
 
