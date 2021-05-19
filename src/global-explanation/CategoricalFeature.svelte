@@ -1,8 +1,10 @@
 <script>
   import * as d3 from 'd3';
+  import { round } from '../utils';
 
   export let featureData = null;
   export let scoreRange = null;
+  export let svgHeight = 400;
 
   let svg = null;
 
@@ -11,8 +13,13 @@
     top: 30, right: 20, bottom: 30, left: 25
   };
   const densityHeight = 90;
-  const width = 600;
+
+  // Viewbox width and height
+  let width = 600;
   const height = 400;
+
+  // Real width (depends on the svgHeight prop)
+  let svgWidth = svgHeight * (width / height);
 
   // Show some hidden elements for development
   const showRuler = false;
@@ -67,9 +74,20 @@
     console.log(featureData);
     let svgSelect = d3.select(svg);
 
+    // For categorical variables, the width depends on the number of levels
+    // Level # <= 4 => 300, level # <= 10 => 450, others => 600
+    let levelNum = featureData.binLabel.length;
+    if (levelNum <= 10) width = 450;
+    if (levelNum <= 4) width = 300;
+
+    // Make the svg keep the viewbox 3:2 ratio
+    svgWidth = svgHeight * (width / height);
+
     // Set svg viewBox (3:2 WH ratio)
-    svgSelect.attr('viewBox', '0 0 600 400')
-      .attr('preserveAspectRatio', 'xMinYMin meet');
+    svgSelect.attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('preserveAspectRatio', 'xMinYMin meet')
+      .attr('width', svgWidth)
+      .attr('height', svgHeight);
 
     // Draw a border for the svg
     svgSelect.append('rect')
@@ -98,7 +116,7 @@
 
     let xScale = d3.scalePoint()
       .domain(featureData.binLabel)
-      .padding(1)
+      .padding(0.7)
       .range([0, chartWidth])
       .round(true);
 
@@ -217,7 +235,7 @@
       .domain(d3.extent(histFrequency))
       .range([0, densityHeight]);
 
-    let histWidth = xScale(histData[0].x2) - xScale(histData[0].x1);
+    let histWidth = Math.min(30, xScale(histData[0].x2) - xScale(histData[0].x1));
 
     histChart.selectAll('rect')
       .data(histData)
@@ -271,8 +289,6 @@
   .explain-panel {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    height: 100%;
   }
 
   .header {
@@ -280,16 +296,14 @@
     height: $header-height;
     padding: 5px 10px;
     border-bottom: 1px solid $gray-border;
-  }
 
-  .svg-container {
-    width: 100%;
-    height: calc(100% - #{$header-height});
-  }
+    .header__name {
+      margin-right: 10px;
+    }
 
-  .svg-explainer {
-    width: 100%;
-    height: 100%;
+    .header__importance {
+      color: $gray-light;
+    }
   }
 
   :global(.explain-panel .y-axis-text) {
@@ -310,9 +324,20 @@
 </style>
 
 <div class='explain-panel'>
-  <div class='header'>
-    {featureData === null ? ' ' : featureData.name}
-  </div>
+  {#if featureData !== null}
+
+    <div class='header'>
+      <div class='header__name'>
+        {featureData === null ? ' ' : featureData.name}
+      </div>
+      
+      <div class='header__importance'>
+        {featureData === null ? ' ': round(featureData.importance, 2)}
+      </div>
+    </div>
+
+  {/if}
+
 
   <div class='svg-container'>
     <svg class='svg-explainer' bind:this={svg}></svg>

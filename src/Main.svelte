@@ -40,6 +40,9 @@
 
   .content {
     display: flex;
+    flex-direction: row;
+    gap: 50px;
+    justify-content: center;
     height: min(800px, calc(100vh - 50px));
     width: 100vw;
     box-sizing: border-box;
@@ -47,10 +50,8 @@
   }
 
   .feature-window {
-    width: 600px;
-    height: 437px;
     border: 1px solid $gray-border;
-    margin: auto;
+    margin: auto 0;
   }
 
 </style>
@@ -63,14 +64,16 @@
   <div class='content'>
     <div class='feature-window'>
       <CategoricalGlobalExplain
-        featureData = {data === null ? null : data.features[0]}
+        featureData = {data === null ? null : data.features[26]}
         scoreRange = {data === null ? null : data.scoreRange}
       />
+    </div>
 
-      <!-- <ContinuousGlobalExplain
+    <div class='feature-window'>
+      <ContinuousGlobalExplain
         featureData = {data === null ? null : data.features[2]}
         scoreRange = {data === null ? null : data.scoreRange}
-      /> -->
+      />
     </div>
   </div>
   

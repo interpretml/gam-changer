@@ -1,8 +1,10 @@
 <script>
   import * as d3 from 'd3';
+  import { round } from '../utils';
 
   export let featureData = null;
   export let scoreRange = null;
+  export let svgHeight = 400;
 
   let svg = null;
 
@@ -11,8 +13,13 @@
     top: 30, right: 20, bottom: 30, left: 25
   };
   const densityHeight = 90;
+
+  // Viewbox width and height
   const width = 600;
   const height = 400;
+
+  // Real SVG width
+  let svgWidth = svgHeight * (width / height);
 
   // Show some hidden elements for development
   const showRuler = false;
@@ -25,7 +32,6 @@
     histAxis: 'hsl(222, 10%, 70%)',
     line0: 'hsla(222, 0%, 0%, 5%)'
   };
-
 
   const defaultFont = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;';
 
@@ -118,7 +124,9 @@
 
     // Set svg viewBox (3:2 WH ratio)
     svgSelect.attr('viewBox', '0 0 600 400')
-      .attr('preserveAspectRatio', 'xMinYMin meet');
+      .attr('preserveAspectRatio', 'xMinYMin meet')
+      .attr('width', svgWidth)
+      .attr('height', svgHeight);
 
     // Draw a border for the svg
     svgSelect.append('rect')
@@ -315,8 +323,6 @@
   .explain-panel {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    height: 100%;
   }
 
   .header {
@@ -324,16 +330,14 @@
     height: $header-height;
     padding: 5px 10px;
     border-bottom: 1px solid $gray-border;
-  }
 
-  .svg-container {
-    width: 100%;
-    height: calc(100% - #{$header-height});
-  }
+    .header__name {
+      margin-right: 10px;
+    }
 
-  .svg-explainer {
-    width: 100%;
-    height: 100%;
+    .header__importance {
+      color: $gray-light;
+    }
   }
 
   :global(.explain-panel .y-axis-text) {
@@ -354,9 +358,19 @@
 </style>
 
 <div class='explain-panel'>
-  <div class='header'>
-    {featureData === null ? ' ' : featureData.name}
-  </div>
+  {#if featureData !== null}
+
+    <div class='header'>
+      <div class='header__name'>
+        {featureData === null ? ' ' : featureData.name}
+      </div>
+      
+      <div class='header__importance'>
+        {featureData === null ? ' ': round(featureData.importance, 2)}
+      </div>
+    </div>
+
+  {/if}
 
   <div class='svg-container'>
     <svg class='svg-explainer' bind:this={svg}></svg>
