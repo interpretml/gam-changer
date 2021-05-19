@@ -1,6 +1,6 @@
 <script>
   import Header from './Header.svelte';
-  import ContinuousGlobalExplain from './global-explaination/Continuous.svelte';
+  import ContinuousGlobalExplain from './global-explaination/ContinuousFeature.svelte';
   import * as d3 from 'd3';
   import { onMount } from 'svelte';
 
