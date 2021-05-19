@@ -188,7 +188,7 @@
       .attr('class', 'line-0')
       .attr('d', `M ${0} ${yScale(0)} L ${chartWidth} ${yScale(0)}`)
       .style('stroke', colors.line0)
-      .style('stroke-width', 4)
+      .style('stroke-width', 3)
       .style('stroke-dasharray', '15 10');
 
     yAxisGroup.append('g')

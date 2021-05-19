@@ -1,6 +1,6 @@
 <script>
   import Header from './Header.svelte';
-  // import ContinuousGlobalExplain from './global-explanation/ContinuousFeature.svelte';
+  import ContinuousGlobalExplain from './global-explanation/ContinuousFeature.svelte';
   import CategoricalGlobalExplain from './global-explanation/CategoricalFeature.svelte';
   import * as d3 from 'd3';
   import { onMount } from 'svelte';
@@ -66,6 +66,11 @@
         featureData = {data === null ? null : data.features[0]}
         scoreRange = {data === null ? null : data.scoreRange}
       />
+
+      <!-- <ContinuousGlobalExplain
+        featureData = {data === null ? null : data.features[2]}
+        scoreRange = {data === null ? null : data.scoreRange}
+      /> -->
     </div>
   </div>
   

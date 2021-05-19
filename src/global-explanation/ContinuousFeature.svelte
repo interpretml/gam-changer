@@ -18,10 +18,14 @@
   const showRuler = false;
 
   // Colors
-  const lineColor = 'hsl(222, 80%, 30%)';
-  const confidenceColor = 'hsl(222, 55%, 96%)';
-  const histColor = 'hsl(222, 10%, 93%)';
-  const histAxisColor = 'hsl(222, 10%, 70%)';
+  const colors = {
+    line: 'hsl(222, 80%, 30%)',
+    confidence: 'hsl(222, 55%, 96%)',
+    hist: 'hsl(222, 10%, 93%)',
+    histAxis: 'hsl(222, 10%, 70%)',
+    line0: 'hsla(222, 0%, 0%, 5%)'
+  };
+
 
   const defaultFont = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;';
 
@@ -127,7 +131,6 @@
 
     // Some constant lengths of different elements
     const yAxisWidth = 30;
-    const xAxisHeight = 30;
 
     const lineChartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
     const lineChartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
@@ -139,7 +142,6 @@
     // The bins have unequal length, and they are inner edges
     // Here we use the min and max values from the training set as our left and
     // right bounds on the x-axis
-    let binNum = featureData.binEdge.length;
     let xMin = featureData.binMin;
     let xMax = featureData.binMax;
 
@@ -175,6 +177,9 @@
     // Draw the line chart
     let lineChart = content.append('g')
       .attr('class', 'line-chart-group');
+
+    let axisGroup = lineChart.append('g')
+      .attr('class', 'axis-group');
     
     let lineChartContent = lineChart.append('g')
       .attr('class', 'line-chart-content-group')
@@ -194,7 +199,7 @@
       .attr('d', d => {
         return `M ${xScale(d.sx)}, ${yScale(d.sy)} L ${xScale(d.tx)} ${yScale(d.sy)} L ${xScale(d.tx)}, ${yScale(d.ty)}`;
       })
-      .style('stroke', lineColor)
+      .style('stroke', colors.line)
       .style('stroke-width', 2)
       .style('fill', 'none');
 
@@ -206,10 +211,10 @@
       .attr('y', d => yScale(d.y1))
       .attr('width', d => xScale(d.x2) - xScale(d.x1))
       .attr('height', d => yScale(d.y2) - yScale(d.y1))
-      .style('fill', confidenceColor);
+      .style('fill', colors.confidence);
 
     // Draw the line chart X axis
-    let xAxisGroup = lineChart.append('g')
+    let xAxisGroup = axisGroup.append('g')
       .attr('class', 'x-axis')
       .attr('transform', `translate(${yAxisWidth}, ${lineChartHeight})`)
       .call(d3.axisBottom(xScale));
@@ -217,7 +222,7 @@
     xAxisGroup.attr('font-family', defaultFont);
     
     // Draw the line chart Y axis
-    let yAxisGroup = lineChart.append('g')
+    let yAxisGroup = axisGroup.append('g')
       .attr('class', 'y-axis')
       .attr('transform', `translate(${yAxisWidth}, 0)`);
     
@@ -230,6 +235,14 @@
       .append('text')
       .text('score')
       .style('fill', 'black');
+
+    // Add a line to highlight y = 0
+    yAxisGroup.append('path')
+      .attr('class', 'line-0')
+      .attr('d', `M ${0} ${yScale(0)} L ${lineChartWidth} ${yScale(0)}`)
+      .style('stroke', colors.line0)
+      .style('stroke-width', 3)
+      .style('stroke-dasharray', '15 10');
 
     // Draw the histograms at the bottom
     let histData = [];
@@ -258,7 +271,7 @@
       .attr('y', 0)
       .attr('width', d => xScale(d.x2) - xScale(d.x1))
       .attr('height', d => histYScale(d.height))
-      .style('fill', histColor);
+      .style('fill', colors.hist);
     
     // Draw a Y axis for the histogram chart
     let yAxisHistGroup = lineChart.append('g')
@@ -274,19 +287,19 @@
 
     // Change 0.0 to 0
     yAxisHistGroup.selectAll('text')
-      .style('fill', histAxisColor)
+      .style('fill', colors.histAxis)
       .filter((d, i, g) => d3.select(g[i]).text() === '0.0')
       .text('0');
 
     yAxisHistGroup.selectAll('path,line')
-      .style('stroke', histAxisColor);
+      .style('stroke', colors.histAxis);
 
     yAxisHistGroup.append('g')
       .attr('class', 'y-axis-text')
       .attr('transform', `translate(${-yAxisWidth - 5}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
       .text('density')
-      .style('fill', histAxisColor);
+      .style('fill', colors.histAxis);
 
   };
 
