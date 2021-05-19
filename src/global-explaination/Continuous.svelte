@@ -8,9 +8,9 @@
 
   // Visualization constants
   const svgPadding = {
-    top: 30, right: 20, bottom: 20, left: 25
+    top: 30, right: 20, bottom: 30, left: 25
   };
-  const densityHeight = 100;
+  const densityHeight = 90;
   const width = 600;
   const height = 400;
 
@@ -19,7 +19,7 @@
 
   // Colors
   const lineColor = 'hsl(222, 80%, 30%)';
-  const confidenceColor = 'hsl(222, 80%, 96%)';
+  const confidenceColor = 'hsl(222, 55%, 96%)';
   const histColor = 'hsl(222, 10%, 93%)';
   const histAxisColor = 'hsl(222, 10%, 70%)';
 
@@ -261,10 +261,6 @@
       .style('fill', histColor);
     
     // Draw a Y axis for the histogram chart
-    // let yAxisHistGroup = histChart.append('g')
-    //   .attr('class', 'y-axis');
-    //   // .attr('transform', `translate(0, 0)`);
-
     let yAxisHistGroup = lineChart.append('g')
       .attr('class', 'y-axis')
       .attr('transform', `translate(${yAxisWidth}, ${lineChartHeight})`);
@@ -276,8 +272,11 @@
 
     yAxisHistGroup.attr('font-family', defaultFont);
 
+    // Change 0.0 to 0
     yAxisHistGroup.selectAll('text')
-      .style('fill', histAxisColor);
+      .style('fill', histAxisColor)
+      .filter((d, i, g) => d3.select(g[i]).text() === '0.0')
+      .text('0');
 
     yAxisHistGroup.selectAll('path,line')
       .style('stroke', histAxisColor);
@@ -288,7 +287,6 @@
       .append('text')
       .text('density')
       .style('fill', histAxisColor);
-
 
   };
 
