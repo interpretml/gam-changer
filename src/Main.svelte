@@ -16,7 +16,7 @@
   const processData = (data) => {
     data.features.sort((a, b) => b.importance - a.importance);
     return data;
-  }
+  };
 
   onMount(async () => {
     console.log('loading data');
@@ -63,7 +63,7 @@
   <div class='content'>
     <div class='feature-window'>
       <CategoricalGlobalExplain
-        featureData = {data === null ? null : data.features[1]}
+        featureData = {data === null ? null : data.features[0]}
         scoreRange = {data === null ? null : data.scoreRange}
       />
     </div>

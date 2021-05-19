@@ -18,90 +18,45 @@
   const showRuler = false;
 
   // Colors
-  const lineColor = 'hsl(222, 80%, 30%)';
-  const confidenceColor = 'hsl(222, 55%, 96%)';
-  const histColor = 'hsl(222, 10%, 93%)';
-  const histAxisColor = 'hsl(222, 10%, 70%)';
+  const colors = {
+    dot: 'hsla(222, 80%, 30%, 100%)',
+    confidence: 'hsl(222, 55%, 70%)',
+    hist: 'hsl(222, 10%, 93%)',
+    histAxis: 'hsl(222, 10%, 70%)',
+    line0: 'hsla(222, 0%, 0%, 5%)'
+  };
 
   const defaultFont = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;';
 
   /**
-   * Create rectangles in SVG path format tracing the standard deviations at each
-   * point in the model.
-   * @param featureData
+   * Create a path to indicate the confidence interval for the addictive score of
+   * categorical variables.
+   * @param d
+   * @param xScale
+   * @param yScale
    */
-  const createConfidenceData = (featureData, xMin, xMax) => {
-    let startPointTop = {x: xMin, y: featureData.addictive[0] + featureData.error[0]};
+  const createDotConfidencePath = (d, width, xScale, yScale) => {
 
-    let confidenceData = [];
+    let topMid = {
+      x: xScale(d.label),
+      y: yScale(d.addictive + d.error)
+    };
 
-    // Left bound
-    confidenceData.push({
-      x1: startPointTop.x,
-      y1: startPointTop.y,
-      x2: featureData.binEdge[0],
-      y2: featureData.addictive[0] - featureData.error[0]
-    });
+    let btmMid = {
+      x: xScale(d.label),
+      y: yScale(d.addictive - d.error)
+    };
+    
+    // Draw the top line
+    let pathStr = `M ${topMid.x - width}, ${topMid.y} L ${topMid.x + width}, ${topMid.y} `;
 
-    for (let i = 0; i < featureData.binEdge.length - 1; i++) {
-      let curValue = featureData.addictive[i + 1];
-      let curError = featureData.error[i + 1];
+    // Draw the vertical line
+    pathStr = pathStr.concat(`M ${topMid.x}, ${topMid.y} L ${btmMid.x}, ${btmMid.y} `);
 
-      confidenceData.push({
-        x1: featureData.binEdge[i],
-        y1: curValue + curError,
-        x2: featureData.binEdge[i + 1],
-        y2: curValue - curError
-      });
-    }
+    // Draw the bottom line
+    pathStr = pathStr.concat(`M ${btmMid.x - width}, ${btmMid.y} L ${btmMid.x + width}, ${btmMid.y} `);
 
-    // Right bound
-    confidenceData.push({
-      x1: featureData.binEdge[featureData.binEdge.length - 1],
-      y1: featureData.addictive[featureData.binEdge.length] + featureData.error[featureData.binEdge.length],
-      x2: xMax,
-      y2: featureData.addictive[featureData.binEdge.length] - featureData.error[featureData.binEdge.length]
-    });
-
-    return confidenceData;
-  };
-
-  /**
-   * Create line segments (path) to trace the addictive term at each bin in the
-   * model.
-   * @param featureData
-   * @param xMin
-   * @param xMax
-   */
-  const createAddictiveData = (featureData, xMin, xMax) => {
-    let addictiveData = [];
-
-    // Add the left bound
-    addictiveData.push({
-      sx: xMin,
-      sy: featureData.addictive[0],
-      tx: featureData.binEdge[0],
-      ty: featureData.addictive[1]
-    });
-
-    for (let i = 0; i < featureData.binEdge.length - 1; i++) {
-      addictiveData.push({
-        sx: featureData.binEdge[i],
-        sy: featureData.addictive[i + 1],
-        tx: featureData.binEdge[i + 1],
-        ty: featureData.addictive[i + 2],
-      });
-    }
-
-    // Add the right bound
-    addictiveData.push({
-      sx: featureData.binEdge[featureData.binEdge.length - 1],
-      sy: featureData.addictive[featureData.binEdge.length],
-      tx: xMax,
-      ty: featureData.addictive[featureData.binEdge.length]
-    });
-
-    return addictiveData;
+    return pathStr;
   };
 
   /**
@@ -127,106 +82,118 @@
 
     // Some constant lengths of different elements
     const yAxisWidth = 30;
-    const xAxisHeight = 30;
 
-    const lineChartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
-    const lineChartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
+    const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
+    const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
 
     let content = svgSelect.append('g')
       .attr('class', 'content')
       .attr('transform', `translate(${svgPadding.left}, ${svgPadding.top})`);
 
-    // The bins have unequal length, and they are inner edges
-    // Here we use the min and max values from the training set as our left and
-    // right bounds on the x-axis
-    let binNum = featureData.binEdge.length;
-    let xMin = featureData.binMin;
-    let xMax = featureData.binMax;
+    // let xScale = d3.scaleLinear()
+    //   .domain([xMin, xMax])
+    //   .range([0, lineChartWidth]);
+
+    console.log(featureData.binLabel);
+
+    let xScale = d3.scalePoint()
+      .domain(featureData.binLabel)
+      .padding(1)
+      .range([0, chartWidth])
+      .round(true);
 
     // For the y scale, it seems InterpretML presets the center at 0 (offset
     // doesn't really matter in EBM because we can modify intercept)
     // TODO: Provide interaction for users to change the center point
-    let yExtent = d3.extent(featureData.addictive);
-
-    let xScale = d3.scaleLinear()
-      .domain([xMin, xMax])
-      .range([0, lineChartWidth]);
-
     // Normalize the Y axis by the global score range
     let yScale = d3.scaleLinear()
       .domain(scoreRange)
-      .range([lineChartHeight, 0]);
+      .range([chartHeight, 0]);
 
-    // Create a data array by combining the bin edge and addictive terms
-    let addictiveData = createAddictiveData(featureData, xMin, xMax);
+    // Create a data array by combining the bin labels, addictive terms, and errors
+    let addictiveData = [];
+
+    for (let i = 0; i < featureData.binLabel.length; i++) {
+      addictiveData.push({
+        label: featureData.binLabel[i],
+        addictive: featureData.addictive[i],
+        error: featureData.error[i]
+      });
+    }
 
     console.log(addictiveData);
-
-    console.log(xMin, xMax, yExtent);
-
-    // Create the confidence interval region
-    let confidenceData = createConfidenceData(featureData, xMin, xMax);
 
     // Create histogram chart group
     let histChart = content.append('g')
       .attr('class', 'hist-chart-group')
-      .attr('transform', `translate(${yAxisWidth}, ${lineChartHeight})`);
+      .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`);
     
-    // Draw the line chart
-    let lineChart = content.append('g')
-      .attr('class', 'line-chart-group');
+    // Draw the dot plot
+    let scatterPlot = content.append('g')
+      .attr('class', 'scatter-plot-group');
+
+    // Create axis group early so it shows up at the bottom
+    let axisGroup = scatterPlot.append('g')
+      .attr('class', 'axis-group');
     
-    let lineChartContent = lineChart.append('g')
-      .attr('class', 'line-chart-content-group')
+    let scatterPlotContent = scatterPlot.append('g')
+      .attr('class', 'scatter-plot-content-group')
       .attr('transform', `translate(${yAxisWidth}, 0)`);
 
-    let confidenceGroup = lineChartContent.append('g')
-      .attr('class', 'line-chart-confidence-group');
+    let confidenceGroup = scatterPlotContent.append('g')
+      .attr('class', 'scatter-plot-confidence-group');
 
-    let lineGroup = lineChartContent.append('g')
-      .attr('class', 'line-chart-line-group');
+    let scatterGroup = scatterPlotContent.append('g')
+      .attr('class', 'scatter-plot-dot-group');
 
     // We draw the shape function with many line segments (path)
-    lineGroup.selectAll('path')
+    scatterGroup.selectAll('circle')
+      .data(addictiveData)
+      .join('circle')
+      .attr('class', 'addictive-dot')
+      .attr('cx', d => xScale(d.label))
+      .attr('cy', d => yScale(d.addictive))
+      .attr('r', 3)
+      .style('stroke', 'none')
+      .style('fill', colors.dot);
+
+    // Draw the underlying confidence interval
+    confidenceGroup.selectAll('path')
       .data(addictiveData)
       .join('path')
-      .attr('class', 'addictive-line-segment')
-      .attr('d', d => {
-        return `M ${xScale(d.sx)}, ${yScale(d.sy)} L ${xScale(d.tx)} ${yScale(d.sy)} L ${xScale(d.tx)}, ${yScale(d.ty)}`;
-      })
-      .style('stroke', lineColor)
+      .attr('class', 'dot-confidence')
+      .attr('d', d => createDotConfidencePath(d, 5, xScale, yScale))
+      .style('stroke', colors.confidence)
       .style('stroke-width', 2)
       .style('fill', 'none');
 
-    // Draw the underlying confidence interval
-    confidenceGroup.selectAll('rect')
-      .data(confidenceData)
-      .join('rect')
-      .attr('x', d => xScale(d.x1))
-      .attr('y', d => yScale(d.y1))
-      .attr('width', d => xScale(d.x2) - xScale(d.x1))
-      .attr('height', d => yScale(d.y2) - yScale(d.y1))
-      .style('fill', confidenceColor);
-
-    // Draw the line chart X axis
-    let xAxisGroup = lineChart.append('g')
+    // Draw the chart X axis
+    let xAxisGroup = axisGroup.append('g')
       .attr('class', 'x-axis')
-      .attr('transform', `translate(${yAxisWidth}, ${lineChartHeight})`)
+      .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`)
       .call(d3.axisBottom(xScale));
     
     xAxisGroup.attr('font-family', defaultFont);
     
-    // Draw the line chart Y axis
-    let yAxisGroup = lineChart.append('g')
+    // Draw the chart Y axis
+    let yAxisGroup = axisGroup.append('g')
       .attr('class', 'y-axis')
       .attr('transform', `translate(${yAxisWidth}, 0)`);
     
     yAxisGroup.call(d3.axisLeft(yScale));
     yAxisGroup.attr('font-family', defaultFont);
+  
+    // Add a line to highlight y = 0
+    yAxisGroup.append('path')
+      .attr('class', 'line-0')
+      .attr('d', `M ${0} ${yScale(0)} L ${chartWidth} ${yScale(0)}`)
+      .style('stroke', colors.line0)
+      .style('stroke-width', 4)
+      .style('stroke-dasharray', '15 10');
 
     yAxisGroup.append('g')
       .attr('class', 'y-axis-text')
-      .attr('transform', `translate(${-yAxisWidth - 5}, ${lineChartHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth - 5}, ${chartHeight / 2}) rotate(-90)`)
       .append('text')
       .text('score')
       .style('fill', 'black');
@@ -250,20 +217,22 @@
       .domain(d3.extent(histFrequency))
       .range([0, densityHeight]);
 
+    let histWidth = xScale(histData[0].x2) - xScale(histData[0].x1);
+
     histChart.selectAll('rect')
       .data(histData)
       .join('rect')
       .attr('class', 'hist-rect')
-      .attr('x', d => xScale(d.x1))
+      .attr('x', d => xScale(d.x1) - histWidth / 2)
       .attr('y', 0)
-      .attr('width', d => xScale(d.x2) - xScale(d.x1))
+      .attr('width', histWidth)
       .attr('height', d => histYScale(d.height))
-      .style('fill', histColor);
+      .style('fill', colors.hist);
     
     // Draw a Y axis for the histogram chart
-    let yAxisHistGroup = lineChart.append('g')
+    let yAxisHistGroup = scatterPlot.append('g')
       .attr('class', 'y-axis')
-      .attr('transform', `translate(${yAxisWidth}, ${lineChartHeight})`);
+      .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`);
     
     yAxisHistGroup.call(
       d3.axisLeft(histYScale)
@@ -274,19 +243,19 @@
 
     // Change 0.0 to 0
     yAxisHistGroup.selectAll('text')
-      .style('fill', histAxisColor)
+      .style('fill', colors.histAxis)
       .filter((d, i, g) => d3.select(g[i]).text() === '0.0')
       .text('0');
 
     yAxisHistGroup.selectAll('path,line')
-      .style('stroke', histAxisColor);
+      .style('stroke', colors.histAxis);
 
     yAxisHistGroup.append('g')
       .attr('class', 'y-axis-text')
       .attr('transform', `translate(${-yAxisWidth - 5}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
       .text('density')
-      .style('fill', histAxisColor);
+      .style('fill', colors.histAxis);
 
   };
 
