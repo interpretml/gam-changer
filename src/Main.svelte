@@ -1,7 +1,7 @@
 <script>
   import Header from './Header.svelte';
-  import ContinuousGlobalExplain from './global-explanation/ContinuousFeature.svelte';
-  import CategoricalGlobalExplain from './global-explanation/CategoricalFeature.svelte';
+  import ContGlobalExplain from './global-explanation/ContFeature.svelte';
+  import CatGlobalExplain from './global-explanation/CatFeature.svelte';
   import * as d3 from 'd3';
   import { onMount } from 'svelte';
 
@@ -63,16 +63,18 @@
 
   <div class='content'>
     <div class='feature-window'>
-      <CategoricalGlobalExplain
+      <CatGlobalExplain
         featureData = {data === null ? null : data.features[26]}
         scoreRange = {data === null ? null : data.scoreRange}
+        svgHeight = 400
       />
     </div>
 
     <div class='feature-window'>
-      <ContinuousGlobalExplain
+      <ContGlobalExplain
         featureData = {data === null ? null : data.features[2]}
         scoreRange = {data === null ? null : data.scoreRange}
+        svgHeight = 400
       />
     </div>
   </div>
