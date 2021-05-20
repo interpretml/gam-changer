@@ -2,6 +2,7 @@
   import Header from './Header.svelte';
   import ContGlobalExplain from './global-explanation/ContFeature.svelte';
   import CatGlobalExplain from './global-explanation/CatFeature.svelte';
+  import InterContCatGlobalExplain from './global-explanation/InterContCatFeature.svelte';
   import * as d3 from 'd3';
   import { onMount } from 'svelte';
 
@@ -21,7 +22,7 @@
   onMount(async () => {
     console.log('loading data');
     let loadedData = await d3.json('/data/iow-house-ebm.json');
-    loadedData = processData(loadedData);
+    // loadedData = processData(loadedData);
     data = loadedData;
     console.log('loaded data');
     console.log(data);
@@ -62,7 +63,7 @@
   </div>
 
   <div class='content'>
-    <div class='feature-window'>
+    <!-- <div class='feature-window'>
       <CatGlobalExplain
         featureData = {data === null ? null : data.features[26]}
         scoreRange = {data === null ? null : data.scoreRange}
@@ -76,7 +77,16 @@
         scoreRange = {data === null ? null : data.scoreRange}
         svgHeight = 400
       />
+    </div> -->
+
+    <div class='feature-window'>
+      <InterContCatGlobalExplain
+        featureData = {data === null ? null : data.features[90]}
+        scoreRange = {data === null ? null : data.scoreRange}
+        svgHeight = 400
+      />
     </div>
+
   </div>
   
 
