@@ -10,7 +10,7 @@
 
   // Visualization constants
   const svgPadding = {
-    top: 30, right: 20, bottom: 30, left: 25
+    top: 30, right: 10, bottom: 30, left: 25
   };
   const densityHeight = 90;
 
@@ -167,13 +167,6 @@
       .style('fill', 'none')
       .style('stroke', 'pink');
 
-    // Some constant lengths of different elements
-    const yAxisWidth = 30;
-    const legendWidth = 100;
-
-    const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth - legendWidth;
-    const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
-
     let content = svgSelect.append('g')
       .attr('class', 'content')
       .attr('transform', `translate(${svgPadding.left}, ${svgPadding.top})`);
@@ -183,6 +176,65 @@
     let data = preProcessData(featureData);
 
     console.log(data);
+
+    // Some constant lengths of different elements
+    const yAxisWidth = 30;
+
+    let legendConfig = {
+      maxWidth: 100,
+      leftMargin: 15,
+      rightMargin: 8,
+      lineHeight: 21,
+      rectWidth: 25,
+      rectHeight: 3,
+      rectGap: 7,
+      leftPadding: 5,
+      topPadding: 12
+    };
+
+    // Pre-populate the categorical variable legend to compute its width
+    let hiddenLegendGroup = content.append('g')
+      .style('visibility', 'hidden');
+    
+    hiddenLegendGroup.append('text')
+      .attr('class', 'legend-title')
+      .text(data.catName);
+    
+    let hiddenLegendContent = hiddenLegendGroup.append('g')
+      .attr('transform', `translate(${0}, ${legendConfig.lineHeight})`);
+    
+    let hiddenLegendValues = hiddenLegendContent.selectAll('g.legend-value')
+      .data(data.catHistEdge)
+      .join('g')
+      .attr('class', 'legend-value')
+      .attr('transform', (d, i) => `translate(${0}, ${i * legendConfig.lineHeight})`);
+    
+    hiddenLegendValues.append('rect')
+      .attr('y', -legendConfig.rectHeight / 2)
+      .attr('width', legendConfig.rectWidth)
+      .attr('height', legendConfig.rectHeight)
+      .style('fill', 'navy');
+
+    hiddenLegendValues.append('text')
+      .attr('x', legendConfig.rectWidth + legendConfig.rectGap)
+      .text(d => d);
+    
+    // Get the width and height of the legend box
+    let bbox = hiddenLegendGroup.node().getBBox();
+
+    // TODO: need to handle case where categorical labels are too long
+    legendConfig.width = Math.min(round(bbox.width, 2), legendConfig.maxWidth);
+    legendConfig.height = round(bbox.height, 2);
+
+    // Compute the offset for the content box so we can center it
+    let innerBbox = hiddenLegendContent.node().getBBox();
+    legendConfig.centerOffset = (legendConfig.width - round(innerBbox.width, 2)) / 2;
+
+    hiddenLegendGroup.remove();
+    
+    const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth -
+      legendConfig.width - legendConfig.rightMargin - legendConfig.leftMargin;
+    const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
 
     let xMin = data.contBinLabel[0];
     let xMax = data.contBinLabel[data.contBinLabel.length - 1];
@@ -264,7 +316,7 @@
         .style('fill', lineColor)
         .style('opacity', 0.2);
       
-      colorMap.set(c, lineColor);
+      colorMap.set(data.catHistEdge[c], lineColor);
     }
 
     // Draw the chart X axis
@@ -357,6 +409,45 @@
       .text('density')
       .style('fill', colors.histAxis);
 
+    // Draw a legend for the categorical data
+    let legendGroup = content.append('g')
+      .attr('class', 'legend-group')
+      .attr('transform', `translate(${yAxisWidth + chartWidth + legendConfig.leftMargin}, ${0})`);
+
+    legendGroup.append('rect')
+      .attr('x', -legendConfig.leftPadding)
+      .attr('y', -legendConfig.topPadding)
+      .attr('width', legendConfig.width + legendConfig.leftPadding * 2)
+      .attr('height', legendConfig.height + legendConfig.topPadding * 2)
+      .style('stroke', 'hsla(0, 0%, 0%, 0.1)')
+      .style('fill', 'none');
+
+    legendGroup.append('text')
+      .attr('class', 'legend-title')
+      .attr('x', legendConfig.width / 2)
+      .style('text-anchor', 'middle')
+      .text(data.catName);
+    
+    let legendContent = legendGroup.append('g')
+      .attr('class', 'legend-content')
+      .attr('transform', `translate(${legendConfig.centerOffset}, ${legendConfig.lineHeight + 10})`);
+    
+    let legendValues = legendContent.selectAll('g.legend-value')
+      .data(data.catHistEdge)
+      .join('g')
+      .attr('class', 'legend-value')
+      .attr('transform', (d, i) => `translate(${0}, ${i * legendConfig.lineHeight})`);
+    
+    legendValues.append('rect')
+      .attr('y', -legendConfig.rectHeight / 2)
+      .attr('width', legendConfig.rectWidth)
+      .attr('height', legendConfig.rectHeight)
+      .style('fill', d => colorMap.get(d));
+
+    legendValues.append('text')
+      .attr('x', legendConfig.rectWidth + legendConfig.rectGap)
+      .text(d => d);
+
   };
 
   $: featureData && drawFeature(featureData);
@@ -401,6 +492,16 @@
 
   :global(.explain-panel .hidden) {
     display: none;
+  }
+
+  :global(.explain-panel .legend-title) {
+    font-size: 0.9rem;
+    dominant-baseline: hanging;
+  }
+
+  :global(.explain-panel .legend-value) {
+    font-size: 13px;
+    dominant-baseline: middle;
   }
 
 </style>
