@@ -148,7 +148,7 @@
    * Draw the plot in the SVG component
    * @param featureData
    */
-  const drawFeature = (featureData) => {
+  const drawFeatureLine = (featureData) => {
     console.log(featureData);
     let svgSelect = d3.select(svg);
 
@@ -189,7 +189,8 @@
       rectHeight: 3,
       rectGap: 7,
       leftPadding: 5,
-      topPadding: 12
+      topPadding: 8,
+      btmPadding: 15
     };
 
     // Pre-populate the categorical variable legend to compute its width
@@ -418,7 +419,7 @@
       .attr('x', -legendConfig.leftPadding)
       .attr('y', -legendConfig.topPadding)
       .attr('width', legendConfig.width + legendConfig.leftPadding * 2)
-      .attr('height', legendConfig.height + legendConfig.topPadding * 2)
+      .attr('height', legendConfig.height + legendConfig.topPadding + legendConfig.btmPadding)
       .style('stroke', 'hsla(0, 0%, 0%, 0.1)')
       .style('fill', 'none');
 
@@ -449,6 +450,72 @@
       .text(d => d);
 
   };
+
+  const drawFeatureBar = (featureData) => {
+    console.log(featureData);
+    let svgSelect = d3.select(svg);
+
+    // Set svg viewBox (3:2 WH ratio)
+    svgSelect.attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('preserveAspectRatio', 'xMinYMin meet')
+      .attr('width', svgWidth)
+      .attr('height', svgHeight);
+
+    // Draw a border for the svg
+    svgSelect.append('rect')
+      .attr('class', 'border')
+      .classed('hidden', !showRuler)
+      .attr('width', 600)
+      .attr('height', 400)
+      .style('fill', 'none')
+      .style('stroke', 'pink');
+
+    let content = svgSelect.append('g')
+      .attr('class', 'content')
+      .attr('transform', `translate(${svgPadding.left}, ${svgPadding.top})`);
+
+    // We want to draw continuous variable on the x-axis, and categorical variable
+    // as lines. Need to figure out individual variable type.
+    let data = preProcessData(featureData);
+
+    console.log(data);
+
+    // Some constant lengths of different elements
+    const yAxisWidth = 30;
+    
+    const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
+    const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
+
+    // We put continuous variable on the x-axis
+    let xMin = data.contBinLabel[0];
+    let xMax = data.contBinLabel[data.contBinLabel.length - 1];
+
+    let xScale = d3.scaleLinear()
+      .domain([xMin, xMax])
+      .range([0, chartWidth]);
+
+    // For the y scale, it seems InterpretML presets the center at 0 (offset
+    // doesn't really matter in EBM because we can modify intercept)
+    // TODO: Provide interaction for users to change the center point
+    // Normalize the Y axis by the global score range
+    let yScale = d3.scaleLinear()
+      .domain(scoreRange)
+      .range([chartHeight, 0]);
+
+    // Create a data array by combining the bin labels, addictive terms, and errors
+    // Each line only counts addictive term at one categorical level
+    let addictiveData = createAddictiveData(featureData, data);
+
+    console.log(addictiveData);
+
+    // Create histogram chart group
+    let histChart = content.append('g')
+      .attr('class', 'hist-chart-group')
+      .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`);
+  };
+
+  // const drawFeature = drawFeatureLine;
+  const drawFeature = drawFeatureBar;
 
   $: featureData && drawFeature(featureData);
 
