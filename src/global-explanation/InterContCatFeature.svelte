@@ -145,6 +145,63 @@
   };
 
   /**
+   * Create a horizontal color legend.
+   * @param legendGroup
+   * @param legendConfig
+   * @param largestAbs
+   */
+  const drawHorizontalColorLegend = (legendGroup, legendConfig, largestAbs) => {
+    // Define the gradient
+    let legendGradientDef = legendGroup.append('defs')
+      .append('linearGradient')
+      .attr('x1', 0)
+      .attr('y1', 0)
+      .attr('x2', 1)
+      .attr('y2', 0)
+      // TODO: use state to track the number of legend-gradient and make each of
+      // them unique
+      .attr('id', 'legend-gradient');
+
+    legendGradientDef.append('stop')
+      .attr('stop-color', legendConfig.startColor)
+      .attr('offset', 0);
+
+    legendGradientDef.append('stop')
+      .attr('stop-color', '#ffffff')
+      .attr('offset', 0.5);
+
+    legendGradientDef.append('stop')
+      .attr('stop-color', legendConfig.endColor)
+      .attr('offset', 1);
+
+    legendGroup.append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', legendConfig.width)
+      .attr('height', legendConfig.height)
+      .style('fill', 'url(#legend-gradient)')
+      .style('stroke', 'hsla(0, 0%, 0%, 0.4)');
+
+    // Draw the legend axis
+    let legendScale = d3.scaleLinear()
+      .domain([-largestAbs, largestAbs])
+      .range([0, legendConfig.width])
+      .nice();
+
+    legendGroup.append('g')
+      .attr('transform', `translate(${0}, ${legendConfig.height})`)
+      .call(d3.axisBottom(legendScale).ticks(5));
+
+    legendGroup.append('text')
+      .attr('class', 'legend-title')
+      .attr('x', -10)
+      .attr('y', 0)
+      .style('dominant-baseline', 'hanging')
+      .style('text-anchor', 'end')
+      .text('Score');
+  };
+
+  /**
    * Draw the plot in the SVG component
    * @param featureData
    */
@@ -482,9 +539,17 @@
 
     // Some constant lengths of different elements
     const yAxisWidth = 30;
+    const barHeight = 10;
+    const legendConfig = {
+      startColor: '#b2182b',
+      endColor: '#2166ac',
+      width: 180,
+      height: barHeight * 0.8
+    };
+    const legendHeight = legendConfig.height + 15;
     
     const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
-    const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
+    const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight - legendHeight;
 
     // We put continuous variable on the x-axis
     let xMin = data.contBinLabel[0];
@@ -494,24 +559,161 @@
       .domain([xMin, xMax])
       .range([0, chartWidth]);
 
-    // For the y scale, it seems InterpretML presets the center at 0 (offset
-    // doesn't really matter in EBM because we can modify intercept)
-    // TODO: Provide interaction for users to change the center point
-    // Normalize the Y axis by the global score range
-    let yScale = d3.scaleLinear()
-      .domain(scoreRange)
-      .range([chartHeight, 0]);
-
-    // Create a data array by combining the bin labels, addictive terms, and errors
-    // Each line only counts addictive term at one categorical level
-    let addictiveData = createAddictiveData(featureData, data);
-
-    console.log(addictiveData);
+    // Categorical variable on the y-axis
+    let yScale = d3.scalePoint()
+      .domain(data.catHistEdge)
+      .padding(0.7)
+      .range([chartHeight, 0])
+      .round(true);
 
     // Create histogram chart group
     let histChart = content.append('g')
       .attr('class', 'hist-chart-group')
+      .attr('transform', `translate(${yAxisWidth}, ${chartHeight + legendHeight})`);
+
+    let addictiveData = createAddictiveData(featureData, data);
+    console.log(addictiveData);
+
+    // Create color scale for the bar chart
+    let maxAbsScore = 0;
+    addictiveData.forEach(curArray => {
+      curArray.forEach(d => {
+        if (Math.abs(d.sAddictive) > maxAbsScore) maxAbsScore = Math.abs(d.sAddictive);
+      });
+    });
+    console.log(maxAbsScore);
+
+    // One can consider to use the color scale to encode the global range
+    // let maxAbsScore = Math.max(Math.abs(scoreRange[0]), Math.abs(scoreRange[1]));
+    let colorScale = d3.scaleLinear()
+      .domain([-maxAbsScore, 0, maxAbsScore])
+      .range([legendConfig.startColor, 'white', legendConfig.endColor]);
+
+    // Draw the bar chart
+    let barChart = content.append('g')
+      .attr('transform', `translate(${0}, ${legendHeight})`)
+      .attr('class', 'bar-chart-group');
+    
+    let barChartContent = barChart.append('g')
+      .attr('class', 'bar-chart-content-group')
+      .attr('transform', `translate(${yAxisWidth}, 0)`);
+
+    let barGroup = barChartContent.append('g')
+      .attr('class', 'bar-chart-bar-group');
+
+    let axisGroup = barChart.append('g')
+      .attr('class', 'axis-group');
+
+    // Draw the bars one by one (iterate through the categorical levels)
+    for (let l = 0; l < addictiveData.length; l++) {
+      barGroup.append('g')
+        .attr('class', `bar-group-${l}`)
+        .attr('transform', `translate(${0}, ${yScale(data.catHistEdge[l])})`)
+        .selectAll('rect.bar')
+        .data(addictiveData[l])
+        .join('rect')
+        .attr('class', 'bar')
+        .attr('x', d => xScale(d.sx))
+        .attr('y', - barHeight / 2)
+        .attr('width', d => xScale(d.tx) - xScale(d.sx))
+        .attr('height', barHeight)
+        .style('fill', d => colorScale(d.sAddictive));
+    }
+
+    // Draw the line chart X axis
+    let xAxisGroup = axisGroup.append('g')
+      .attr('class', 'x-axis')
+      .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`)
+      .call(d3.axisBottom(xScale));
+    
+    xAxisGroup.attr('font-family', defaultFont);
+
+    xAxisGroup.append('g')
+      .attr('class', 'x-axis-text')
+      .attr('transform', `translate(${chartWidth / 2}, ${25})`)
+      .append('text')
+      .text(data.contName)
+      .style('fill', 'black');
+    
+    // Draw the line chart Y axis
+    let yAxisGroup = axisGroup.append('g')
+      .attr('class', 'y-axis')
+      .attr('transform', `translate(${yAxisWidth}, 0)`);
+    
+    yAxisGroup.call(d3.axisLeft(yScale));
+    yAxisGroup.attr('font-family', defaultFont);
+
+    yAxisGroup.append('g')
+      .attr('class', 'y-axis-text')
+      .attr('transform', `translate(${-yAxisWidth - 5}, ${chartHeight / 2}) rotate(-90)`)
+      .append('text')
+      .text(data.catName)
+      .style('fill', 'black');
+    
+    // Draw a color legend
+    let legendGroup = content.append('g')
+      .attr('class', 'legend-group')
+      .attr('transform', `translate(${width - legendConfig.width - svgPadding.right - svgPadding.left}, ${-5})`);
+    
+    drawHorizontalColorLegend(legendGroup, legendConfig, maxAbsScore);
+
+    // Draw the cont histograms at the bottom
+    let histData = [];
+    
+    // Transform the count to frequency (percentage)
+    let histCountSum = d3.sum(data.contHistCount);
+    let histFrequency = data.contHistCount.map(d => d / histCountSum);
+
+    for (let i = 0; i < histFrequency.length; i++) {
+      histData.push({
+        x1: data.contHistEdge[i],
+        x2: data.contHistEdge[i + 1],
+        height: histFrequency[i]
+      });
+    }
+
+    let histYScale = d3.scaleLinear()
+      .domain(d3.extent(histFrequency))
+      .range([0, densityHeight]);
+
+    histChart.selectAll('rect')
+      .data(histData)
+      .join('rect')
+      .attr('class', 'hist-rect')
+      .attr('x', d => xScale(d.x1))
+      .attr('y', 0)
+      .attr('width', d => xScale(d.x2) - xScale(d.x1))
+      .attr('height', d => histYScale(d.height))
+      .style('fill', colors.hist);
+    
+    // Draw a Y axis for the histogram chart
+    let yAxisHistGroup = barChart.append('g')
+      .attr('class', 'y-axis')
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`);
+    
+    yAxisHistGroup.call(
+      d3.axisLeft(histYScale)
+        .ticks(2)
+    );
+
+    yAxisHistGroup.attr('font-family', defaultFont);
+
+    // Change 0.0 to 0
+    yAxisHistGroup.selectAll('text')
+      .style('fill', colors.histAxis)
+      .filter((d, i, g) => d3.select(g[i]).text() === '0.0')
+      .text('0');
+
+    yAxisHistGroup.selectAll('path,line')
+      .style('stroke', colors.histAxis);
+
+    yAxisHistGroup.append('g')
+      .attr('class', 'y-axis-text')
+      .attr('transform', `translate(${-yAxisWidth - 5}, ${densityHeight / 2}) rotate(-90)`)
+      .append('text')
+      .text('density')
+      .style('fill', colors.histAxis);
+
   };
 
   // const drawFeature = drawFeatureLine;
@@ -550,6 +752,12 @@
     font-size: 1rem;
     text-anchor: middle;
     dominant-baseline: text-bottom;
+  }
+
+  :global(.explain-panel .x-axis-text) {
+    font-size: 1rem;
+    text-anchor: middle;
+    dominant-baseline: hanging;
   }
 
   :global(.explain-panel .addictive-line-segment) {
