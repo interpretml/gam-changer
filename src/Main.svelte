@@ -4,6 +4,7 @@
   import CatGlobalExplain from './global-explanation/CatFeature.svelte';
   import InterContCatGlobalExplain from './global-explanation/InterContCatFeature.svelte';
   import InterContContGlobalExplain from './global-explanation/InterContContFeature.svelte';
+  import InterCatCatGlobalExplain from './global-explanation/InterCatCatFeature.svelte';
   import * as d3 from 'd3';
   import { onMount } from 'svelte';
 
@@ -100,6 +101,7 @@
       />
     </div>
 
+
     <div class='feature-window'>
       <InterContCatGlobalExplain
         featureData = {data === null ? null : data.features[89]}
@@ -107,11 +109,21 @@
         svgHeight = 400
         chartType = 'bar'
       />
+    </div>
+
+    -->
+
+    <!-- <div class='feature-window'>
+      <InterContContGlobalExplain
+        featureData = {data === null ? null : data.features[86]}
+        scoreRange = {data === null ? null : data.scoreRange}
+        svgHeight = 400
+      />
     </div> -->
 
     <div class='feature-window'>
-      <InterContContGlobalExplain
-        featureData = {data === null ? null : data.features[86]}
+      <InterCatCatGlobalExplain
+        featureData = {data === null ? null : data.features[81]}
         scoreRange = {data === null ? null : data.scoreRange}
         svgHeight = 400
       />
