@@ -5,6 +5,7 @@
   export let featureData = null;
   export let scoreRange = null;
   export let svgHeight = 400;
+  export let chartType = 'bar';
 
   let svg = null;
 
@@ -180,7 +181,8 @@
       .attr('width', legendConfig.width)
       .attr('height', legendConfig.height)
       .style('fill', 'url(#legend-gradient)')
-      .style('stroke', 'hsla(0, 0%, 0%, 0.4)');
+      .style('stroke', 'hsla(0, 0%, 0%, 0.5)')
+      .style('stroke-width', 0.3);
 
     // Draw the legend axis
     let legendScale = d3.scaleLinear()
@@ -716,8 +718,20 @@
 
   };
 
-  // const drawFeature = drawFeatureLine;
-  const drawFeature = drawFeatureBar;
+  let drawFeature = null;
+  console.log(chartType);
+
+  if (chartType === 'bar') {
+    console.log(chartType, 'use bar chart!');
+    drawFeature = drawFeatureBar;
+  } else if (chartType === 'line') {
+    console.log(chartType, 'use line chart!');
+    drawFeature = drawFeatureLine;
+  } else {
+    console.error('The provided chart type is not supported.');
+  }
+
+  console.log(drawFeature);
 
   $: featureData && drawFeature(featureData);
 

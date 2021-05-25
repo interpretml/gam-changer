@@ -3,6 +3,7 @@
   import ContGlobalExplain from './global-explanation/ContFeature.svelte';
   import CatGlobalExplain from './global-explanation/CatFeature.svelte';
   import InterContCatGlobalExplain from './global-explanation/InterContCatFeature.svelte';
+  import InterContContGlobalExplain from './global-explanation/InterContContFeature.svelte';
   import * as d3 from 'd3';
   import { onMount } from 'svelte';
 
@@ -42,9 +43,12 @@
   .content {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     gap: 50px;
+    padding: 30px 0 30px 0;
     justify-content: center;
     height: min(800px, calc(100vh - 50px));
+    overflow-y: scroll;
     width: 100vw;
     box-sizing: border-box;
     border: 1px solid $gray-border;
@@ -72,16 +76,42 @@
     </div>
 
     <div class='feature-window'>
+      <CatGlobalExplain
+        featureData = {data === null ? null : data.features[12]}
+        scoreRange = {data === null ? null : data.scoreRange}
+        svgHeight = 400
+      />
+    </div>
+
+    <div class='feature-window'>
       <ContGlobalExplain
         featureData = {data === null ? null : data.features[2]}
         scoreRange = {data === null ? null : data.scoreRange}
         svgHeight = 400
       />
-    </div> -->
+    </div>
+
+    <div class='feature-window'>
+      <InterContCatGlobalExplain
+        featureData = {data === null ? null : data.features[90]}
+        scoreRange = {data === null ? null : data.scoreRange}
+        svgHeight = 400
+        chartType = 'line'
+      />
+    </div>
 
     <div class='feature-window'>
       <InterContCatGlobalExplain
         featureData = {data === null ? null : data.features[89]}
+        scoreRange = {data === null ? null : data.scoreRange}
+        svgHeight = 400
+        chartType = 'bar'
+      />
+    </div> -->
+
+    <div class='feature-window'>
+      <InterContContGlobalExplain
+        featureData = {data === null ? null : data.features[86]}
         scoreRange = {data === null ? null : data.scoreRange}
         svgHeight = 400
       />

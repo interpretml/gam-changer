@@ -70,7 +70,7 @@
 
   <div class="icons">
 
-    <a target="_blank" href="https://github.com/poloclub/dodrio">
+    <a target="_blank" href="https://github.com/interpretml/interpret">
       <div class="icon" title="Open-source code">
         <i class="fab fa-github"></i>
       </div>
