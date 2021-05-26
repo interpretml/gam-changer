@@ -29,7 +29,7 @@
   const defaultFont = config.defaultFont;
 
   /**
-   * Create a path to indicate the confidence interval for the addictive score of
+   * Create a path to indicate the confidence interval for the additive score of
    * categorical variables.
    * @param d
    * @param xScale
@@ -39,12 +39,12 @@
 
     let topMid = {
       x: xScale(d.label),
-      y: yScale(d.addictive + d.error)
+      y: yScale(d.additive + d.error)
     };
 
     let btmMid = {
       x: xScale(d.label),
-      y: yScale(d.addictive - d.error)
+      y: yScale(d.additive - d.error)
     };
     
     // Draw the top line
@@ -121,18 +121,18 @@
       .domain(scoreRange)
       .range([chartHeight, 0]);
 
-    // Create a data array by combining the bin labels, addictive terms, and errors
-    let addictiveData = [];
+    // Create a data array by combining the bin labels, additive terms, and errors
+    let additiveData = [];
 
     for (let i = 0; i < featureData.binLabel.length; i++) {
-      addictiveData.push({
+      additiveData.push({
         label: featureData.binLabel[i],
-        addictive: featureData.addictive[i],
+        additive: featureData.additive[i],
         error: featureData.error[i]
       });
     }
 
-    console.log(addictiveData);
+    console.log(additiveData);
 
     // Create histogram chart group
     let histChart = content.append('g')
@@ -159,18 +159,18 @@
 
     // We draw the shape function with many line segments (path)
     scatterGroup.selectAll('circle')
-      .data(addictiveData)
+      .data(additiveData)
       .join('circle')
-      .attr('class', 'addictive-dot')
+      .attr('class', 'additive-dot')
       .attr('cx', d => xScale(d.label))
-      .attr('cy', d => yScale(d.addictive))
+      .attr('cy', d => yScale(d.additive))
       .attr('r', 3)
       .style('stroke', 'none')
       .style('fill', colors.dot);
 
     // Draw the underlying confidence interval
     confidenceGroup.selectAll('path')
-      .data(addictiveData)
+      .data(additiveData)
       .join('path')
       .attr('class', 'dot-confidence')
       .attr('d', d => createDotConfidencePath(d, 5, xScale, yScale))
@@ -305,7 +305,7 @@
     dominant-baseline: text-bottom;
   }
 
-  :global(.explain-panel .addictive-line-segment) {
+  :global(.explain-panel .additive-line-segment) {
     stroke-linejoin: round;
     stroke-linecap: round;
   }

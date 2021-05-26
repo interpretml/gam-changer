@@ -34,7 +34,7 @@
    * @param featureData
    */
   const createConfidenceData = (featureData, xMin, xMax) => {
-    let startPointTop = {x: xMin, y: featureData.addictive[0] + featureData.error[0]};
+    let startPointTop = {x: xMin, y: featureData.additive[0] + featureData.error[0]};
 
     let confidenceData = [];
 
@@ -43,11 +43,11 @@
       x1: startPointTop.x,
       y1: startPointTop.y,
       x2: featureData.binEdge[0],
-      y2: featureData.addictive[0] - featureData.error[0]
+      y2: featureData.additive[0] - featureData.error[0]
     });
 
     for (let i = 0; i < featureData.binEdge.length - 1; i++) {
-      let curValue = featureData.addictive[i + 1];
+      let curValue = featureData.additive[i + 1];
       let curError = featureData.error[i + 1];
 
       confidenceData.push({
@@ -61,50 +61,50 @@
     // Right bound
     confidenceData.push({
       x1: featureData.binEdge[featureData.binEdge.length - 1],
-      y1: featureData.addictive[featureData.binEdge.length] + featureData.error[featureData.binEdge.length],
+      y1: featureData.additive[featureData.binEdge.length] + featureData.error[featureData.binEdge.length],
       x2: xMax,
-      y2: featureData.addictive[featureData.binEdge.length] - featureData.error[featureData.binEdge.length]
+      y2: featureData.additive[featureData.binEdge.length] - featureData.error[featureData.binEdge.length]
     });
 
     return confidenceData;
   };
 
   /**
-   * Create line segments (path) to trace the addictive term at each bin in the
+   * Create line segments (path) to trace the additive term at each bin in the
    * model.
    * @param featureData
    * @param xMin
    * @param xMax
    */
-  const createAddictiveData = (featureData, xMin, xMax) => {
-    let addictiveData = [];
+  const createAdditiveData = (featureData, xMin, xMax) => {
+    let additiveData = [];
 
     // Add the left bound
-    addictiveData.push({
+    additiveData.push({
       sx: xMin,
-      sy: featureData.addictive[0],
+      sy: featureData.additive[0],
       tx: featureData.binEdge[0],
-      ty: featureData.addictive[1]
+      ty: featureData.additive[1]
     });
 
     for (let i = 0; i < featureData.binEdge.length - 1; i++) {
-      addictiveData.push({
+      additiveData.push({
         sx: featureData.binEdge[i],
-        sy: featureData.addictive[i + 1],
+        sy: featureData.additive[i + 1],
         tx: featureData.binEdge[i + 1],
-        ty: featureData.addictive[i + 2],
+        ty: featureData.additive[i + 2],
       });
     }
 
     // Add the right bound
-    addictiveData.push({
+    additiveData.push({
       sx: featureData.binEdge[featureData.binEdge.length - 1],
-      sy: featureData.addictive[featureData.binEdge.length],
+      sy: featureData.additive[featureData.binEdge.length],
       tx: xMax,
-      ty: featureData.addictive[featureData.binEdge.length]
+      ty: featureData.additive[featureData.binEdge.length]
     });
 
-    return addictiveData;
+    return additiveData;
   };
 
   /**
@@ -149,7 +149,7 @@
     // For the y scale, it seems InterpretML presets the center at 0 (offset
     // doesn't really matter in EBM because we can modify intercept)
     // TODO: Provide interaction for users to change the center point
-    let yExtent = d3.extent(featureData.addictive);
+    let yExtent = d3.extent(featureData.additive);
 
     let xScale = d3.scaleLinear()
       .domain([xMin, xMax])
@@ -160,10 +160,10 @@
       .domain(scoreRange)
       .range([lineChartHeight, 0]);
 
-    // Create a data array by combining the bin edge and addictive terms
-    let addictiveData = createAddictiveData(featureData, xMin, xMax);
+    // Create a data array by combining the bin edge and additive terms
+    let additiveData = createAdditiveData(featureData, xMin, xMax);
 
-    console.log(addictiveData);
+    console.log(additiveData);
 
     console.log(xMin, xMax, yExtent);
 
@@ -194,9 +194,9 @@
 
     // We draw the shape function with many line segments (path)
     lineGroup.selectAll('path')
-      .data(addictiveData)
+      .data(additiveData)
       .join('path')
-      .attr('class', 'addictive-line-segment')
+      .attr('class', 'additive-line-segment')
       .attr('d', d => {
         return `M ${xScale(d.sx)}, ${yScale(d.sy)} L ${xScale(d.tx)} ${yScale(d.sy)} L ${xScale(d.tx)}, ${yScale(d.ty)}`;
       })
@@ -339,7 +339,7 @@
     dominant-baseline: text-bottom;
   }
 
-  :global(.explain-panel .addictive-line-segment) {
+  :global(.explain-panel .additive-line-segment) {
     stroke-linejoin: round;
     stroke-linecap: round;
   }

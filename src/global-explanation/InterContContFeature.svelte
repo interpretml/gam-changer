@@ -84,11 +84,11 @@
       .attr('class', 'hist-chart-group')
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight + legendHeight})`);
 
-    let addictiveData = transpose2dArray(featureData.addictive);
+    let additiveData = transpose2dArray(featureData.additive);
 
     // Create color scale for the bar chart
     let maxAbsScore = 0;
-    featureData.addictive.forEach(curArray => {
+    featureData.additive.forEach(curArray => {
       curArray.forEach(d => {
         if (Math.abs(d) > maxAbsScore) maxAbsScore = Math.abs(d);
       });
@@ -116,14 +116,14 @@
       .attr('class', 'axis-group');
 
     // Draw the bars one by one (iterate through continuous 2 at y-axis)
-    for (let l = 0; l < featureData.addictive[0].length; l++) {
+    for (let l = 0; l < featureData.additive[0].length; l++) {
       let curHeight = yScale(featureData.binLabel2[l]) - yScale(featureData.binLabel2[l + 1]);
 
       barGroup.append('g')
         .attr('class', `bar-group-${l}`)
         .attr('transform', `translate(${0}, ${yScale(featureData.binLabel2[l])})`)
         .selectAll('rect.bar')
-        .data(addictiveData[l])
+        .data(additiveData[l])
         .join('rect')
         .attr('class', 'bar')
         .attr('x', (d, i) => xScale(featureData.binLabel1[i]))
@@ -274,7 +274,7 @@
     dominant-baseline: hanging;
   }
 
-  :global(.explain-panel .addictive-line-segment) {
+  :global(.explain-panel .additive-line-segment) {
     stroke-linejoin: round;
     stroke-linecap: round;
   }

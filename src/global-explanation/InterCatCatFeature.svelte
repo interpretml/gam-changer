@@ -28,25 +28,25 @@
   const colors = config.colors;
 
   /**
-   * Create addictiveData which is used to draw dots on the plot.
+   * Create additiveData which is used to draw dots on the plot.
    * @param {[object]} featureData Original feature data passed from the parent component
    * @param {[object]} data Processed feature data (separated by long/short categorical variables)
    */
-  const createAddictiveData = (featureData, data) => {
-    let addictiveData = [];
+  const createAdditiveData = (featureData, data) => {
+    let additiveData = [];
 
-    for (let i = 0; i < featureData.addictive.length; i++) {
-      for (let j = 0; j < featureData.addictive[i].length; j++) {
-        addictiveData.push({
+    for (let i = 0; i < featureData.additive.length; i++) {
+      for (let j = 0; j < featureData.additive[i].length; j++) {
+        additiveData.push({
           longLabel: data.longDim === 0 ? data.longBinLabel[i] : data.longBinLabel[j],
           shortLabel: data.longDim === 0 ? data.shortBinLabel[j] : data.shortBinLabel[i],
-          addictive: featureData.addictive[i][j],
+          additive: featureData.additive[i][j],
           error: featureData.error[i][j]
         });
       }
     }
 
-    return addictiveData;
+    return additiveData;
   };
 
   /**
@@ -147,12 +147,12 @@
       .attr('class', 'hist-chart-group')
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight + legendHeight})`);
 
-    let addictiveData = createAddictiveData(featureData, data);
-    console.log(addictiveData);
+    let additiveData = createAdditiveData(featureData, data);
+    console.log(additiveData);
 
     // Create color scale for the bar chart
     let maxAbsScore = 0;
-    featureData.addictive.forEach(curArray => {
+    featureData.additive.forEach(curArray => {
       curArray.forEach(d => {
         if (Math.abs(d) > maxAbsScore) maxAbsScore = Math.abs(d);
       });
@@ -182,13 +182,13 @@
 
     // Draw the scatter plot
     scatterGroup.selectAll('circle.dot')
-      .data(addictiveData)
+      .data(additiveData)
       .join('circle')
       .attr('class', 'dot')
       .attr('cx', d => xScale(d.longLabel))
       .attr('cy', d => yScale(d.shortLabel))
       .attr('r', config.catDotRadius)
-      .style('fill', d => colorScale(d.addictive));
+      .style('fill', d => colorScale(d.additive));
 
 
     // Draw the line chart X axis
@@ -332,7 +332,7 @@
     dominant-baseline: hanging;
   }
 
-  :global(.explain-panel .addictive-line-segment) {
+  :global(.explain-panel .additive-line-segment) {
     stroke-linejoin: round;
     stroke-linecap: round;
   }

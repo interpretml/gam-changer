@@ -30,75 +30,75 @@
   const defaultFont = config.defaultFont;
 
   /**
-   * Create addictiveData which is used to draw line segments for each categorical
+   * Create additiveData which is used to draw line segments for each categorical
    * level.
    * @param {[object]} featureData Original feature data passed from the parent component
    * @param {[object]} data Processed feature data (separated by cont/cat variables)
    */
-  const createAddictiveData = (featureData, data) => {
-    let addictiveData = [];
+  const createAdditiveData = (featureData, data) => {
+    let additiveData = [];
 
     if (data.catDim === 0) {
-      for (let c = 0; c < featureData.addictive.length; c++) {
+      for (let c = 0; c < featureData.additive.length; c++) {
         let curValues = [];
 
-        for (let i = 0; i < featureData.addictive[0].length - 1; i++) {
+        for (let i = 0; i < featureData.additive[0].length - 1; i++) {
           curValues.push({
             sx: data.contBinLabel[i],
-            sAddictive: featureData.addictive[c][i],
+            sAdditive: featureData.additive[c][i],
             sError: featureData.error[c][i],
             tx: data.contBinLabel[i + 1],
-            tAddictive: featureData.addictive[c][i + 1],
+            tAdditive: featureData.additive[c][i + 1],
             tError: featureData.error[c][i + 1]
           });
         }
 
-        // Finally, add the ending point (xMax without addictive value)
-        // We would use the second last point's addictive value and error value
-        let endI = featureData.addictive[0].length - 1;
+        // Finally, add the ending point (xMax without additive value)
+        // We would use the second last point's additive value and error value
+        let endI = featureData.additive[0].length - 1;
         curValues.push({
           sx: data.contBinLabel[endI],
-          sAddictive: featureData.addictive[c][endI],
+          sAdditive: featureData.additive[c][endI],
           sError: featureData.error[c][endI],
           tx: data.contBinLabel[endI + 1],
-          tAddictive: featureData.addictive[c][endI],
+          tAdditive: featureData.additive[c][endI],
           tError: featureData.error[c][endI]
         });
 
-        addictiveData.push(curValues);
+        additiveData.push(curValues);
       }
     } else {
-      for (let c = 0; c < featureData.addictive[0].length; c++) {
+      for (let c = 0; c < featureData.additive[0].length; c++) {
         let curValues = [];
 
-        for (let i = 0; i < featureData.addictive.length - 1; i++) {
+        for (let i = 0; i < featureData.additive.length - 1; i++) {
           curValues.push({
             sx: data.contBinLabel[i],
-            sAddictive: featureData.addictive[i][c],
+            sAdditive: featureData.additive[i][c],
             sError: featureData.error[i][c],
             tx: data.contBinLabel[i + 1],
-            tAddictive: featureData.addictive[i + 1][c],
+            tAdditive: featureData.additive[i + 1][c],
             tError: featureData.error[i + 1][c]
           });
         }
 
-        // Finally, add the ending point (xMax without addictive value)
-        // We would use the second last point's addictive value and error value
-        let endI = featureData.addictive.length - 1;
+        // Finally, add the ending point (xMax without additive value)
+        // We would use the second last point's additive value and error value
+        let endI = featureData.additive.length - 1;
         curValues.push({
           sx: data.contBinLabel[endI],
-          sAddictive: featureData.addictive[endI][c],
+          sAdditive: featureData.additive[endI][c],
           sError: featureData.error[endI][c],
           tx: data.contBinLabel[endI + 1],
-          tAddictive: featureData.addictive[endI][c],
+          tAdditive: featureData.additive[endI][c],
           tError: featureData.error[endI][c]
         });
 
-        addictiveData.push(curValues);
+        additiveData.push(curValues);
       }
     }
 
-    return addictiveData;
+    return additiveData;
   };
 
   /**
@@ -245,11 +245,11 @@
       .domain(scoreRange)
       .range([chartHeight, 0]);
 
-    // Create a data array by combining the bin labels, addictive terms, and errors
-    // Each line only counts addictive term at one categorical level
-    let addictiveData = createAddictiveData(featureData, data);
+    // Create a data array by combining the bin labels, additive terms, and errors
+    // Each line only counts additive term at one categorical level
+    let additiveData = createAdditiveData(featureData, data);
 
-    console.log(addictiveData);
+    console.log(additiveData);
 
     // Create histogram chart group
     let histChart = content.append('g')
@@ -277,7 +277,7 @@
     // We draw it line by line
     let colorMap = new Map();
 
-    for (let c = 0; c < addictiveData.length; c++) {
+    for (let c = 0; c < additiveData.length; c++) {
 
       // Create line color
       let lineColor = d3.schemeTableau10[c];
@@ -285,12 +285,12 @@
       lineGroup.append('g')
         .attr('class', `line-group-${c}`)
         .selectAll('path')
-        .data(addictiveData[c])
+        .data(additiveData[c])
         .join('path')
-        .attr('class', 'addictive-line-segment')
+        .attr('class', 'additive-line-segment')
         .attr('d', d => {
-          return `M ${xScale(d.sx)}, ${yScale(d.sAddictive)} L ${xScale(d.tx)}
-            ${yScale(d.sAddictive)} L ${xScale(d.tx)}, ${yScale(d.tAddictive)}`;
+          return `M ${xScale(d.sx)}, ${yScale(d.sAdditive)} L ${xScale(d.tx)}
+            ${yScale(d.sAdditive)} L ${xScale(d.tx)}, ${yScale(d.tAdditive)}`;
         })
         .style('stroke', lineColor)
         .style('stroke-width', 2)
@@ -300,13 +300,13 @@
       confidenceGroup.append('g')
         .attr('class', `confidence-group-${c}`)
         .selectAll('rect')
-        .data(addictiveData[c])
+        .data(additiveData[c])
         .join('rect')
         .attr('class', 'line-confidence')
         .attr('x', d => xScale(d.sx))
-        .attr('y', d => yScale(d.sAddictive + d.sError))
+        .attr('y', d => yScale(d.sAdditive + d.sError))
         .attr('width', d => xScale(d.tx) - xScale(d.sx))
-        .attr('height', d => yScale(d.sAddictive - d.sError) - yScale(d.sAddictive + d.sError))
+        .attr('height', d => yScale(d.sAdditive - d.sError) - yScale(d.sAdditive + d.sError))
         .style('fill', lineColor)
         .style('opacity', 0.2);
       
@@ -507,14 +507,14 @@
       .attr('class', 'hist-chart-group')
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight + legendHeight})`);
 
-    let addictiveData = createAddictiveData(featureData, data);
-    console.log(addictiveData);
+    let additiveData = createAdditiveData(featureData, data);
+    console.log(additiveData);
 
     // Create color scale for the bar chart
     let maxAbsScore = 0;
-    addictiveData.forEach(curArray => {
+    additiveData.forEach(curArray => {
       curArray.forEach(d => {
-        if (Math.abs(d.sAddictive) > maxAbsScore) maxAbsScore = Math.abs(d.sAddictive);
+        if (Math.abs(d.sAdditive) > maxAbsScore) maxAbsScore = Math.abs(d.sAdditive);
       });
     });
     console.log(maxAbsScore);
@@ -541,19 +541,19 @@
       .attr('class', 'axis-group');
 
     // Draw the bars one by one (iterate through the categorical levels)
-    for (let l = 0; l < addictiveData.length; l++) {
+    for (let l = 0; l < additiveData.length; l++) {
       barGroup.append('g')
         .attr('class', `bar-group-${l}`)
         .attr('transform', `translate(${0}, ${yScale(data.catHistEdge[l])})`)
         .selectAll('rect.bar')
-        .data(addictiveData[l])
+        .data(additiveData[l])
         .join('rect')
         .attr('class', 'bar')
         .attr('x', d => xScale(d.sx))
         .attr('y', - barHeight / 2)
         .attr('width', d => xScale(d.tx) - xScale(d.sx))
         .attr('height', barHeight)
-        .style('fill', d => colorScale(d.sAddictive));
+        .style('fill', d => colorScale(d.sAdditive));
     }
 
     // Draw the line chart X axis
@@ -703,7 +703,7 @@
     dominant-baseline: hanging;
   }
 
-  :global(.explain-panel .addictive-line-segment) {
+  :global(.explain-panel .additive-line-segment) {
     stroke-linejoin: round;
     stroke-linecap: round;
   }
