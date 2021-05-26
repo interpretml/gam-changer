@@ -11,6 +11,7 @@
   let svg = null;
 
   // Visualization constants
+  const svgPadding = config.svgPadding;
   const densityHeight = 90;
 
   // Viewbox width and height
@@ -24,14 +25,7 @@
   const showRuler = false;
 
   // Colors
-  const colors = {
-    line: 'hsl(222, 80%, 30%)',
-    dot: 'hsla(222, 80%, 30%, 100%)',
-    confidence: 'hsl(222, 55%, 70%)',
-    hist: 'hsl(222, 10%, 93%)',
-    histAxis: 'hsl(222, 10%, 70%)',
-    line0: 'hsla(222, 0%, 0%, 5%)'
-  };
+  const colors = config.colors;
 
   const drawFeatureBar = (featureData) => {
     console.log(featureData);
@@ -54,7 +48,7 @@
 
     let content = svgSelect.append('g')
       .attr('class', 'content')
-      .attr('transform', `translate(${config.svgPadding.left}, ${config.svgPadding.top})`);
+      .attr('transform', `translate(${svgPadding.left}, ${svgPadding.top})`);
 
     // Some constant lengths of different elements
     const yAxisWidth = 30;
@@ -66,8 +60,8 @@
     };
     const legendHeight = legendConfig.height + 15;
     
-    const chartWidth = width - config.svgPadding.left - config.svgPadding.right - yAxisWidth;
-    const chartHeight = height - config.svgPadding.top - config.svgPadding.bottom - densityHeight - legendHeight;
+    const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
+    const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight - legendHeight;
 
     // We put continuous 1 on the x-axis
     let xMin = featureData.binLabel1[0];
@@ -173,7 +167,7 @@
     let legendGroup = content.append('g')
       .attr('class', 'legend-group')
       .attr('transform', `translate(${width - legendConfig.width -
-        config.svgPadding.right - config.svgPadding.left}, ${-10})`);
+        svgPadding.right - svgPadding.left}, ${-10})`);
     
     drawHorizontalColorLegend(legendGroup, legendConfig, maxAbsScore);
 

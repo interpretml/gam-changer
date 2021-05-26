@@ -1,6 +1,7 @@
 <script>
   import * as d3 from 'd3';
   import { round } from '../utils';
+  import { config } from '../config';
 
   export let featureData = null;
   export let scoreRange = null;
@@ -9,9 +10,7 @@
   let svg = null;
 
   // Visualization constants
-  const svgPadding = {
-    top: 30, right: 20, bottom: 30, left: 25
-  };
+  const svgPadding = config.svgPadding;
   const densityHeight = 90;
 
   // Viewbox width and height
@@ -25,15 +24,9 @@
   const showRuler = false;
 
   // Colors
-  const colors = {
-    dot: 'hsla(222, 80%, 30%, 100%)',
-    confidence: 'hsl(222, 55%, 70%)',
-    hist: 'hsl(222, 10%, 93%)',
-    histAxis: 'hsl(222, 10%, 70%)',
-    line0: 'hsla(222, 0%, 0%, 5%)'
-  };
+  const colors = config.colors;
 
-  const defaultFont = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;';
+  const defaultFont = config.defaultFont;
 
   /**
    * Create a path to indicate the confidence interval for the addictive score of
@@ -181,7 +174,7 @@
       .join('path')
       .attr('class', 'dot-confidence')
       .attr('d', d => createDotConfidencePath(d, 5, xScale, yScale))
-      .style('stroke', colors.confidence)
+      .style('stroke', colors.dotConfidence)
       .style('stroke-width', 2)
       .style('fill', 'none');
 

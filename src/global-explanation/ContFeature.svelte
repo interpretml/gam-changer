@@ -1,6 +1,7 @@
 <script>
   import * as d3 from 'd3';
   import { round } from '../utils';
+  import { config } from '../config';
 
   export let featureData = null;
   export let scoreRange = null;
@@ -9,9 +10,7 @@
   let svg = null;
 
   // Visualization constants
-  const svgPadding = {
-    top: 30, right: 20, bottom: 30, left: 25
-  };
+  const svgPadding = config.svgPadding;
   const densityHeight = 90;
 
   // Viewbox width and height
@@ -25,15 +24,9 @@
   const showRuler = false;
 
   // Colors
-  const colors = {
-    line: 'hsl(222, 80%, 30%)',
-    confidence: 'hsl(222, 55%, 96%)',
-    hist: 'hsl(222, 10%, 93%)',
-    histAxis: 'hsl(222, 10%, 70%)',
-    line0: 'hsla(222, 0%, 0%, 5%)'
-  };
+  const colors = config.colors;
 
-  const defaultFont = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;';
+  const defaultFont = config.defaultFont;
 
   /**
    * Create rectangles in SVG path format tracing the standard deviations at each
@@ -219,7 +212,7 @@
       .attr('y', d => yScale(d.y1))
       .attr('width', d => xScale(d.x2) - xScale(d.x1))
       .attr('height', d => yScale(d.y2) - yScale(d.y1))
-      .style('fill', colors.confidence);
+      .style('fill', colors.lineConfidence);
 
     // Draw the line chart X axis
     let xAxisGroup = axisGroup.append('g')

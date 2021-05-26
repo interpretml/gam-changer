@@ -1,6 +1,7 @@
 <script>
   import * as d3 from 'd3';
   import { round } from '../utils';
+  import { config } from '../config';
   import { drawHorizontalColorLegend } from './draw';
 
   export let featureData = null;
@@ -11,9 +12,7 @@
   let svg = null;
 
   // Visualization constants
-  const svgPadding = {
-    top: 30, right: 10, bottom: 30, left: 25
-  };
+  const svgPadding = config.svgPadding;
   const densityHeight = 90;
 
   // Viewbox width and height
@@ -27,16 +26,8 @@
   const showRuler = false;
 
   // Colors
-  const colors = {
-    line: 'hsl(222, 80%, 30%)',
-    dot: 'hsla(222, 80%, 30%, 100%)',
-    confidence: 'hsl(222, 55%, 70%)',
-    hist: 'hsl(222, 10%, 93%)',
-    histAxis: 'hsl(222, 10%, 70%)',
-    line0: 'hsla(222, 0%, 0%, 5%)'
-  };
-
-  const defaultFont = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;';
+  const colors = config.colors;
+  const defaultFont = config.defaultFont;
 
   /**
    * Create addictiveData which is used to draw line segments for each categorical
@@ -662,19 +653,14 @@
   };
 
   let drawFeature = null;
-  console.log(chartType);
 
   if (chartType === 'bar') {
-    console.log(chartType, 'use bar chart!');
     drawFeature = drawFeatureBar;
   } else if (chartType === 'line') {
-    console.log(chartType, 'use line chart!');
     drawFeature = drawFeatureLine;
   } else {
     console.error('The provided chart type is not supported.');
   }
-
-  console.log(drawFeature);
 
   $: featureData && drawFeature(featureData);
 
