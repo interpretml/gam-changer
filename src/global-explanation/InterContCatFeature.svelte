@@ -338,9 +338,9 @@
       .style('stroke-dasharray', '15 10');
 
     yAxisGroup.append('g')
-      .attr('class', 'y-axis-text')
       .attr('transform', `translate(${-yAxisWidth - 5}, ${chartHeight / 2}) rotate(-90)`)
       .append('text')
+      .attr('class', 'y-axis-text')
       .text('score')
       .style('fill', 'black');
 
@@ -565,9 +565,9 @@
     xAxisGroup.attr('font-family', defaultFont);
 
     xAxisGroup.append('g')
-      .attr('class', 'x-axis-text')
       .attr('transform', `translate(${chartWidth / 2}, ${25})`)
       .append('text')
+      .attr('class', 'x-axis-text')
       .text(data.contName)
       .style('fill', 'black');
     
@@ -644,9 +644,9 @@
       .style('stroke', colors.histAxis);
 
     yAxisHistGroup.append('g')
-      .attr('class', 'y-axis-text')
       .attr('transform', `translate(${-yAxisWidth - 5}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
+      .attr('class', 'y-axis-text')
       .text('density')
       .style('fill', colors.histAxis);
 
@@ -669,8 +669,6 @@
 <style type='text/scss'>
   @import '../define';
 
-  $header-height: 2.3rem;
-
   .explain-panel {
     display: flex;
     flex-direction: column;
@@ -678,7 +676,7 @@
 
   .header {
     display: flex;
-    height: $header-height;
+    height: $explanation-header-height;
     padding: 5px 10px;
     border-bottom: 1px solid $gray-border;
 
@@ -692,13 +690,13 @@
   }
 
   :global(.explain-panel .y-axis-text) {
-    font-size: 1rem;
+    font-size: 16px;
     text-anchor: middle;
     dominant-baseline: text-bottom;
   }
 
   :global(.explain-panel .x-axis-text) {
-    font-size: 1rem;
+    font-size: 16px;
     text-anchor: middle;
     dominant-baseline: hanging;
   }
@@ -713,7 +711,7 @@
   }
 
   :global(.explain-panel .legend-title) {
-    font-size: 0.9rem;
+    font-size: 0.9em;
     dominant-baseline: hanging;
   }
 
