@@ -198,9 +198,17 @@
 
     let axisGroup = lineChart.append('g')
       .attr('class', 'axis-group');
+
+    // Add a clip path to bound the lines (for zooming)
+    lineChart.append('clipPath')
+      .attr('id', 'line-chart-clip')
+      .append('rect')
+      .attr('width', lineChartWidth)
+      .attr('height', lineChartHeight);
     
     let lineChartContent = lineChart.append('g')
       .attr('class', 'line-chart-content-group')
+      .attr('clip-path', 'url(#line-chart-clip)')
       .attr('transform', `translate(${yAxisWidth}, 0)`);
 
     let confidenceGroup = lineChartContent.append('g')
@@ -369,7 +377,6 @@
   };
 
   const zoom = (xScale, yScale) => {
-    console.log('zoom called', xScale.domain());
 
     // Create a common transition
     let svgSelect = d3.select(svg);
@@ -386,6 +393,12 @@
       .call(d3.axisLeft(yScale));
 
     // Redraw the lines using the new scale
+    svgSelect.select('g.line-chart-line-group')
+      .selectAll('path.additive-line-segment')
+      .transition(trans)
+      .attr('d', d => {
+        return `M ${xScale(d.x1)}, ${yScale(d.y1)} L ${xScale(d.x2)} ${yScale(d.y2)}`;
+      });
     
   };
 
