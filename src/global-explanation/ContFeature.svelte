@@ -85,20 +85,40 @@
     let additiveData = [];
 
     for (let i = 0; i < featureData.additive.length - 1; i++) {
+
+      // Compute the source point and the target point
+      let sx = featureData.binEdge[i];
+      let sy = featureData.additive[i];
+      let tx = featureData.binEdge[i + 1];
+      let ty = featureData.additive[i + 1];
+
+      // Add line segments (need two segments to connect two points)
+      // We separate these two lines so it is easier to drag
       additiveData.push({
-        sx: featureData.binEdge[i],
-        sy: featureData.additive[i],
-        tx: featureData.binEdge[i + 1],
-        ty: featureData.additive[i + 1],
+        x1: sx,
+        y1: sy,
+        x2: tx,
+        y2: sy,
+        id: `${i}-r`
+      });
+
+      additiveData.push({
+        x1: tx,
+        y1: sy,
+        x2: tx,
+        y2: ty,
+        id: `${i + 1}-l`
       });
     }
 
-    // Add the lat point (max bin edge)
+    // Connect the last two points (because max point has no additive value, it
+    // does not have a left edge)
     additiveData.push({
-      sx: featureData.binEdge[featureData.additive.length - 1],
-      sy: featureData.additive[featureData.additive.length - 1],
-      tx: featureData.binEdge[featureData.additive.length],
-      ty: featureData.additive[featureData.additive.length - 1]
+      x1: featureData.binEdge[featureData.additive.length - 1],
+      y1: featureData.additive[featureData.additive.length - 1],
+      x2: featureData.binEdge[featureData.additive.length],
+      y2: featureData.additive[featureData.additive.length - 1],
+      id: `${featureData.additive.length - 1}-r`
     });
 
     return additiveData;
@@ -191,11 +211,12 @@
 
     // We draw the shape function with many line segments (path)
     lineGroup.selectAll('path')
-      .data(additiveData)
+      .data(additiveData, d => d.id)
       .join('path')
       .attr('class', 'additive-line-segment')
+      .attr('id', d => d.id)
       .attr('d', d => {
-        return `M ${xScale(d.sx)}, ${yScale(d.sy)} L ${xScale(d.tx)} ${yScale(d.sy)} L ${xScale(d.tx)}, ${yScale(d.ty)}`;
+        return `M ${xScale(d.x1)}, ${yScale(d.y1)} L ${xScale(d.x2)} ${yScale(d.y2)}`;
       })
       .style('stroke', colors.line)
       .style('stroke-width', 2)
