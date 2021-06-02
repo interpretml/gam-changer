@@ -23,10 +23,23 @@
   // Show some hidden elements for development
   const showRuler = false;
 
-  // Colors
+  // Colors and fonts
   const colors = config.colors;
-
   const defaultFont = config.defaultFont;
+
+  // Interactions
+
+  // Brush interactions
+  let brush = null;
+  let initXDomain = null;
+  let initYDomain = null;
+
+  // Need a timer to avoid the brush event call after brush.move()
+  let idleTimeout = null;
+  const idleDelay = 300;
+
+  // Zooming
+  const zoomTransitionTime = 700;
 
   /**
    * Create rectangles in SVG path format tracing the standard deviations at each
@@ -143,6 +156,10 @@
     let yScale = d3.scaleLinear()
       .domain(scoreRange)
       .range([lineChartHeight, 0]);
+    
+    // Store the initial domain for zooming
+    initXDomain = [xMin, xMax];
+    initYDomain = scoreRange; 
 
     // Create a data array by combining the bin edge and additive terms
     let additiveData = createAdditiveData(featureData);
@@ -282,6 +299,73 @@
       .text('density')
       .style('fill', colors.histAxis);
 
+    // Add brush
+    brush = d3.brush()
+      .on('end', e => brushEnd(e, xScale, yScale, lineChartContent, brush))
+      .extent([[0, 0], [lineChartWidth, lineChartHeight]]);
+
+    lineChartContent.append('g')
+      .attr('class', 'brush')
+      .call(brush);
+
+  };
+
+  const brushEnd = (event, xScale, yScale) => {
+    // Get the selection boundary
+    let selection = event.selection;
+
+    // If there is no selection, return to the initial stage
+    // Double click returns to the initial stage
+    if (selection === null) {
+      if (idleTimeout === null) {
+        return idleTimeout = setTimeout(idled, idleDelay);
+      }
+
+      xScale.domain(initXDomain);
+      yScale.domain(initYDomain);
+    } else {
+      console.log(selection);
+
+      // Rescale the x and y axises
+      xScale.domain([xScale.invert(selection[0][0]), xScale.invert(selection[1][0])]);
+      yScale.domain([yScale.invert(selection[1][1]), yScale.invert(selection[0][1])]);
+
+      // Remove the brush box
+      d3.select(svg)
+        .select('g.line-chart-content-group g.brush')
+        .call(brush.move, null);
+    }
+
+    // Zoom in to the new selection
+    zoom(xScale, yScale);
+  };
+
+  /**
+   * Reset the idleTimeout timer
+   */
+  const idled = () => {
+    idleTimeout = null;
+  };
+
+  const zoom = (xScale, yScale) => {
+    console.log('zoom called', xScale.domain());
+
+    // Create a common transition
+    let svgSelect = d3.select(svg);
+    let trans = svgSelect.transition('zoom')
+      .duration(zoomTransitionTime);
+
+    // Update the axises
+    svgSelect.select('g.x-axis')
+      .transition(trans)
+      .call(d3.axisBottom(xScale));
+
+    svgSelect.select('g.y-axis')
+      .transition(trans)
+      .call(d3.axisLeft(yScale));
+
+    // Redraw the lines using the new scale
+    
   };
 
   $: featureData && drawFeature(featureData);
