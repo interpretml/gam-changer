@@ -76,13 +76,13 @@
       />
     </div> -->
 
-    <div class='feature-window'>
+    <!-- <div class='feature-window'>
       <CatGlobalExplain
         featureData = {data === null ? null : data.features[12]}
         scoreRange = {data === null ? null : data.scoreRange}
         svgHeight = 400
       />
-    </div>
+    </div> -->
 
     <div class='feature-window'>
       <ContGlobalExplain
@@ -92,7 +92,7 @@
       />
     </div>
 
-    <div class='feature-window'>
+    <!-- <div class='feature-window'>
       <InterContCatGlobalExplain
         featureData = {data === null ? null : data.features[90]}
         scoreRange = {data === null ? null : data.scoreRange}
@@ -125,7 +125,7 @@
         scoreRange = {data === null ? null : data.scoreRange}
         svgHeight = 400
       />
-    </div>
+    </div> -->
 
   </div>
   

@@ -33,22 +33,13 @@
    * point in the model.
    * @param featureData
    */
-  const createConfidenceData = (featureData, xMin, xMax) => {
-    let startPointTop = {x: xMin, y: featureData.additive[0] + featureData.error[0]};
+  const createConfidenceData = (featureData) => {
 
     let confidenceData = [];
 
-    // Left bound
-    confidenceData.push({
-      x1: startPointTop.x,
-      y1: startPointTop.y,
-      x2: featureData.binEdge[0],
-      y2: featureData.additive[0] - featureData.error[0]
-    });
-
-    for (let i = 0; i < featureData.binEdge.length - 1; i++) {
-      let curValue = featureData.additive[i + 1];
-      let curError = featureData.error[i + 1];
+    for (let i = 0; i < featureData.additive.length; i++) {
+      let curValue = featureData.additive[i];
+      let curError = featureData.error[i];
 
       confidenceData.push({
         x1: featureData.binEdge[i],
@@ -59,11 +50,14 @@
     }
 
     // Right bound
+    let rightValue = featureData.additive[featureData.additive.length - 1];
+    let rightError = featureData.error[featureData.additive.length - 1];
+
     confidenceData.push({
-      x1: featureData.binEdge[featureData.binEdge.length - 1],
-      y1: featureData.additive[featureData.binEdge.length] + featureData.error[featureData.binEdge.length],
-      x2: xMax,
-      y2: featureData.additive[featureData.binEdge.length] - featureData.error[featureData.binEdge.length]
+      x1: featureData.binEdge[featureData.additive.length - 1],
+      y1: rightValue + rightError,
+      x2: featureData.binEdge[featureData.additive.length - 1],
+      y2: rightValue - rightError
     });
 
     return confidenceData;
@@ -73,35 +67,25 @@
    * Create line segments (path) to trace the additive term at each bin in the
    * model.
    * @param featureData
-   * @param xMin
-   * @param xMax
    */
-  const createAdditiveData = (featureData, xMin, xMax) => {
+  const createAdditiveData = (featureData) => {
     let additiveData = [];
 
-    // Add the left bound
-    additiveData.push({
-      sx: xMin,
-      sy: featureData.additive[0],
-      tx: featureData.binEdge[0],
-      ty: featureData.additive[1]
-    });
-
-    for (let i = 0; i < featureData.binEdge.length - 1; i++) {
+    for (let i = 0; i < featureData.additive.length - 1; i++) {
       additiveData.push({
         sx: featureData.binEdge[i],
-        sy: featureData.additive[i + 1],
+        sy: featureData.additive[i],
         tx: featureData.binEdge[i + 1],
-        ty: featureData.additive[i + 2],
+        ty: featureData.additive[i + 1],
       });
     }
 
-    // Add the right bound
+    // Add the lat point (max bin edge)
     additiveData.push({
-      sx: featureData.binEdge[featureData.binEdge.length - 1],
-      sy: featureData.additive[featureData.binEdge.length],
-      tx: xMax,
-      ty: featureData.additive[featureData.binEdge.length]
+      sx: featureData.binEdge[featureData.additive.length - 1],
+      sy: featureData.additive[featureData.additive.length - 1],
+      tx: featureData.binEdge[featureData.additive.length],
+      ty: featureData.additive[featureData.additive.length - 1]
     });
 
     return additiveData;
@@ -142,14 +126,14 @@
 
     // The bins have unequal length, and they are inner edges
     // Here we use the min and max values from the training set as our left and
-    // right bounds on the x-axis
-    let xMin = featureData.binMin;
-    let xMax = featureData.binMax;
+    // right bounds on the x-axis (left most and right most edges)
+    let xMin = featureData.binEdge[0];
+    let xMax = featureData.binEdge[featureData.binEdge.length - 1];
 
     // For the y scale, it seems InterpretML presets the center at 0 (offset
     // doesn't really matter in EBM because we can modify intercept)
     // TODO: Provide interaction for users to change the center point
-    let yExtent = d3.extent(featureData.additive);
+    // let yExtent = d3.extent(featureData.additive);
 
     let xScale = d3.scaleLinear()
       .domain([xMin, xMax])
@@ -161,14 +145,10 @@
       .range([lineChartHeight, 0]);
 
     // Create a data array by combining the bin edge and additive terms
-    let additiveData = createAdditiveData(featureData, xMin, xMax);
-
-    console.log(additiveData);
-
-    console.log(xMin, xMax, yExtent);
+    let additiveData = createAdditiveData(featureData);
 
     // Create the confidence interval region
-    let confidenceData = createConfidenceData(featureData, xMin, xMax);
+    let confidenceData = createConfidenceData(featureData);
 
     // Create histogram chart group
     let histChart = content.append('g')
