@@ -33,6 +33,8 @@
   const colors = config.colors;
   const defaultFont = config.defaultFont;
   const linePathWidth = 2.5;
+  // const xAxisTicks = 15;
+  // const yAxisTicks = xAxisTicks * lineChartHeight / lineChartWidth;
 
   // Interactions
 
@@ -290,14 +292,6 @@
       .text('score')
       .style('fill', 'black');
 
-    // Add a line to highlight y = 0
-    yAxisGroup.append('path')
-      .attr('class', 'line-0')
-      .attr('d', `M ${0} ${yScale(0)} L ${lineChartWidth} ${yScale(0)}`)
-      .style('stroke', colors.line0)
-      .style('stroke-width', 3)
-      .style('stroke-dasharray', '15 10');
-
     // Draw the histograms at the bottom
     let histData = [];
     
@@ -379,6 +373,10 @@
         if (e.type === 'mousedown' || e.type === 'wheel') return true;
       });
 
+    // Create a group to draw grids
+    lineChartContent.append('g')
+      .attr('class', 'line-chart-grid-group');
+
     lineChartContent.call(zoom)
       .call(zoom.transform, d3.zoomIdentity);
   };
@@ -446,6 +444,12 @@
     
   };
 
+  /**
+   * Update the view with zoom transformation
+   * @param event Zoom event
+   * @param xScale Scale for the x-axis
+   * @param yScale Scale for the y-axis
+   */
   const zoomed = (event, xScale, yScale) => {
 
     let svgSelect = d3.select(svg);
@@ -478,6 +482,44 @@
       .attr('transform', `translate(${yAxisWidth + transform.x},
         ${lineChartHeight})scale(${transform.k}, 1)`);
 
+    // Draw/update the grid
+    svgSelect.select('g.line-chart-grid-group')
+      .call(drawGrid, zXScale, zYScale);
+
+  };
+
+  const drawGrid = (g, xScale, yScale) => {
+    g.style('stroke', 'black')
+      .style('stroke-opacity', 0.08);
+    
+    // Add vertical lines based on the xScale ticks
+    g.call(g => g.selectAll('line.x-line')
+      .data(xScale.ticks(), d => d)
+      .join(
+        enter => enter.append('line')
+          .attr('class', 'x-line')
+          .attr('y2', lineChartHeight),
+        update => update,
+        exit => exit.remove()
+      )
+      .attr('x1', d => 0.5 + xScale(d))
+      .attr('x2', d => 0.5 + xScale(d))
+    );
+
+    // Add horizontal lines based on the yScale ticks
+    return g.call(g => g.selectAll('line.y-line')
+      .data(yScale.ticks(), d => d)
+      .join(
+        enter => enter.append('line')
+          .attr('class', 'y-line')
+          .classed('line-0', d => d === 0)
+          .attr('x2', lineChartWidth),
+        update => update,
+        exit => exit.remove()
+      )
+      .attr('y1', d => yScale(d))
+      .attr('y2', d => yScale(d))
+    );
   };
 
   $: featureData && drawFeature(featureData);
@@ -520,6 +562,19 @@
 
   :global(.explain-panel .hidden) {
     display: none;
+  }
+
+  :global(.explain-panel .x-line, .explain-panel .y-line) {
+    stroke-width: 1;
+    stroke: black;
+    stroke-opacity: 0.08;
+  }
+
+  :global(.explain-panel .line-0) {
+    stroke-width: 3;
+    stroke: black;
+    stroke-opacity: 0.1;
+    stroke-dasharray: 15 10;
   }
 
 </style>
