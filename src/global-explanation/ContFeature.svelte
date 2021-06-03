@@ -137,8 +137,7 @@
   };
 
   /**
-   * Create nodes where each step function begins and an ending node that marks
-   * the maximum value of the training data
+   * Create nodes where each step function begins
    * @param featureData
    */
   const createPointData = (featureData) => {
@@ -147,15 +146,10 @@
     for (let i = 0; i < featureData.additive.length; i++) {
       pointData.push({
         x: featureData.binEdge[i],
-        y: featureData.additive[i]
+        y: featureData.additive[i],
+        id: i
       });
     }
-
-    // Add the last point
-    pointData.push({
-      x: featureData.binEdge[featureData.additive.length],
-      y: featureData.additive[featureData.additive.length - 1]
-    });
 
     return pointData;
   };
@@ -267,6 +261,10 @@
       .attr('height', lineChartHeight)
       .style('opacity', 0);
 
+    // Create a group to draw grids
+    lineChartContent.append('g')
+      .attr('class', 'line-chart-grid-group');
+
     let confidenceGroup = lineChartContent.append('g')
       .attr('class', 'line-chart-confidence-group');
 
@@ -292,9 +290,10 @@
       .style('visibility', 'hidden');
     
     nodeGroup.selectAll('circle')
-      .data(pointData)
+      .data(pointData, d => d.id)
       .join('circle')
       .attr('class', 'node')
+      .attr('id', d => `node-${d.id}`)
       .attr('cx', d => xScale(d.x))
       .attr('cy', d => yScale(d.y))
       .attr('r', rExtent[0])
@@ -304,11 +303,13 @@
     confidenceGroup.selectAll('rect')
       .data(confidenceData)
       .join('rect')
+      .attr('class', 'confidence-rect')
       .attr('x', d => xScale(d.x1))
       .attr('y', d => yScale(d.y1))
       .attr('width', d => xScale(d.x2) - xScale(d.x1))
       .attr('height', d => yScale(d.y2) - yScale(d.y1))
-      .style('fill', colors.lineConfidence);
+      .style('fill', colors.lineConfidence)
+      .style('opacity', 0.13);
 
     // Draw the line chart X axis
     let xAxisGroup = axisGroup.append('g')
@@ -412,10 +413,6 @@
         // if (e.shiftKey) return false;
         if (e.type === 'mousedown' || e.type === 'wheel') return true;
       });
-
-    // Create a group to draw grids
-    lineChartContent.append('g')
-      .attr('class', 'line-chart-grid-group');
 
     lineChartContent.call(zoom)
       .call(zoom.transform, d3.zoomIdentity);
@@ -671,6 +668,14 @@
   :global(.explain-panel circle.node) {
     fill: hsl(213, 100%, 53%);
     stroke: white;
+  }
+
+  :global(.explain-panel .line-chart-content-group) {
+    cursor: grab;
+  }
+
+  :global(.explain-panel .line-chart-content-group:active) {
+    cursor: grabbing;
   }
 
 </style>

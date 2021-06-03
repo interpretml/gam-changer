@@ -10,7 +10,7 @@ export const config = {
   catDotRadius: 8,
   colors: {
     line: 'hsl(222, 80%, 30%)',
-    lineConfidence: 'hsl(222, 55%, 96%)',
+    lineConfidence: 'hsl(222, 60%, 50%)',
     dot: 'hsla(222, 80%, 30%, 100%)',
     dotConfidence: 'hsl(222, 55%, 70%)',
     hist: 'hsl(222, 10%, 93%)',
