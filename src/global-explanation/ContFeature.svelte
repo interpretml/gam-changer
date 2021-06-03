@@ -23,9 +23,16 @@
   // Show some hidden elements for development
   const showRuler = false;
 
-  // Colors and fonts
+  // Some constant lengths of different elements
+  const yAxisWidth = 30;
+
+  const lineChartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
+  const lineChartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
+
+  // Some styles
   const colors = config.colors;
   const defaultFont = config.defaultFont;
+  const linePathWidth = 2.5;
 
   // Interactions
 
@@ -38,8 +45,11 @@
   let idleTimeout = null;
   const idleDelay = 300;
 
-  // Zooming
+  // Brush zooming
   const zoomTransitionTime = 700;
+
+  // Panning
+  let zoom = null;
 
   /**
    * Create rectangles in SVG path format tracing the standard deviations at each
@@ -137,6 +147,11 @@
       .attr('preserveAspectRatio', 'xMinYMin meet')
       .attr('width', svgWidth)
       .attr('height', svgHeight);
+    
+    // Disable the default context menu when right click
+    svgSelect.on('contextmenu', (event) => {
+      event.preventDefault();
+    });
 
     // Draw a border for the svg
     svgSelect.append('rect')
@@ -146,12 +161,6 @@
       .attr('height', 400)
       .style('fill', 'none')
       .style('stroke', 'pink');
-
-    // Some constant lengths of different elements
-    const yAxisWidth = 30;
-
-    const lineChartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
-    const lineChartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
 
     let content = svgSelect.append('g')
       .attr('class', 'content')
@@ -189,8 +198,7 @@
 
     // Create histogram chart group
     let histChart = content.append('g')
-      .attr('class', 'hist-chart-group')
-      .attr('transform', `translate(${yAxisWidth}, ${lineChartHeight})`);
+      .attr('class', 'hist-chart-group');
     
     // Draw the line chart
     let lineChart = content.append('g')
@@ -205,17 +213,39 @@
       .append('rect')
       .attr('width', lineChartWidth)
       .attr('height', lineChartHeight);
+
+    // For the histogram clippath, need to carefully play around with the
+    // transformation, the path should be in a static group; the group having
+    // clip-path attr should be static. Therefore we apply the transformation to
+    // histChart's child later.
+    histChart.append('clipPath')
+      .attr('id', 'hist-chart-clip')
+      .append('rect')
+      .attr('x', yAxisWidth)
+      .attr('y', lineChartHeight)
+      .attr('width', lineChartWidth)
+      .attr('height', densityHeight);
+
+    histChart.attr('clip-path', 'url(#hist-chart-clip)');
     
     let lineChartContent = lineChart.append('g')
       .attr('class', 'line-chart-content-group')
       .attr('clip-path', 'url(#line-chart-clip)')
       .attr('transform', `translate(${yAxisWidth}, 0)`);
 
+    lineChartContent.append('rect')
+      .attr('width', lineChartWidth)
+      .attr('height', lineChartHeight)
+      .style('opacity', 0);
+
     let confidenceGroup = lineChartContent.append('g')
       .attr('class', 'line-chart-confidence-group');
 
     let lineGroup = lineChartContent.append('g')
-      .attr('class', 'line-chart-line-group');
+      .attr('class', 'line-chart-line-group')
+      .style('stroke', colors.line)
+      .style('stroke-width', linePathWidth)
+      .style('fill', 'none');
 
     // We draw the shape function with many line segments (path)
     lineGroup.selectAll('path')
@@ -225,10 +255,7 @@
       .attr('id', d => d.id)
       .attr('d', d => {
         return `M ${xScale(d.x1)}, ${yScale(d.y1)} L ${xScale(d.x2)} ${yScale(d.y2)}`;
-      })
-      .style('stroke', colors.line)
-      .style('stroke-width', 2)
-      .style('fill', 'none');
+      });
 
     // Draw the underlying confidence interval
     confidenceGroup.selectAll('rect')
@@ -290,7 +317,12 @@
       .domain(d3.extent(histFrequency))
       .range([0, densityHeight]);
 
-    histChart.selectAll('rect')
+    // Draw the density histogram 
+    let histChartContent = histChart.append('g')
+      .attr('class', 'hist-chart-content-group')
+      .attr('transform', `translate(${yAxisWidth}, ${lineChartHeight})`);
+
+    histChartContent.selectAll('rect')
       .data(histData)
       .join('rect')
       .attr('class', 'hist-rect')
@@ -333,10 +365,22 @@
       .on('end', e => brushEnd(e, xScale, yScale, lineChartContent, brush))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]]);
 
-    lineChartContent.append('g')
-      .attr('class', 'brush')
-      .call(brush);
+    // lineChartContent.append('g')
+    //   .attr('class', 'brush')
+    //   .call(brush);
 
+    // Add panning and zooming
+    zoom = d3.zoom()
+      .scaleExtent([1, 30])
+      // .translateExtent([[0, 0], [lineChartWidth, lineChartHeight]])
+      .on('zoom', e => zoomed(e, xScale, yScale))
+      .filter(e => {
+        // if (e.shiftKey) return false;
+        if (e.type === 'mousedown' || e.type === 'wheel') return true;
+      });
+
+    lineChartContent.call(zoom)
+      .call(zoom.transform, d3.zoomIdentity);
   };
 
   const brushEnd = (event, xScale, yScale) => {
@@ -366,7 +410,7 @@
     }
 
     // Zoom in to the new selection
-    zoom(xScale, yScale);
+    brushZoom(xScale, yScale);
   };
 
   /**
@@ -376,7 +420,7 @@
     idleTimeout = null;
   };
 
-  const zoom = (xScale, yScale) => {
+  const brushZoom = (xScale, yScale) => {
 
     // Create a common transition
     let svgSelect = d3.select(svg);
@@ -400,6 +444,40 @@
         return `M ${xScale(d.x1)}, ${yScale(d.y1)} L ${xScale(d.x2)} ${yScale(d.y2)}`;
       });
     
+  };
+
+  const zoomed = (event, xScale, yScale) => {
+
+    let svgSelect = d3.select(svg);
+    let transform = event.transform;
+
+    // Transform the axises
+    let zXScale = transform.rescaleX(xScale);
+    let zYScale = transform.rescaleY(yScale);
+
+    svgSelect.select('g.x-axis')
+      .call(d3.axisBottom(zXScale));
+
+    svgSelect.select('g.y-axis')
+      .call(d3.axisLeft(zYScale));
+    
+    // Transform the lines
+    let lineGroup = svgSelect.select('g.line-chart-line-group')
+      .attr('transform', transform);
+    
+    // Rescale the stroke width a little bit
+    lineGroup.style('stroke-width', linePathWidth / transform.k);
+
+    // Transform the confidence rectangles
+    svgSelect.select('g.line-chart-confidence-group')
+      .attr('transform', transform);
+
+    // Transform the density rectangles
+    // Here we want to translate and scale the x axis, and keep y axis consistent
+    svgSelect.select('g.hist-chart-content-group')
+      .attr('transform', `translate(${yAxisWidth + transform.x},
+        ${lineChartHeight})scale(${transform.k}, 1)`);
+
   };
 
   $: featureData && drawFeature(featureData);
