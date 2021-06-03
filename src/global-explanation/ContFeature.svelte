@@ -33,11 +33,9 @@
   const colors = config.colors;
   const defaultFont = config.defaultFont;
   const linePathWidth = 2.5;
-  // const xAxisTicks = 15;
-  // const yAxisTicks = xAxisTicks * lineChartHeight / lineChartWidth;
+  const nodeStrokeWidth = 1;
 
-  // Interactions
-
+  // --- Interactions ---
   // Brush interactions
   let brush = null;
   let initXDomain = null;
@@ -52,6 +50,8 @@
 
   // Panning
   let zoom = null;
+  const zoomScaleExtent = [1, 30];
+  const rExtent = [2, 16];
 
   /**
    * Create rectangles in SVG path format tracing the standard deviations at each
@@ -137,6 +137,30 @@
   };
 
   /**
+   * Create nodes where each step function begins and an ending node that marks
+   * the maximum value of the training data
+   * @param featureData
+   */
+  const createPointData = (featureData) => {
+    let pointData = [];
+
+    for (let i = 0; i < featureData.additive.length; i++) {
+      pointData.push({
+        x: featureData.binEdge[i],
+        y: featureData.additive[i]
+      });
+    }
+
+    // Add the last point
+    pointData.push({
+      x: featureData.binEdge[featureData.additive.length],
+      y: featureData.additive[featureData.additive.length - 1]
+    });
+
+    return pointData;
+  };
+
+  /**
    * Draw the plot in the SVG component
    * @param featureData
    */
@@ -198,6 +222,9 @@
     // Create the confidence interval region
     let confidenceData = createConfidenceData(featureData);
 
+    // Create a data array to draw nodes
+    let pointData = createPointData(featureData);
+
     // Create histogram chart group
     let histChart = content.append('g')
       .attr('class', 'hist-chart-group');
@@ -214,7 +241,7 @@
       .attr('id', 'line-chart-clip')
       .append('rect')
       .attr('width', lineChartWidth)
-      .attr('height', lineChartHeight);
+      .attr('height', lineChartHeight - 1);
 
     // For the histogram clippath, need to carefully play around with the
     // transformation, the path should be in a static group; the group having
@@ -258,6 +285,20 @@
       .attr('d', d => {
         return `M ${xScale(d.x1)}, ${yScale(d.y1)} L ${xScale(d.x2)} ${yScale(d.y2)}`;
       });
+    
+    // Draw nodes for editing
+    let nodeGroup = lineChartContent.append('g')
+      .attr('class', 'line-chart-node-group')
+      .style('visibility', 'hidden');
+    
+    nodeGroup.selectAll('circle')
+      .data(pointData)
+      .join('circle')
+      .attr('class', 'node')
+      .attr('cx', d => xScale(d.x))
+      .attr('cy', d => yScale(d.y))
+      .attr('r', rExtent[0])
+      .style('stroke-width', nodeStrokeWidth);
 
     // Draw the underlying confidence interval
     confidenceGroup.selectAll('rect')
@@ -289,7 +330,7 @@
       .attr('class', 'y-axis-text')
       .attr('transform', `translate(${-yAxisWidth - 5}, ${lineChartHeight / 2}) rotate(-90)`)
       .append('text')
-      .text('score')
+      .text('Score')
       .style('fill', 'black');
 
     // Draw the histograms at the bottom
@@ -351,7 +392,7 @@
       .attr('transform', `translate(${-yAxisWidth - 5}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
       .attr('class', 'y-axis-text')
-      .text('density')
+      .text('Density')
       .style('fill', colors.histAxis);
 
     // Add brush
@@ -365,8 +406,7 @@
 
     // Add panning and zooming
     zoom = d3.zoom()
-      .scaleExtent([1, 30])
-      // .translateExtent([[0, 0], [lineChartWidth, lineChartHeight]])
+      .scaleExtent(zoomScaleExtent)
       .on('zoom', e => zoomed(e, xScale, yScale))
       .filter(e => {
         // if (e.shiftKey) return false;
@@ -379,6 +419,15 @@
 
     lineChartContent.call(zoom)
       .call(zoom.transform, d3.zoomIdentity);
+    
+    // Listen to double click to reset zoom
+    lineChartContent.on('dblclick', () => {
+      lineChartContent.transition('reset')
+        .duration(750)
+        .ease(d3.easeCubicInOut)
+        .call(zoom.transform, d3.zoomIdentity);
+    });
+
   };
 
   const brushEnd = (event, xScale, yScale) => {
@@ -476,6 +525,33 @@
     svgSelect.select('g.line-chart-confidence-group')
       .attr('transform', transform);
 
+    // Transform the nodes
+    let nodeGroup = svgSelect.select('g.line-chart-node-group');
+
+    if (transform.k === 1 && nodeGroup.style('visibility') === 'visible') {
+      nodeGroup.transition()
+        .duration(300)
+        .style('opacity', 0)
+        .on('end', (d, i, g) => {
+          d3.select(g[i])
+            .style('visibility', 'hidden');
+        });
+    }
+
+    if (transform.k !== 1 && nodeGroup.style('visibility') === 'hidden') {
+      nodeGroup.style('opacity', 0);
+      nodeGroup.style('visibility', 'visible')
+        .transition()
+        .duration(500)
+        .style('opacity', 1);
+    }
+
+    svgSelect.select('g.line-chart-node-group')
+      .attr('transform', transform)
+      .selectAll('circle.node')
+      .attr('r', rScale(transform.k))
+      .style('stroke-width', nodeStrokeWidth / transform.k);
+
     // Transform the density rectangles
     // Here we want to translate and scale the x axis, and keep y axis consistent
     svgSelect.select('g.hist-chart-content-group')
@@ -488,16 +564,31 @@
 
   };
 
+  /**
+   * Use linear interpolation to scale the node radius during zooming
+   * It is actually kind of tricky, there should be better functions
+   * (1) In overview, we want the radius to be small to avoid overdrawing;
+   * (2) When zooming in, we want the radius to increase (slowly)
+   * (3) Need to counter the zoom's scaling effect
+   * @param k Scale factor
+   */
+  const rScale = (k) => {
+    let alpha = (k - zoomScaleExtent[0]) / (zoomScaleExtent[1] - zoomScaleExtent[0]);
+    alpha = d3.easeLinear(alpha);
+    let target = alpha * (rExtent[1] - rExtent[0]) + rExtent[0];
+    return target / k;
+  };
+
   const drawGrid = (g, xScale, yScale) => {
     g.style('stroke', 'black')
       .style('stroke-opacity', 0.08);
     
     // Add vertical lines based on the xScale ticks
-    g.call(g => g.selectAll('line.x-line')
+    g.call(g => g.selectAll('line.grid-line-x')
       .data(xScale.ticks(), d => d)
       .join(
         enter => enter.append('line')
-          .attr('class', 'x-line')
+          .attr('class', 'grid-line-x')
           .attr('y2', lineChartHeight),
         update => update,
         exit => exit.remove()
@@ -507,12 +598,12 @@
     );
 
     // Add horizontal lines based on the yScale ticks
-    return g.call(g => g.selectAll('line.y-line')
+    return g.call(g => g.selectAll('line.grid-line-y')
       .data(yScale.ticks(), d => d)
       .join(
         enter => enter.append('line')
-          .attr('class', 'y-line')
-          .classed('line-0', d => d === 0)
+          .attr('class', 'grid-line-y')
+          .classed('grid-line-y-0', d => d === 0)
           .attr('x2', lineChartWidth),
         update => update,
         exit => exit.remove()
@@ -564,17 +655,22 @@
     display: none;
   }
 
-  :global(.explain-panel .x-line, .explain-panel .y-line) {
+  :global(.explain-panel .grid-line-x, .explain-panel .grid-line-y) {
     stroke-width: 1;
     stroke: black;
     stroke-opacity: 0.08;
   }
 
-  :global(.explain-panel .line-0) {
+  :global(.explain-panel .grid-line-y-0) {
     stroke-width: 3;
     stroke: black;
     stroke-opacity: 0.1;
     stroke-dasharray: 15 10;
+  }
+
+  :global(.explain-panel circle.node) {
+    fill: hsl(213, 100%, 53%);
+    stroke: white;
   }
 
 </style>

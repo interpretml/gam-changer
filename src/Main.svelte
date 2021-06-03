@@ -88,7 +88,7 @@
       <ContGlobalExplain
         featureData = {data === null ? null : data.features[2]}
         scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 400
+        svgHeight = 500
       />
     </div>
 
