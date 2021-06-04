@@ -48,13 +48,18 @@
   // Brush zooming
   const zoomTransitionTime = 700;
 
-  // Panning
+  // Panning and zooming
   let zoom = null;
   const zoomScaleExtent = [1, 30];
   const rExtent = [2, 16];
+  let curXScale = null;
+  let curYScale = null;
 
   // Select mode
   let selectMode = false;
+
+  // Editing mode
+  let hasSelected = false;
 
   /**
    * Create rectangles in SVG path format tracing the standard deviations at each
@@ -114,7 +119,9 @@
         y1: sy,
         x2: tx,
         y2: sy,
-        id: `${i}-r`
+        id: `${i}-r`,
+        ox: sx,
+        oy: sy
       });
 
       additiveData.push({
@@ -122,7 +129,9 @@
         y1: sy,
         x2: tx,
         y2: ty,
-        id: `${i + 1}-l`
+        id: `${i + 1}-l`,
+        ox: sx,
+        oy: sy
       });
     }
 
@@ -208,6 +217,9 @@
     let yScale = d3.scaleLinear()
       .domain(scoreRange)
       .range([lineChartHeight, 0]);
+    
+    curXScale = xScale;
+    curYScale = yScale;
     
     // Store the initial domain for zooming
     initXDomain = [xMin, xMax];
@@ -401,7 +413,8 @@
 
     // Add brush
     brush = d3.brush()
-      .on('end', e => brushEndSelect(e))
+      .on('end', e => brushEndSelect(e, xScale, yScale))
+      .on('start brush', e => brushDuring(e, xScale, yScale))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]])
       .filter(() => {
         return selectMode;
@@ -442,8 +455,81 @@
 
   };
 
+  const brushDuring = (event) => {
+    // Get the selection boundary
+    let selection = event.selection;
+    let svgSelect = d3.select(svg);
+
+    if (selection === null) {
+      if (idleTimeout === null) {
+        return idleTimeout = setTimeout(idled, idleDelay);
+      }
+    } else {
+      // Compute the selected data region
+      let xRange = [curXScale.invert(selection[0][0]), curXScale.invert(selection[1][0])];
+      let yRange = [curYScale.invert(selection[1][1]), curYScale.invert(selection[0][1])];
+
+      // Clean up the previous flowing lines
+      stopAnimateLine();
+      hasSelected = false;
+
+      // Highlight the selected dots
+      svgSelect.select('g.line-chart-node-group')
+        .selectAll('circle.node')
+        .classed('selected', d => d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]);
+
+      // Highlight the paths associated with the selected dots
+      svgSelect.select('g.line-chart-line-group')
+        .selectAll('path.additive-line-segment')
+        .classed('selected', d => d.ox >= xRange[0] && d.ox <= xRange[1] && d.oy >= yRange[0] && d.oy <= yRange[1]);
+    }
+  };
+
   const brushEndSelect = (event) => {
-    console.log(event);
+    // Get the selection boundary
+    let selection = event.selection;
+    let svgSelect = d3.select(svg);
+
+    if (selection === null) {
+      if (idleTimeout === null) {
+        // Clean up the previous flowing lines
+        stopAnimateLine();
+        hasSelected = false;
+
+        return idleTimeout = setTimeout(idled, idleDelay);
+      }
+    } else {
+      // Clean up the previous flowing lines
+      stopAnimateLine();
+
+      // Compute the selected data region
+      let xRange = [curXScale.invert(selection[0][0]), curXScale.invert(selection[1][0])];
+      let yRange = [curYScale.invert(selection[1][1]), curYScale.invert(selection[0][1])];
+
+      // Highlight the selected dots
+      svgSelect.select('g.line-chart-node-group')
+        .selectAll('circle.node')
+        .classed('selected', d => d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]);
+
+      hasSelected = svgSelect.selectAll('g.line-chart-node-group circle.node.selected').size() > 0;
+
+      // Highlight the paths associated with the selected dots
+      svgSelect.select('g.line-chart-line-group')
+        .selectAll('path.additive-line-segment')
+        .classed('selected', d => d.ox >= xRange[0] && d.ox <= xRange[1] && d.oy >= yRange[0] && d.oy <= yRange[1]);
+      
+      // Add animation to the selected paths
+      svgSelect.select('g.line-chart-line-group')
+        .selectAll('path.additive-line-segment.selected')
+        .classed('flow-line', true)
+        .attr('stroke-dasharray', '2 3')
+        .attr('stroke-dashoffset', 0)
+        .each((d, i, g) => animateLine(d, i, g, -500));
+
+      // Remove the brush box
+      svgSelect.select('g.line-chart-content-group g.brush')
+        .call(brush.move, null);
+    }
   };
 
   const brushEndZoom = (event, xScale, yScale) => {
@@ -523,6 +609,9 @@
     // Transform the axises
     let zXScale = transform.rescaleX(xScale);
     let zYScale = transform.rescaleY(yScale);
+
+    curXScale = zXScale;
+    curYScale = zYScale;
 
     svgSelect.select('g.x-axis')
       .call(d3.axisBottom(zXScale));
@@ -631,6 +720,9 @@
 
   // ---- Interaction Functions ----
 
+  /**
+   * Event handler for the select button in the header
+   */
   const selectButtonClicked = () => {
     selectMode = !selectMode;
 
@@ -640,7 +732,36 @@
     
     lineChartContent.select('g.brush rect.overlay')
       .attr('cursor', null);
+  };
 
+  /**
+   * Animate teh dashed line infinitely
+   * @param dashoffset Use this to control the moving speed, each loop is 1 minute
+   */
+  const animateLine = (d, i, g, dashoffset) => {
+    let curPath = d3.select(g[i]);
+    curPath.transition()
+      .duration(60000)
+      .ease(d3.easeLinear)
+      .attr('stroke-dashoffset', dashoffset)
+      .on('end', (d, i, g) => {
+        console.log('animated');
+        if (hasSelected) {
+          animateLine(d, i, g, dashoffset - dashoffset);
+        }
+      });
+  };
+
+  /**
+   * Stop animating all flowing lines
+   */
+  const stopAnimateLine = () => {
+    d3.select(svg)
+      .select('g.line-chart-line-group')
+      .selectAll('path.additive-line-segment.flow-line')
+      .interrupt()
+      .attr('stroke-dasharray', '0 0')
+      .classed('flow-line', false);
   };
 
   $: featureData && drawFeature(featureData);
@@ -728,6 +849,21 @@
   :global(.explain-panel circle.node) {
     fill: hsl(213, 100%, 53%);
     stroke: white;
+  }
+
+  :global(.explain-panel circle.node.selected) {
+    fill: hsl(348, 98%, 58%);
+    stroke: white;
+  }
+
+  :global(.explain-panel path.additive-line-segment.selected) {
+    stroke: hsl(348, 71%, 33%);
+  }
+
+  @keyframes dash {
+    to {
+      stroke-dashoffset: 1000;
+    }
   }
 
   :global(.explain-panel .line-chart-content-group) {
