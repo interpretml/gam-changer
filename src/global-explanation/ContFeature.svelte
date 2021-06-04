@@ -425,7 +425,6 @@
       .call(brush);
     
     // Change the style of the select box
-    console.log(brushGroup.select('rect.overlay'));
     brushGroup.select('rect.overlay')
       .attr('cursor', null);
 
@@ -723,7 +722,7 @@
   /**
    * Event handler for the select button in the header
    */
-  const selectButtonClicked = () => {
+  const selectModeSwitched = () => {
     selectMode = !selectMode;
 
     let lineChartContent = d3.select(svg)
@@ -745,9 +744,8 @@
       .ease(d3.easeLinear)
       .attr('stroke-dashoffset', dashoffset)
       .on('end', (d, i, g) => {
-        console.log('animated');
         if (hasSelected) {
-          animateLine(d, i, g, dashoffset - dashoffset);
+          animateLine(d, i, g, dashoffset * 2);
         }
       });
   };
@@ -794,6 +792,11 @@
     .header__importance {
       color: $gray-light;
     }
+
+    .header__control-panel {
+      display: flex;
+      align-items: center;
+    }
   }
 
   .is-very-small {
@@ -816,6 +819,64 @@
   .state-button:hover {
     color: $blue-icon;
     // border-color: hsl(0, 0%, 85.9%);;
+  }
+
+  .toggle {
+    display: none;
+    
+    &:checked + .toggle-botton:after {
+      left: 50%;
+      color: hsl(213, 100%, 60%);
+      content: '\f245';
+      font-weight: 900;
+    }
+    
+    &:checked + .toggle-botton {
+      background: hsl(213, 100%, 70%);
+    }
+  }
+
+  .toggle-botton {
+    outline: 0;
+    display: block;
+    width: 3em;
+    height: 1.5em;
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    margin-left: 10px;
+
+    background: hsl(0, 0%, 90%);
+    border-radius: 2em;
+    padding: 2px;
+    transition: all .4s ease;
+
+    &:after {
+      position: relative;
+      width: 50%;
+      height: 100%;
+
+      left: 0;
+      border-radius: 50%;
+      background: white;
+      transition: all .2s ease;
+      
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.8em;
+      
+      font-family: "Font Awesome 5 Free";
+      content: "\f255";
+    }
+  }
+
+  .toggle-label {
+    color: hsl(0, 0%, 40%);
+
+    &.select-mode {
+      color: hsl(213, 100%, 60%);
+    }
   }
 
   :global(.explain-panel .y-axis-text) {
@@ -901,13 +962,16 @@
 
 
       <div class='header__control-panel'>
-        <button class="button is-very-small state-button"
+        <!-- <button class="button is-very-small state-button"
           class:is-activated={selectMode}
           on:click={selectButtonClicked}>
           <span class="icon">
             <i class="fas fa-mouse-pointer"></i>
           </span>
-        </button>
+        </button> -->
+        <div class='toggle-label' class:select-mode = {selectMode}> {selectMode ? 'Select' : 'Move'} </div>
+        <input class='toggle' id='my-toggle' type='checkbox' on:change={selectModeSwitched}/>
+        <label for='my-toggle' class='toggle-botton'> </label>
       </div>
 
     </div>
