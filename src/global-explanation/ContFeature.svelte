@@ -53,6 +53,9 @@
   const zoomScaleExtent = [1, 30];
   const rExtent = [2, 16];
 
+  // Select mode
+  let selectMode = false;
+
   /**
    * Create rectangles in SVG path format tracing the standard deviations at each
    * point in the model.
@@ -398,12 +401,20 @@
 
     // Add brush
     brush = d3.brush()
-      .on('end', e => brushEnd(e, xScale, yScale, lineChartContent, brush))
-      .extent([[0, 0], [lineChartWidth, lineChartHeight]]);
+      .on('end', e => brushEndSelect(e))
+      .extent([[0, 0], [lineChartWidth, lineChartHeight]])
+      .filter(() => {
+        return selectMode;
+      });
 
-    // lineChartContent.append('g')
-    //   .attr('class', 'brush')
-    //   .call(brush);
+    let brushGroup = lineChartContent.append('g')
+      .attr('class', 'brush')
+      .call(brush);
+    
+    // Change the style of the select box
+    console.log(brushGroup.select('rect.overlay'));
+    brushGroup.select('rect.overlay')
+      .attr('cursor', null);
 
     // Add panning and zooming
     zoom = d3.zoom()
@@ -411,7 +422,11 @@
       .on('zoom', e => zoomed(e, xScale, yScale))
       .filter(e => {
         // if (e.shiftKey) return false;
-        if (e.type === 'mousedown' || e.type === 'wheel') return true;
+        if (selectMode) {
+          return (e.type === 'wheel');
+        } else {
+          return (e.type === 'mousedown' || e.type === 'wheel');
+        }
       });
 
     lineChartContent.call(zoom)
@@ -427,7 +442,11 @@
 
   };
 
-  const brushEnd = (event, xScale, yScale) => {
+  const brushEndSelect = (event) => {
+    console.log(event);
+  };
+
+  const brushEndZoom = (event, xScale, yScale) => {
     // Get the selection boundary
     let selection = event.selection;
 
@@ -610,6 +629,20 @@
     );
   };
 
+  // ---- Interaction Functions ----
+
+  const selectButtonClicked = () => {
+    selectMode = !selectMode;
+
+    let lineChartContent = d3.select(svg)
+      .select('g.line-chart-content-group')
+      .classed('select-mode', selectMode);
+    
+    lineChartContent.select('g.brush rect.overlay')
+      .attr('cursor', null);
+
+  };
+
   $: featureData && drawFeature(featureData);
 
 </script>
@@ -624,9 +657,14 @@
 
   .header {
     display: flex;
-    height: $explanation-header-height;
+    align-items: center;
+    justify-content: space-between;
     padding: 5px 10px;
     border-bottom: 1px solid $gray-border;
+
+    .header__info {
+      display: flex;
+    }
 
     .header__name {
       margin-right: 10px;
@@ -635,6 +673,28 @@
     .header__importance {
       color: $gray-light;
     }
+  }
+
+  .is-very-small {
+    font-size: 1em;
+    padding: 4px 12px;
+    height: auto;
+  }
+
+  .state-button {
+    color: $indigo-dark;
+    transition: border-color 200ms ease-in-out, color 200ms ease-in-out;
+  }
+
+  .state-button.is-activated, .state-button.is-activated:hover {
+    color: $blue-icon;
+    // border-color: $blue-icon;
+    border-color: hsl(0, 0%, 71%);
+  }
+
+  .state-button:hover {
+    color: $blue-icon;
+    // border-color: hsl(0, 0%, 85.9%);;
   }
 
   :global(.explain-panel .y-axis-text) {
@@ -678,19 +738,42 @@
     cursor: grabbing;
   }
 
+  :global(.explain-panel .line-chart-content-group.select-mode) {
+    cursor: crosshair;
+  }
+
+  :global(.explain-panel .line-chart-content-group.select-mode:active) {
+    cursor: crosshair;
+  }
+
 </style>
 
 <div class='explain-panel'>
   {#if featureData !== null}
 
     <div class='header'>
-      <div class='header__name'>
-        {featureData === null ? ' ' : featureData.name}
+
+      <div class='header__info'>
+        <div class='header__name'>
+          {featureData === null ? ' ' : featureData.name}
+        </div>
+        
+        <div class='header__importance'>
+          {featureData === null ? ' ': round(featureData.importance, 2)}
+        </div>
       </div>
-      
-      <div class='header__importance'>
-        {featureData === null ? ' ': round(featureData.importance, 2)}
+
+
+      <div class='header__control-panel'>
+        <button class="button is-very-small state-button"
+          class:is-activated={selectMode}
+          on:click={selectButtonClicked}>
+          <span class="icon">
+            <i class="fas fa-mouse-pointer"></i>
+          </span>
+        </button>
       </div>
+
     </div>
 
   {/if}
