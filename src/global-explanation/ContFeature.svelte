@@ -2,12 +2,17 @@
   import * as d3 from 'd3';
   import { round } from '../utils';
   import { config } from '../config';
+  import { onMount } from 'svelte';
+  import openHandSVG from '../img/openhand.svg';
+  import selectIconSVG from '../img/select-icon.svg';
+  import dragIconSVG from '../img/drag-icon.svg';
 
   export let featureData = null;
   export let scoreRange = null;
   export let svgHeight = 400;
 
   let svg = null;
+  let component = null;
 
   // Visualization constants
   const svgPadding = config.svgPadding;
@@ -173,6 +178,9 @@
   const drawFeature = (featureData) => {
     console.log(featureData);
     let svgSelect = d3.select(svg);
+
+    // Bind inline SVG elements in the header
+    bindInlineSVG();
 
     // Set svg viewBox (3:2 WH ratio)
     svgSelect.attr('viewBox', '0 0 600 400')
@@ -416,8 +424,13 @@
       .on('end', e => brushEndSelect(e, xScale, yScale))
       .on('start brush', e => brushDuring(e, xScale, yScale))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]])
-      .filter(() => {
-        return selectMode;
+      .filter((e) => {
+        console.log(e);
+        if (selectMode) {
+          return e.button === 0;
+        } else {
+          return e.button === 2;
+        }
       });
 
     let brushGroup = lineChartContent.append('g')
@@ -435,17 +448,20 @@
       .filter(e => {
         // if (e.shiftKey) return false;
         if (selectMode) {
-          return (e.type === 'wheel');
+          return (e.type === 'wheel' || e.button === 2);
         } else {
-          return (e.type === 'mousedown' || e.type === 'wheel');
+          return (e.button === 0 || e.type === 'wheel');
         }
       });
 
     lineChartContent.call(zoom)
       .call(zoom.transform, d3.zoomIdentity);
+
+    lineChartContent.on('dblclick.zoom', null);
     
     // Listen to double click to reset zoom
     lineChartContent.on('dblclick', () => {
+      console.log('here!');
       lineChartContent.transition('reset')
         .duration(750)
         .ease(d3.easeCubicInOut)
@@ -475,7 +491,10 @@
       // Highlight the selected dots
       svgSelect.select('g.line-chart-node-group')
         .selectAll('circle.node')
-        .classed('selected', d => d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]);
+        .classed('selected', d => 
+          (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) ||
+          (d.x1 === d.x2 && d.x2 >= xRange[0] && d.x2 <= xRange[1] && d.y2 >= yRange[0] && d.y2 <= yRange[1])
+        );
 
       // Highlight the paths associated with the selected dots
       svgSelect.select('g.line-chart-line-group')
@@ -494,6 +513,9 @@
         // Clean up the previous flowing lines
         stopAnimateLine();
         hasSelected = false;
+
+        svgSelect.select('g.line-chart-content-group g.brush rect.overlay')
+          .attr('cursor', null);
 
         return idleTimeout = setTimeout(idled, idleDelay);
       }
@@ -523,11 +545,13 @@
         .classed('flow-line', true)
         .attr('stroke-dasharray', '2 3')
         .attr('stroke-dashoffset', 0)
-        .each((d, i, g) => animateLine(d, i, g, -500));
+        .each((d, i, g) => animateLine(d, i, g, 0, -500));
 
       // Remove the brush box
       svgSelect.select('g.line-chart-content-group g.brush')
-        .call(brush.move, null);
+        .call(brush.move, null)
+        .select('rect.overlay')
+        .attr('cursor', null);
     }
   };
 
@@ -735,17 +759,18 @@
 
   /**
    * Animate teh dashed line infinitely
-   * @param dashoffset Use this to control the moving speed, each loop is 1 minute
+   * @param initOffset The initial stroke-dashoffset
+   * @param offsetRate Use this to control the moving speed, each loop is 1 minute
    */
-  const animateLine = (d, i, g, dashoffset) => {
+  const animateLine = (d, i, g, initOffset, offsetRate) => {
     let curPath = d3.select(g[i]);
     curPath.transition()
       .duration(60000)
       .ease(d3.easeLinear)
-      .attr('stroke-dashoffset', dashoffset)
+      .attr('stroke-dashoffset', initOffset + offsetRate)
       .on('end', (d, i, g) => {
         if (hasSelected) {
-          animateLine(d, i, g, dashoffset * 2);
+          animateLine(d, i, g, initOffset + offsetRate, offsetRate);
         }
       });
   };
@@ -760,6 +785,19 @@
       .interrupt()
       .attr('stroke-dasharray', '0 0')
       .classed('flow-line', false);
+  };
+
+  /**
+   * Dynamically bind SVG files as inline SVG strings in this component
+   */
+  const bindInlineSVG = () => {
+    d3.select(component)
+      .select('.toggle-button .dot .icon-left')
+      .html(dragIconSVG.replaceAll('black', 'currentcolor'));
+
+    d3.select(component)
+      .select('.toggle-button .dot .icon-right')
+      .html(selectIconSVG.replaceAll('black', 'currentcolor'));
   };
 
   $: featureData && drawFeature(featureData);
@@ -824,19 +862,35 @@
   .toggle {
     display: none;
     
-    &:checked + .toggle-botton:after {
+    &:checked + .toggle-button .dot {
       left: 50%;
       color: hsl(213, 100%, 60%);
       content: '\f245';
       font-weight: 900;
+
+      .icon-left {
+        display: none;
+      }
+
+      .icon-right {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: hsl(213, 100%, 60%);
+
+        :global(svg) {
+          stroke: hsl(213, 100%, 60%);
+          fill: hsl(213, 100%, 60%);
+        }
+      }
     }
     
-    &:checked + .toggle-botton {
+    &:checked + .toggle-button {
       background: hsl(213, 100%, 70%);
     }
   }
 
-  .toggle-botton {
+  .toggle-button {
     outline: 0;
     display: block;
     width: 3em;
@@ -851,7 +905,7 @@
     padding: 2px;
     transition: all .4s ease;
 
-    &:after {
+    .dot {
       position: relative;
       width: 50%;
       height: 100%;
@@ -868,6 +922,22 @@
       
       font-family: "Font Awesome 5 Free";
       content: "\f255";
+
+      :global(svg) {
+        width: 1.2em;
+        height: 1.2em;
+      }
+
+      .icon-left {
+        color: hsl(0, 0%, 40%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .icon-right {
+        display: none;
+      }
     }
   }
 
@@ -945,8 +1015,8 @@
 
 </style>
 
-<div class='explain-panel'>
-  {#if featureData !== null}
+<div class='explain-panel' bind:this={component}>
+
 
     <div class='header'>
 
@@ -960,23 +1030,20 @@
         </div>
       </div>
 
-
       <div class='header__control-panel'>
-        <!-- <button class="button is-very-small state-button"
-          class:is-activated={selectMode}
-          on:click={selectButtonClicked}>
-          <span class="icon">
-            <i class="fas fa-mouse-pointer"></i>
-          </span>
-        </button> -->
         <div class='toggle-label' class:select-mode = {selectMode}> {selectMode ? 'Select' : 'Move'} </div>
         <input class='toggle' id='my-toggle' type='checkbox' on:change={selectModeSwitched}/>
-        <label for='my-toggle' class='toggle-botton'> </label>
+        <label for='my-toggle' class='toggle-button'>
+          <div class='dot'>
+            <div class='icon-left'></div>
+            <div class='icon-right'></div>
+          </div>
+        </label>
       </div>
 
     </div>
 
-  {/if}
+
 
   <div class='svg-container'>
     <svg class='svg-explainer' bind:this={svg}></svg>
