@@ -39,14 +39,15 @@
 </script>
 
 <style type='text/scss'>
+  @import '../define';
 
-  $width: 100%;
   $secondary-color: hsl(0, 0%, 40%);
   $border-radius: 13px;
+  $dot-background: $blue-dark;
 
   @mixin toggle-button-label {
     padding: 5px 0;
-    width: calc(#{$width} / 2);
+    width: 50%;
     display: flex;
     justify-content: center;
     position: absolute;
@@ -58,7 +59,7 @@
   .toggle-wrapper {
     display: flex;
     // Expect the parent to have a width defined
-    width: 200px;
+    width: 100%;
   }
 
   .toggle {
@@ -74,7 +75,7 @@
     display: flex;
     align-items: center;
     justify-content: space-around;
-    width: $width;
+    width: 100%;
     position: relative;
     height: 2em;
     cursor: pointer;
@@ -109,8 +110,7 @@
       height: 100%;
       left: 0;
       border-radius: $border-radius;
-
-      background: hsl(213, 100%, 60%);
+      background: $dot-background;
       transition: all .2s ease;
     }
 

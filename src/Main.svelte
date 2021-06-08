@@ -78,8 +78,6 @@
       />
     </div> -->
 
-    <ToggleSwitch />
-    
     <!-- <div class='feature-window'>
       <CatGlobalExplain
         featureData = {data === null ? null : data.features[12]}

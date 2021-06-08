@@ -842,12 +842,8 @@
     height: auto;
   }
 
-  .toggle-button {
-    border-radius: 8px;
-
-    .icon-label {
-      margin-left: 5px;
-    }
+  .toggle-switch-wrapper {
+    width: 180px;
   }
 
   .state-button {
@@ -960,21 +956,10 @@
       <div class='header__control-panel'>
 
         <!-- The toggle button -->
-        <div class="field has-addons">
-          <div class="control">
-            <button class="button is-very-small toggle-button">
-              <div class='svg-icon' id='toggle-button-move'></div>
-              <div class='icon-label'>Move</div>
-            </button>
-          </div>
-          <div class="control">
-            <button class="button is-very-small toggle-button">
-              <div class='svg-icon' id='toggle-button-select'></div>
-              <div class='icon-label'>Select</div>
-            </button>
-          </div>
+        <div class='toggle-switch-wrapper'>
+          <ToggleSwitch on:selectModeSwitched={selectModeSwitched}/>
         </div>
-
+        
       </div>
 
     </div>
