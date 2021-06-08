@@ -59,6 +59,7 @@
   .feature-window {
     border: 1px solid $gray-border;
     margin: auto 0;
+    border-radius: 5px;
   }
 
 </style>
@@ -77,6 +78,8 @@
       />
     </div> -->
 
+    <ToggleSwitch />
+    
     <!-- <div class='feature-window'>
       <CatGlobalExplain
         featureData = {data === null ? null : data.features[12]}

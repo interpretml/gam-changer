@@ -5,6 +5,8 @@
   import selectIconSVG from '../img/select-icon.svg';
   import dragIconSVG from '../img/drag-icon.svg';
 
+  import ToggleSwitch from '../components/ToggleSwitch.svelte';
+
   export let featureData = null;
   export let scoreRange = null;
   export let svgHeight = 400;
@@ -788,11 +790,11 @@
    */
   const bindInlineSVG = () => {
     d3.select(component)
-      .select('.toggle-button .dot .icon-left')
+      .select('.svg-icon#toggle-button-move')
       .html(dragIconSVG.replaceAll('black', 'currentcolor'));
 
     d3.select(component)
-      .select('.toggle-button .dot .icon-right')
+      .select('.svg-icon#toggle-button-select')
       .html(selectIconSVG.replaceAll('black', 'currentcolor'));
   };
 
@@ -806,13 +808,14 @@
   .explain-panel {
     display: flex;
     flex-direction: column;
+    border-radius: 5px;
   }
 
   .header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 5px 10px;
+    padding: 10px 10px;
     border-bottom: 1px solid $gray-border;
 
     .header__info {
@@ -839,6 +842,14 @@
     height: auto;
   }
 
+  .toggle-button {
+    border-radius: 8px;
+
+    .icon-label {
+      margin-left: 5px;
+    }
+  }
+
   .state-button {
     color: $indigo-dark;
     transition: border-color 200ms ease-in-out, color 200ms ease-in-out;
@@ -853,96 +864,6 @@
   .state-button:hover {
     color: $blue-icon;
     // border-color: hsl(0, 0%, 85.9%);;
-  }
-
-  .toggle {
-    display: none;
-    
-    &:checked + .toggle-button .dot {
-      left: 50%;
-      color: hsl(213, 100%, 60%);
-      content: '\f245';
-      font-weight: 900;
-
-      .icon-left {
-        display: none;
-      }
-
-      .icon-right {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: hsl(213, 100%, 60%);
-
-        :global(svg) {
-          stroke: hsl(213, 100%, 60%);
-          fill: hsl(213, 100%, 60%);
-        }
-      }
-    }
-    
-    &:checked + .toggle-button {
-      background: hsl(213, 100%, 70%);
-    }
-  }
-
-  .toggle-button {
-    outline: 0;
-    display: block;
-    width: 3em;
-    height: 1.5em;
-    position: relative;
-    cursor: pointer;
-    user-select: none;
-    margin-left: 10px;
-
-    background: hsl(0, 0%, 90%);
-    border-radius: 2em;
-    padding: 2px;
-    transition: all .4s ease;
-
-    .dot {
-      position: relative;
-      width: 50%;
-      height: 100%;
-
-      left: 0;
-      border-radius: 50%;
-      background: white;
-      transition: all .2s ease;
-      
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 0.8em;
-      
-      font-family: "Font Awesome 5 Free";
-      content: "\f255";
-
-      :global(svg) {
-        width: 1.2em;
-        height: 1.2em;
-      }
-
-      .icon-left {
-        color: hsl(0, 0%, 40%);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-
-      .icon-right {
-        display: none;
-      }
-    }
-  }
-
-  .toggle-label {
-    color: hsl(0, 0%, 40%);
-
-    &.select-mode {
-      color: hsl(213, 100%, 60%);
-    }
   }
 
   :global(.explain-panel .y-axis-text) {
@@ -1009,10 +930,20 @@
     cursor: crosshair;
   }
 
+  :global(.explain-panel .svg-icon) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    :global(svg) {
+      width: 1.2em;
+      height: 1.2em;
+    }
+  }
+
 </style>
 
 <div class='explain-panel' bind:this={component}>
-
 
     <div class='header'>
 
@@ -1027,14 +958,23 @@
       </div>
 
       <div class='header__control-panel'>
-        <div class='toggle-label' class:select-mode = {selectMode}> {selectMode ? 'Select' : 'Move'} </div>
-        <input class='toggle' id='my-toggle' type='checkbox' on:change={selectModeSwitched}/>
-        <label for='my-toggle' class='toggle-button'>
-          <div class='dot'>
-            <div class='icon-left'></div>
-            <div class='icon-right'></div>
+
+        <!-- The toggle button -->
+        <div class="field has-addons">
+          <div class="control">
+            <button class="button is-very-small toggle-button">
+              <div class='svg-icon' id='toggle-button-move'></div>
+              <div class='icon-label'>Move</div>
+            </button>
           </div>
-        </label>
+          <div class="control">
+            <button class="button is-very-small toggle-button">
+              <div class='svg-icon' id='toggle-button-select'></div>
+              <div class='icon-label'>Select</div>
+            </button>
+          </div>
+        </div>
+
       </div>
 
     </div>
