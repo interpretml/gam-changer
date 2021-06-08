@@ -490,14 +490,16 @@
       svgSelect.select('g.line-chart-node-group')
         .selectAll('circle.node')
         .classed('selected', d => 
-          (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) ||
-          (d.x1 === d.x2 && d.x2 >= xRange[0] && d.x2 <= xRange[1] && d.y2 >= yRange[0] && d.y2 <= yRange[1])
+          (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1])
         );
 
       // Highlight the paths associated with the selected dots
       svgSelect.select('g.line-chart-line-group')
         .selectAll('path.additive-line-segment')
-        .classed('selected', d => d.ox >= xRange[0] && d.ox <= xRange[1] && d.oy >= yRange[0] && d.oy <= yRange[1]);
+        .classed('selected', d => 
+          (d.ox >= xRange[0] && d.ox <= xRange[1] && d.oy >= yRange[0] && d.oy <= yRange[1]) ||
+          (d.x1 === d.x2 && d.x2 >= xRange[0] && d.x2 <= xRange[1] && d.y2 >= yRange[0] && d.y2 <= yRange[1])
+        );
     }
   };
 
@@ -535,7 +537,10 @@
       // Highlight the paths associated with the selected dots
       svgSelect.select('g.line-chart-line-group')
         .selectAll('path.additive-line-segment')
-        .classed('selected', d => d.ox >= xRange[0] && d.ox <= xRange[1] && d.oy >= yRange[0] && d.oy <= yRange[1]);
+        .classed('selected', d => 
+          (d.ox >= xRange[0] && d.ox <= xRange[1] && d.oy >= yRange[0] && d.oy <= yRange[1]) ||
+          (d.x1 === d.x2 && d.x2 >= xRange[0] && d.x2 <= xRange[1] && d.y2 >= yRange[0] && d.y2 <= yRange[1])
+        );
       
       // Add animation to the selected paths
       svgSelect.select('g.line-chart-line-group')
@@ -954,16 +959,13 @@
       </div>
 
       <div class='header__control-panel'>
-
         <!-- The toggle button -->
         <div class='toggle-switch-wrapper'>
           <ToggleSwitch on:selectModeSwitched={selectModeSwitched}/>
         </div>
-        
       </div>
 
     </div>
-
 
 
   <div class='svg-container'>
