@@ -5,6 +5,7 @@
   import InterContCatGlobalExplain from './global-explanation/InterContCatFeature.svelte';
   import InterContContGlobalExplain from './global-explanation/InterContContFeature.svelte';
   import InterCatCatGlobalExplain from './global-explanation/InterCatCatFeature.svelte';
+  import ToggleSwitch from './components/ToggleSwitch.svelte';
   import * as d3 from 'd3';
   import { onMount } from 'svelte';
 

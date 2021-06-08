@@ -2,8 +2,6 @@
   import * as d3 from 'd3';
   import { round } from '../utils';
   import { config } from '../config';
-  import { onMount } from 'svelte';
-  import openHandSVG from '../img/openhand.svg';
   import selectIconSVG from '../img/select-icon.svg';
   import dragIconSVG from '../img/drag-icon.svg';
 
@@ -425,7 +423,6 @@
       .on('start brush', e => brushDuring(e, xScale, yScale))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]])
       .filter((e) => {
-        console.log(e);
         if (selectMode) {
           return e.button === 0;
         } else {
@@ -461,7 +458,6 @@
     
     // Listen to double click to reset zoom
     lineChartContent.on('dblclick', () => {
-      console.log('here!');
       lineChartContent.transition('reset')
         .duration(750)
         .ease(d3.easeCubicInOut)
