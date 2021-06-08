@@ -80,7 +80,7 @@
       />
     </div> -->
 
-    <ContextMenu />
+    <!-- <ContextMenu /> -->
 
     <!-- <div class='feature-window'>
       <CatGlobalExplain

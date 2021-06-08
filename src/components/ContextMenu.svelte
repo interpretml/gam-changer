@@ -12,8 +12,15 @@
   import downIconSVG from '../img/down-icon.svg';
 
   let component = null;
+  let increment = 0;
 
   const dispatch = createEventDispatcher();
+
+  const preProcessSVG = (svgString) => {
+    return svgString.replaceAll('black', 'currentcolor')
+      .replaceAll('fill:none', 'fill:currentcolor')
+      .replaceAll('stroke:none', 'fill:currentcolor');
+  };
 
   /**
    * Dynamically bind SVG files as inline SVG strings in this component
@@ -21,7 +28,7 @@
   const bindInlineSVG = () => {
     d3.select(component)
       .select('.svg-icon#icon-merge')
-      .html(mergeIconSVG.replaceAll('black', 'currentcolor'));
+      .html(preProcessSVG(mergeIconSVG));
 
     d3.select(component)
       .select('.svg-icon#icon-increasing')
@@ -33,7 +40,7 @@
 
     d3.select(component)
       .select('.svg-icon#icon-updown')
-      .html(upDownIconSVG.replaceAll('black', 'currentcolor'));
+      .html(preProcessSVG(upDownIconSVG));
 
     d3.select(component)
       .select('.svg-icon#icon-input-up')
@@ -46,6 +53,32 @@
     d3.select(component)
       .select('.svg-icon#icon-delete')
       .html(trashIconSVG.replaceAll('black', 'currentcolor'));
+  };
+
+  const inputChanged = (e) => {
+    console.log(increment);
+    e.preventDefault();
+    let value = parseInt(e.target.value);
+    if (isNaN(value)) value = 0;
+    increment = value;
+    e.target.value = `${value >= 0 ? '+' : ''}${value}`;
+    console.log(increment);
+  };
+
+  const inputAdd = () => {
+    increment++;
+    d3.select(component)
+      .select('.item-input')
+      .node()
+      .value = `${increment >= 0 ? '+' : ''}${increment}`;
+  };
+
+  const inputMinus = () => {
+    increment--;
+    d3.select(component)
+      .select('.item-input')
+      .node()
+      .value = `${increment >= 0 ? '+' : ''}${increment}`;
   };
 
   onMount(() => {
@@ -75,6 +108,7 @@
   .menu-wrapper {
     height: 50px;
     border-radius: 4px;
+    background: white;
     box-shadow: 0px 4px 16px hsla(245, 100%, 11%, 0.12)
   }
 
@@ -91,6 +125,7 @@
     justify-content: center;
     align-items: center;
     position: relative;
+    pointer-events: fill;
 
     color: $indigo-dark;
 
@@ -111,6 +146,10 @@
     border-radius: 2px;
     border: 1px solid transparent;
     outline: none;
+
+    :hover {
+      color: $indigo-dark;
+    }
 
     &:focus {
       border-radius: 2px;
@@ -143,6 +182,10 @@
     height: 50px;
   }
 
+  .svg-icon:hover {
+    color: $blue-dark;
+  }
+
   :global(.menu-wrapper .svg-icon) {
     display: flex;
     justify-content: center;
@@ -151,6 +194,8 @@
     :global(svg) {
       width: 1.2em;
       height: 1.2em;
+      fill: currentcolor;
+      stroke: currentcolor;
     }
   }
 
@@ -166,8 +211,27 @@
   <div class='items'>
 
     <div class='item'>
-      <div class='svg-icon' id='icon-merge'></div>
+      <div class='svg-icon' id='icon-updown'></div>
     </div>
+
+    <div class='separator'></div>
+
+    <div class='item has-input'>
+      <input class='item-input'
+        placeholder={`${increment >= 0 ? '+' : '-'}${increment}`}
+        on:change={inputChanged}
+      >
+
+      <div class='svg-icon item-input-up' id='icon-input-up'
+        on:click={inputAdd}
+      ></div>
+
+      <div class='svg-icon item-input-down' id='icon-input-down'
+        on:click={inputMinus}
+      ></div>
+
+    </div>
+
     <div class='separator'></div>
 
     <div class='item'>
@@ -181,16 +245,7 @@
     <div class='separator'></div>
 
     <div class='item'>
-      <div class='svg-icon' id='icon-updown'></div>
-    </div>
-
-    <div class='separator'></div>
-
-    <div class='item has-input'>
-      <input class='item-input' placeholder='+0'>
-      <div class='svg-icon' id='icon-decreasing'></div>
-      <div class='svg-icon item-input-up' id='icon-input-up'></div>
-      <div class='svg-icon item-input-down' id='icon-input-down'></div>
+      <div class='svg-icon' id='icon-merge'></div>
     </div>
 
     <div class='separator'></div>

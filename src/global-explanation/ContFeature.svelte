@@ -6,6 +6,7 @@
   import dragIconSVG from '../img/drag-icon.svg';
 
   import ToggleSwitch from '../components/ToggleSwitch.svelte';
+  import ContextMenu from '../components/ContextMenu.svelte';
 
   export let featureData = null;
   export let scoreRange = null;
@@ -13,6 +14,7 @@
 
   let svg = null;
   let component = null;
+  let multiMenu = null;
 
   // Visualization constants
   const svgPadding = config.svgPadding;
@@ -517,6 +519,9 @@
         svgSelect.select('g.line-chart-content-group g.brush rect.overlay')
           .attr('cursor', null);
 
+        d3.select(multiMenu)
+          .classed('hidden', true);
+
         return idleTimeout = setTimeout(idled, idleDelay);
       }
     } else {
@@ -555,6 +560,10 @@
         .call(brush.move, null)
         .select('rect.overlay')
         .attr('cursor', null);
+
+      // Show the context menu
+      d3.select(multiMenu)
+        .classed('hidden', false);
     }
   };
 
@@ -813,6 +822,7 @@
   .explain-panel {
     display: flex;
     flex-direction: column;
+    position: relative;
     border-radius: 5px;
   }
 
@@ -865,6 +875,17 @@
   .state-button:hover {
     color: $blue-icon;
     // border-color: hsl(0, 0%, 85.9%);;
+  }
+
+  .context-menu-container {
+    position: absolute;
+    z-index: 5;
+    left: 250px;
+    bottom: 50px;
+
+    &.hidden {
+      visibility: hidden;
+    }
   }
 
   :global(.explain-panel .y-axis-text) {
@@ -945,6 +966,10 @@
 </style>
 
 <div class='explain-panel' bind:this={component}>
+
+    <div class='context-menu-container hidden' bind:this={multiMenu}>
+      <ContextMenu /> 
+    </div>
 
     <div class='header'>
 
