@@ -81,6 +81,7 @@
     cursor: pointer;
     user-select: none;
 
+    background: hsl(0, 0%, 98%);
     border: 1px solid hsl(0, 0%, 86%);
     border-radius: $border-radius;
     transition: all .4s ease;

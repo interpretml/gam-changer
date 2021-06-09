@@ -40,6 +40,7 @@
   const colors = config.colors;
   const defaultFont = config.defaultFont;
   const linePathWidth = 2.5;
+  const bboxStrokeWidth = 1;
   const nodeStrokeWidth = 1;
 
   // --- Interactions ---
@@ -61,6 +62,8 @@
   const rExtent = [2, 16];
   let curXScale = null;
   let curYScale = null;
+  let curTransform = null;
+  const bboxPadding = 1;
 
   // Select mode
   let selectMode = false;
@@ -487,6 +490,9 @@
       // Clean up the previous flowing lines
       stopAnimateLine();
       hasSelected = false;
+      
+      // Remove the selection bbox
+      svgSelect.selectAll('g.line-chart-content-group g.select-bbox-group').remove();
 
       // Highlight the selected dots
       svgSelect.select('g.line-chart-node-group')
@@ -522,6 +528,9 @@
         d3.select(multiMenu)
           .classed('hidden', true);
 
+        // Remove the selection bbox
+        svgSelect.selectAll('g.line-chart-content-group g.select-bbox-group').remove();
+
         return idleTimeout = setTimeout(idled, idleDelay);
       }
     } else {
@@ -532,10 +541,50 @@
       let xRange = [curXScale.invert(selection[0][0]), curXScale.invert(selection[1][0])];
       let yRange = [curYScale.invert(selection[1][1]), curYScale.invert(selection[0][1])];
 
+      // Keep an array of selected nodes
+      let selectedNodeData = [];
+
       // Highlight the selected dots
       svgSelect.select('g.line-chart-node-group')
         .selectAll('circle.node')
-        .classed('selected', d => d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]);
+        .classed('selected', d => {
+          if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
+            selectedNodeData.push([d.x, d.y]);
+            return true;
+          } else {
+            return false;
+          }
+        });
+
+      // Compute the bounding box 
+      let selectedBoundingBox = [{
+        x1: d3.min(selectedNodeData.map(d => d[0])),
+        y1: d3.max(selectedNodeData.map(d => d[1])),
+        x2: d3.max(selectedNodeData.map(d => d[0])),
+        y2: d3.min(selectedNodeData.map(d => d[1]))
+      }];
+
+      let curPadding = (rScale(curTransform.k) + bboxPadding) * curTransform.k;
+
+      let bbox = svgSelect.select('g.line-chart-content-group')
+        .append('g')
+        .attr('class', 'select-bbox-group')
+        .selectAll('rect.select-bbox')
+        .data(selectedBoundingBox)
+        .join('rect')
+        .attr('class', 'select-bbox')
+        .attr('x', d => curXScale(d.x1) - curPadding)
+        .attr('y', d => curYScale(d.y1) - curPadding)
+        .attr('width', d => curXScale(d.x2) - curXScale(d.x1) + 2 * curPadding)
+        .attr('height', d => curYScale(d.y2) - curYScale(d.y1) + 2 * curPadding)
+        .style('stroke-width', bboxStrokeWidth)
+        .style('stroke', 'hsl(245.4, 100%, 11%)')
+        .style('stroke-dasharray', '5 3');
+
+      bbox.clone(true)
+        .style('stroke', 'white')
+        .style('stroke-width', bboxStrokeWidth * 3)
+        .lower();
 
       hasSelected = svgSelect.selectAll('g.line-chart-node-group circle.node.selected').size() > 0;
 
@@ -548,12 +597,12 @@
         );
       
       // Add animation to the selected paths
-      svgSelect.select('g.line-chart-line-group')
-        .selectAll('path.additive-line-segment.selected')
-        .classed('flow-line', true)
-        .attr('stroke-dasharray', '2 3')
-        .attr('stroke-dashoffset', 0)
-        .each((d, i, g) => animateLine(d, i, g, 0, -500));
+      // svgSelect.select('g.line-chart-line-group')
+      //   .selectAll('path.additive-line-segment.selected')
+      //   .classed('flow-line', true)
+      //   .attr('stroke-dasharray', '2 3')
+      //   .attr('stroke-dashoffset', 0)
+      //   .each((d, i, g) => animateLine(d, i, g, 0, -300));
 
       // Remove the brush box
       svgSelect.select('g.line-chart-content-group g.brush')
@@ -647,6 +696,7 @@
 
     curXScale = zXScale;
     curYScale = zYScale;
+    curTransform = transform;
 
     svgSelect.select('g.x-axis')
       .call(d3.axisBottom(zXScale));
@@ -697,6 +747,23 @@
     svgSelect.select('g.hist-chart-content-group')
       .attr('transform', `translate(${yAxisWidth + transform.x},
         ${lineChartHeight})scale(${transform.k}, 1)`);
+
+    // Transform the selection bbox if applicable
+    if (hasSelected) {
+      // Here we don't use transform, because we want to keep the gap between
+      // the nodes and bounding box border constant across all scales
+
+      // We want to compute the world coordinate here
+      // Need to transfer back the scale factor from the node radius
+      let curPadding = (rScale(curTransform.k) + bboxPadding) * curTransform.k;
+
+      svgSelect.select('g.line-chart-content-group')
+        .selectAll('rect.select-bbox')
+        .attr('x', d => curXScale(d.x1) - curPadding)
+        .attr('y', d => curYScale(d.y1) - curPadding)
+        .attr('width', d => curXScale(d.x2) - curXScale(d.x1) + 2 * curPadding)
+        .attr('height', d => curYScale(d.y2) - curYScale(d.y1) + 2 * curPadding);
+    }
 
     // Draw/update the grid
     svgSelect.select('g.line-chart-grid-group')
@@ -812,6 +879,16 @@
       .html(selectIconSVG.replaceAll('black', 'currentcolor'));
   };
 
+  const fadeRemove = (g, time=500, ease=d3.easeCubicInOut) => {
+    g.transition()
+      .duration(time)
+      .ease(ease)
+      .style('opacity', 0)
+      .on('end', (d, i, g) => {
+        d3.select(g[i]).remove();
+      });
+  };
+
   $: featureData && drawFeature(featureData);
 
 </script>
@@ -922,12 +999,12 @@
   }
 
   :global(.explain-panel circle.node.selected) {
-    fill: hsl(348, 98%, 58%);
+    fill: hsl(35, 100%, 50%);
     stroke: white;
   }
 
   :global(.explain-panel path.additive-line-segment.selected) {
-    stroke: hsl(348, 71%, 33%);
+    stroke: hsl(35, 100%, 40%);
   }
 
   @keyframes dash {
@@ -961,6 +1038,10 @@
       width: 1.2em;
       height: 1.2em;
     }
+  }
+
+  :global(.explain-panel .select-bbox) {
+    fill: none;
   }
 
 </style>
