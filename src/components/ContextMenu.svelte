@@ -3,7 +3,7 @@
   import { onMount, createEventDispatcher } from 'svelte';
 
   // Stores
-  import { multiSelectMenuStore } from '../store';
+  import { multiSelectMenuStore, tooltipConfigStore } from '../store';
 
   // SVGs
   import mergeIconSVG from '../img/merge-icon.svg';
@@ -21,6 +21,8 @@
     moveMode: false,
     increment: 0
   };
+  let tooltipConfig = {};
+  let mouseoverTimeout = null;
 
   // Store binding
   multiSelectMenuStore.subscribe(value => {
@@ -120,6 +122,39 @@
     multiSelectMenuStore.set(controlInfo);
 
     dispatch('moveButtonClicked');
+  };
+
+  const mouseoverHandler = (e, message, width, yOffset) => {
+    let node = e.currentTarget;
+
+    mouseoverTimeout = setTimeout(() => {
+      let position = node.getBoundingClientRect();
+      let curWidth = position.width;
+
+      let tooltipCenterX = position.x + curWidth / 2;
+      let tooltipCenterY = position.y - yOffset;
+      tooltipConfig.html = `
+        <div class='tooltip-content' style='display: flex; flex-direction: column;
+          justify-content: center;'>
+          ${message}
+        </div>
+      `;
+      tooltipConfig.width = width;
+      tooltipConfig.maxWidth = width;
+      tooltipConfig.left = tooltipCenterX - tooltipConfig.width / 2;
+      tooltipConfig.top = tooltipCenterY;
+      tooltipConfig.fontSize = '14px';
+      tooltipConfig.show = true;
+      tooltipConfig.orientation = 's';
+      tooltipConfigStore.set(tooltipConfig);
+    }, 400);
+  };
+
+  const mouseleaveHandler = () => {
+    clearTimeout(mouseoverTimeout);
+    mouseoverTimeout = null;
+    tooltipConfig.show = false;
+    tooltipConfigStore.set(tooltipConfig);
   };
 
   onMount(() => {
@@ -263,6 +298,8 @@
     <!-- Move button -->
     <div class='item' on:click={moveButtonClicked}
       class:selected={controlInfo.moveMode}
+      on:mouseenter={(e) => mouseoverHandler(e, 'move', 55, 30)}
+      on:mouseleave={mouseleaveHandler}
     >
       <div class='svg-icon' id='icon-updown'></div>
     </div>
@@ -270,7 +307,10 @@
     <div class='separator'></div>
 
     <!-- Input field -->
-    <div class='item has-input'>
+    <div class='item has-input'
+      on:mouseenter={(e) => mouseoverHandler(e, 'change scores', 120, 30)}
+      on:mouseleave={mouseleaveHandler}
+    >
       <input class='item-input'
         placeholder={`${controlInfo.increment >= 0 ? '+' : '-'}${controlInfo.increment}`}
         on:change={inputChanged}
@@ -290,6 +330,8 @@
     <!-- Increasing -->
     <div class='item'
       on:click={() => dispatch('increasingClicked')}
+      on:mouseenter={(e) => mouseoverHandler(e, 'monotonically increasing', 120, 52)}
+      on:mouseleave={mouseleaveHandler}
     >
       <div class='svg-icon' id='icon-increasing'></div>
     </div>
@@ -297,6 +339,8 @@
     <!-- Decreasing -->
     <div class='item'
       on:click={() => dispatch('decreasingClicked')}
+      on:mouseenter={(e) => mouseoverHandler(e, 'monotonically decreasing', 120, 52)}
+      on:mouseleave={mouseleaveHandler}
     >
       <div class='svg-icon' id='icon-decreasing'></div>
     </div>
@@ -306,6 +350,8 @@
     <!-- Interpolation -->
     <div class='item'
       on:click={() => dispatch('interpolationClicked')}
+      on:mouseenter={(e) => mouseoverHandler(e, 'interpolate', 85, 30)}
+      on:mouseleave={mouseleaveHandler}
     >
       <div class='svg-icon' id='icon-interpolate'></div>
     </div>
@@ -315,6 +361,8 @@
     <!-- Merge -->
     <div class='item'
       on:click={() => dispatch('mergeClicked')}
+      on:mouseenter={(e) => mouseoverHandler(e, 'merge', 60, 30)}
+      on:mouseleave={mouseleaveHandler}
     >
       <div class='svg-icon' id='icon-merge'></div>
     </div>
@@ -324,6 +372,8 @@
     <!-- Deletion -->
     <div class='item'
       on:click={() => dispatch('deleteClicked')}
+      on:mouseenter={(e) => mouseoverHandler(e, 'delete', 60, 30)}
+      on:mouseleave={mouseleaveHandler}
     >
       <div class='svg-icon' id='icon-delete'></div>
     </div>

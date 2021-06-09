@@ -7,11 +7,19 @@
   import InterCatCatGlobalExplain from './global-explanation/InterCatCatFeature.svelte';
   import ToggleSwitch from './components/ToggleSwitch.svelte';
   import ContextMenu from './components/ContextMenu.svelte';
+  import Tooltip from './components/Tooltip.svelte';
+
+  import { tooltipConfigStore } from './store';
 
   import * as d3 from 'd3';
   import { onMount } from 'svelte';
 
   let data = null;
+
+  // Set up tooltip
+  let tooltip = null;
+  let tooltipConfig = null;
+  tooltipConfigStore.subscribe(value => {tooltipConfig = value;});
 
   /**
    * Pre-process the data loaded from a json file or passed from other sources
@@ -70,6 +78,8 @@
   <div class='header'>
     <Header />
   </div>
+
+  <Tooltip bind:this={tooltip}/>
 
   <div class='content'>
     <!-- <div class='feature-window'>

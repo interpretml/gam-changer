@@ -4,10 +4,15 @@
   import selectIconSVG from '../img/select-icon.svg';
   import dragIconSVG from '../img/drag-icon.svg';
 
+  import { tooltipConfigStore } from '../store';
+
   let selectMode = false;
   let component = null;
-
+  let tooltipConfig = {};
+  let mouseoverTimeout = null;
   const dispatch = createEventDispatcher();
+
+  tooltipConfigStore.subscribe(value => {tooltipConfig = value;});
 
   /**
    * Event handler for the select button in the header
@@ -30,6 +35,40 @@
     d3.select(component)
       .select('.svg-icon#toggle-button-select')
       .html(selectIconSVG.replaceAll('black', 'currentcolor'));
+  };
+
+
+  const mouseoverHandler = (e, message, width, yOffset) => {
+    let node = e.currentTarget;
+    mouseoverTimeout = setTimeout(() => {
+      console.log('enter');
+      let position = node.getBoundingClientRect();
+      let curWidth = position.width;
+
+      let tooltipCenterX = position.x + curWidth / 2;
+      let tooltipCenterY = position.y - yOffset;
+      tooltipConfig.html = `
+        <div class='tooltip-content' style='display: flex; flex-direction: column;
+          justify-content: center;'>
+          ${message}
+        </div>
+      `;
+      tooltipConfig.width = width;
+      tooltipConfig.maxWidth = width;
+      tooltipConfig.left = tooltipCenterX - tooltipConfig.width / 2;
+      tooltipConfig.top = tooltipCenterY;
+      tooltipConfig.fontSize = '14px';
+      tooltipConfig.show = true;
+      tooltipConfig.orientation = 's';
+      tooltipConfigStore.set(tooltipConfig);
+    }, 1000);
+  };
+
+  const mouseleaveHandler = () => {
+    clearTimeout(mouseoverTimeout);
+    mouseoverTimeout = null;
+    tooltipConfig.show = false;
+    tooltipConfigStore.set(tooltipConfig);
   };
 
   onMount(() => {
@@ -139,12 +178,18 @@
 
   <label for='my-toggle' class='toggle-button'>
 
-    <div class='left-label' class:select-mode = {selectMode}>
+    <div class='left-label' class:select-mode = {selectMode}
+      on:mouseenter={(e) => mouseoverHandler(e, 'navigate graph', 120, 30)}
+      on:mouseleave={mouseleaveHandler}
+    >
       <div class='svg-icon' id='toggle-button-move'></div>
       <div class='icon-label'>Move</div>
     </div>
 
-    <div class='right-label' class:select-mode = {selectMode}>
+    <div class='right-label' class:select-mode = {selectMode}
+      on:mouseenter={(e) => mouseoverHandler(e, 'select nodes', 100, 30)}
+      on:mouseleave={mouseleaveHandler}
+    >
       <div class='svg-icon' id='toggle-button-select'></div>
       <div class='icon-label'>Select</div>
     </div>

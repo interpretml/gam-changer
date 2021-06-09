@@ -906,23 +906,23 @@
   };
 
   const multiMenuIncreasingClicked = () => {
-    console.log(multiMenuControlInfo.moveMode);
+    console.log('increasing clicked');
   };
   
   const multiMenuDecreasingClicked = () => {
-    console.log(multiMenuControlInfo.moveMode);
+    console.log('decreasing clicked');
   };
 
   const multiMenuInterpolationClicked = () => {
-    console.log(multiMenuControlInfo.moveMode);
+    console.log('interpolate clicked');
   };
 
   const multiMenuMergeClicked = () => {
-    console.log(multiMenuControlInfo.moveMode);
+    console.log('merge clicked');
   };
 
   const multiMenuDeleteClicked = () => {
-    console.log(multiMenuControlInfo.moveMode);
+    console.log('delete clicked');
   };
 
   $: featureData && drawFeature(featureData);
@@ -1088,6 +1088,11 @@
       <ContextMenu 
         on:inputChanged={multiMenuInputChanged}
         on:moveButtonClicked={multiMenuButtonClicked}
+        on:increasingClicked={multiMenuIncreasingClicked}
+        on:decreasingClicked={multiMenuDecreasingClicked}
+        on:interpolationClicked={multiMenuInterpolationClicked}
+        on:mergeClicked={multiMenuMergeClicked}
+        on:deleteClicked={multiMenuDeleteClicked}
       /> 
     </div>
 
