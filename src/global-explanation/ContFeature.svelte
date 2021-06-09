@@ -506,6 +506,9 @@
       // Remove the selection bbox
       svgSelect.selectAll('g.line-chart-content-group g.select-bbox-group').remove();
 
+      d3.select(multiMenu)
+        .classed('hidden', true);
+
       // Highlight the selected dots
       svgSelect.select('g.line-chart-node-group')
         .selectAll('circle.node')

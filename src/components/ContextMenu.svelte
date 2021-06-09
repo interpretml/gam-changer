@@ -14,6 +14,8 @@
   import upIconSVG from '../img/up-icon.svg';
   import downIconSVG from '../img/down-icon.svg';
   import interpolateIconSVG from '../img/interpolate-icon.svg';
+  import checkIconSVG from '../img/check-icon.svg';
+  import refreshIconSVG from '../img/refresh-icon.svg';
 
   // Component variables
   let component = null;
@@ -54,7 +56,7 @@
       .html(decreasingIconSVG.replaceAll('black', 'currentcolor'));
 
     d3.select(component)
-      .select('.svg-icon#icon-updown')
+      .selectAll('.svg-icon#icon-updown')
       .html(preProcessSVG(upDownIconSVG));
 
     d3.select(component)
@@ -72,6 +74,14 @@
     d3.select(component)
       .select('.svg-icon#icon-interpolate')
       .html(interpolateIconSVG.replaceAll('black', 'currentcolor'));
+
+    d3.select(component)
+      .select('.svg-icon#icon-check')
+      .html(checkIconSVG.replaceAll('black', 'currentcolor'));
+
+    d3.select(component)
+      .select('.svg-icon#icon-refresh')
+      .html(refreshIconSVG.replaceAll('black', 'currentcolor'));
 
   };
 
@@ -120,6 +130,33 @@
 
     // Update the store
     multiSelectMenuStore.set(controlInfo);
+
+    if (controlInfo.moveMode) {
+      // Shrink the menu bar to make space for action
+      d3.select(component)
+        .transition()
+        .duration(300)
+        .ease(d3.easeCubicInOut)
+        .style('width', '120px')
+        .on('end', () => {
+          d3.select(component)
+            .selectAll('div.collapse-item')
+            .style('display', 'flex');
+        });
+
+    } else {
+      // restore the menu bar width
+      d3.select(component)
+        .selectAll('div.collapse-item')
+        .style('display', 'none');
+
+      d3.select(component)
+        .transition()
+        .duration(300)
+        .ease(d3.easeCubicInOut)
+        .style('width', '375px');
+    }
+
 
     dispatch('moveButtonClicked');
   };
@@ -189,14 +226,19 @@
   .menu-wrapper {
     height: 50px;
     border-radius: 4px;
+    width: 100%;
     background: white;
-    box-shadow: 0px 4px 16px hsla(245, 100%, 11%, 0.12)
+    box-shadow: 0px 4px 16px hsla(245, 100%, 11%, 0.12);
   }
 
   .items {
     display: flex;
+    align-items: center;
     padding: 0 5px;
     cursor: pointer;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
   }
 
   .item {
@@ -207,6 +249,7 @@
     align-items: center;
     position: relative;
     pointer-events: fill;
+    flex-shrink: 0;
 
     color: $indigo-dark;
 
@@ -216,10 +259,10 @@
     }
 
     &.selected {
-      color: $blue-icon;
+      color: $blue-600;
 
       &:hover {
-        color: $blue-icon;
+        color: $blue-600;
       }
     }
 
@@ -246,6 +289,32 @@
     }
   }
 
+  .collapse-item {
+    display: none;
+    flex-shrink: 0;
+
+    .item {
+      width: 30px;
+
+      .svg-icon {
+        color: hsl(0, 0%, 85%);
+
+        :global(svg) {
+          width: 1em;
+          height: 1em;
+        }
+      }
+
+      &:hover {
+        color: $blue-600;
+
+        .svg-icon {
+          color: currentcolor;
+        }
+      }
+    }
+  }
+
   .svg-icon.item-input-up {
     @include item-input-arrow;
 
@@ -268,7 +337,8 @@
     margin: 0 5px;
     width: 1px;
     background-color: hsl(0, 0%, 90%);
-    height: 50px;
+    height: 100%;
+    flex-shrink: 0;
   }
 
   :global(.menu-wrapper .svg-icon) {
@@ -305,6 +375,19 @@
     </div>
 
     <div class='separator'></div>
+
+    <div class='collapse-item'>
+      <!-- Check button -->
+      <div class='item' on:click={() => dispatch('moveCheckClicked')}>
+        <div class='svg-icon' id='icon-check'></div>
+      </div>
+
+      <!-- Cancel button -->
+      <div class='item' on:click={() => dispatch('moveCancelClicked')}>
+        <div class='svg-icon' id='icon-refresh'></div>
+      </div>
+
+    </div>
 
     <!-- Input field -->
     <div class='item has-input'
