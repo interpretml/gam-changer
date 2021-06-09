@@ -8,6 +8,8 @@
   import ToggleSwitch from '../components/ToggleSwitch.svelte';
   import ContextMenu from '../components/ContextMenu.svelte';
 
+  import { multiSelectMenuStore } from '../store';
+
   export let featureData = null;
   export let scoreRange = null;
   export let svgHeight = 400;
@@ -70,6 +72,12 @@
 
   // Editing mode
   let hasSelected = false;
+
+  // Store binding
+  let multiMenuControlInfo = null;
+  multiSelectMenuStore.subscribe(value => {
+    multiMenuControlInfo = value;
+  });
 
   /**
    * Create rectangles in SVG path format tracing the standard deviations at each
@@ -578,7 +586,7 @@
         .attr('width', d => curXScale(d.x2) - curXScale(d.x1) + 2 * curPadding)
         .attr('height', d => curYScale(d.y2) - curYScale(d.y1) + 2 * curPadding)
         .style('stroke-width', bboxStrokeWidth)
-        .style('stroke', 'hsl(245.4, 100%, 11%)')
+        .style('stroke', 'hsl(230, 100%, 10%)')
         .style('stroke-dasharray', '5 3');
 
       bbox.clone(true)
@@ -889,6 +897,34 @@
       });
   };
 
+  const multiMenuButtonClicked = () => {
+    console.log(multiMenuControlInfo.moveMode);
+  };
+
+  const multiMenuInputChanged = () => {
+    console.log(multiMenuControlInfo.increment);
+  };
+
+  const multiMenuIncreasingClicked = () => {
+    console.log(multiMenuControlInfo.moveMode);
+  };
+  
+  const multiMenuDecreasingClicked = () => {
+    console.log(multiMenuControlInfo.moveMode);
+  };
+
+  const multiMenuInterpolationClicked = () => {
+    console.log(multiMenuControlInfo.moveMode);
+  };
+
+  const multiMenuMergeClicked = () => {
+    console.log(multiMenuControlInfo.moveMode);
+  };
+
+  const multiMenuDeleteClicked = () => {
+    console.log(multiMenuControlInfo.moveMode);
+  };
+
   $: featureData && drawFeature(featureData);
 
 </script>
@@ -1049,7 +1085,10 @@
 <div class='explain-panel' bind:this={component}>
 
     <div class='context-menu-container hidden' bind:this={multiMenu}>
-      <ContextMenu /> 
+      <ContextMenu 
+        on:inputChanged={multiMenuInputChanged}
+        on:moveButtonClicked={multiMenuButtonClicked}
+      /> 
     </div>
 
     <div class='header'>

@@ -1,8 +1,11 @@
 <script>
   import * as d3 from 'd3';
   import { onMount, createEventDispatcher } from 'svelte';
-  import selectIconSVG from '../img/select-icon.svg';
-  import dragIconSVG from '../img/drag-icon.svg';
+
+  // Stores
+  import { multiSelectMenuStore } from '../store';
+
+  // SVGs
   import mergeIconSVG from '../img/merge-icon.svg';
   import increasingIconSVG from '../img/increasing-icon.svg';
   import decreasingIconSVG from '../img/decreasing-icon.svg';
@@ -10,9 +13,19 @@
   import trashIconSVG from '../img/trash-icon.svg';
   import upIconSVG from '../img/up-icon.svg';
   import downIconSVG from '../img/down-icon.svg';
+  import interpolateIconSVG from '../img/interpolate-icon.svg';
 
+  // Component variables
   let component = null;
-  let increment = 0;
+  let controlInfo = {
+    moveMode: false,
+    increment: 0
+  };
+
+  // Store binding
+  multiSelectMenuStore.subscribe(value => {
+    controlInfo = value;
+  });
 
   const dispatch = createEventDispatcher();
 
@@ -53,32 +66,60 @@
     d3.select(component)
       .select('.svg-icon#icon-delete')
       .html(trashIconSVG.replaceAll('black', 'currentcolor'));
+
+    d3.select(component)
+      .select('.svg-icon#icon-interpolate')
+      .html(interpolateIconSVG.replaceAll('black', 'currentcolor'));
+
   };
 
   const inputChanged = (e) => {
-    console.log(increment);
     e.preventDefault();
     let value = parseInt(e.target.value);
+
     if (isNaN(value)) value = 0;
-    increment = value;
+    controlInfo.increment = value;
     e.target.value = `${value >= 0 ? '+' : ''}${value}`;
-    console.log(increment);
+
+    // Update the store
+    multiSelectMenuStore.set(controlInfo);
+
+    dispatch('inputChanged');
   };
 
   const inputAdd = () => {
-    increment++;
+    controlInfo.increment++;
     d3.select(component)
       .select('.item-input')
       .node()
-      .value = `${increment >= 0 ? '+' : ''}${increment}`;
+      .value = `${controlInfo.increment >= 0 ? '+' : ''}${controlInfo.increment}`;
+
+    // Update the store
+    multiSelectMenuStore.set(controlInfo);
+
+    dispatch('inputChanged');
   };
 
   const inputMinus = () => {
-    increment--;
+    controlInfo.increment--;
     d3.select(component)
       .select('.item-input')
       .node()
-      .value = `${increment >= 0 ? '+' : ''}${increment}`;
+      .value = `${controlInfo.increment >= 0 ? '+' : ''}${controlInfo.increment}`;
+
+    // Update the store
+    multiSelectMenuStore.set(controlInfo);
+
+    dispatch('inputChanged');
+  };
+
+  const moveButtonClicked = () => {
+    controlInfo.moveMode = !controlInfo.moveMode;
+
+    // Update the store
+    multiSelectMenuStore.set(controlInfo);
+
+    dispatch('moveButtonClicked');
   };
 
   onMount(() => {
@@ -93,6 +134,7 @@
   $secondary-color: hsl(0, 0%, 40%);
   $border-radius: 13px;
   $dot-background: $blue-dark;
+  $hover-color: $blue-dark;
 
   @mixin item-input-arrow {
     position: absolute;
@@ -103,6 +145,10 @@
     width: 12px;
     height: 25px;
     right: 0;
+
+    &:hover {
+      color: $hover-color;
+    }
   }
 
   .menu-wrapper {
@@ -133,6 +179,18 @@
       width: 70px;
       justify-content: flex-start;
     }
+
+    &.selected {
+      color: $blue-icon;
+
+      &:hover {
+        color: $blue-icon;
+      }
+    }
+
+    &:hover {
+      color: $hover-color;
+    }
   }
 
   .item-input {
@@ -146,10 +204,6 @@
     border-radius: 2px;
     border: 1px solid transparent;
     outline: none;
-
-    :hover {
-      color: $indigo-dark;
-    }
 
     &:focus {
       border-radius: 2px;
@@ -182,10 +236,6 @@
     height: 50px;
   }
 
-  .svg-icon:hover {
-    color: $blue-dark;
-  }
-
   :global(.menu-wrapper .svg-icon) {
     display: flex;
     justify-content: center;
@@ -210,15 +260,19 @@
 
   <div class='items'>
 
-    <div class='item'>
+    <!-- Move button -->
+    <div class='item' on:click={moveButtonClicked}
+      class:selected={controlInfo.moveMode}
+    >
       <div class='svg-icon' id='icon-updown'></div>
     </div>
 
     <div class='separator'></div>
 
+    <!-- Input field -->
     <div class='item has-input'>
       <input class='item-input'
-        placeholder={`${increment >= 0 ? '+' : '-'}${increment}`}
+        placeholder={`${controlInfo.increment >= 0 ? '+' : '-'}${controlInfo.increment}`}
         on:change={inputChanged}
       >
 
@@ -229,28 +283,48 @@
       <div class='svg-icon item-input-down' id='icon-input-down'
         on:click={inputMinus}
       ></div>
-
     </div>
 
     <div class='separator'></div>
 
-    <div class='item'>
+    <!-- Increasing -->
+    <div class='item'
+      on:click={() => dispatch('increasingClicked')}
+    >
       <div class='svg-icon' id='icon-increasing'></div>
     </div>
 
-    <div class='item'>
+    <!-- Decreasing -->
+    <div class='item'
+      on:click={() => dispatch('decreasingClicked')}
+    >
       <div class='svg-icon' id='icon-decreasing'></div>
     </div>
 
     <div class='separator'></div>
 
-    <div class='item'>
+    <!-- Interpolation -->
+    <div class='item'
+      on:click={() => dispatch('interpolationClicked')}
+    >
+      <div class='svg-icon' id='icon-interpolate'></div>
+    </div>
+
+    <div class='separator'></div>
+
+    <!-- Merge -->
+    <div class='item'
+      on:click={() => dispatch('mergeClicked')}
+    >
       <div class='svg-icon' id='icon-merge'></div>
     </div>
 
     <div class='separator'></div>
 
-    <div class='item'>
+    <!-- Deletion -->
+    <div class='item'
+      on:click={() => dispatch('deleteClicked')}
+    >
       <div class='svg-icon' id='icon-delete'></div>
     </div>
 
