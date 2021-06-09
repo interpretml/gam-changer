@@ -72,6 +72,8 @@
 
   // Editing mode
   let hasSelected = false;
+  const menuWidth = 375;
+  const menuHeight = 50;
 
   // Store binding
   let multiMenuControlInfo = null;
@@ -457,6 +459,8 @@
     zoom = d3.zoom()
       .scaleExtent(zoomScaleExtent)
       .on('zoom', e => zoomed(e, xScale, yScale))
+      .on('start', zoomStart)
+      .on('end', zoomEnd)
       .filter(e => {
         // if (e.shiftKey) return false;
         if (selectMode) {
@@ -604,24 +608,52 @@
           (d.x1 === d.x2 && d.x2 >= xRange[0] && d.x2 <= xRange[1] && d.y2 >= yRange[0] && d.y2 <= yRange[1])
         );
       
-      // Add animation to the selected paths
-      // svgSelect.select('g.line-chart-line-group')
-      //   .selectAll('path.additive-line-segment.selected')
-      //   .classed('flow-line', true)
-      //   .attr('stroke-dasharray', '2 3')
-      //   .attr('stroke-dashoffset', 0)
-      //   .each((d, i, g) => animateLine(d, i, g, 0, -300));
-
       // Remove the brush box
       svgSelect.select('g.line-chart-content-group g.brush')
         .call(brush.move, null)
         .select('rect.overlay')
         .attr('cursor', null);
 
-      // Show the context menu
+      // Show the context menu near the selected region
+      d3.select(multiMenu)
+        .call(moveMenubar, menuWidth, menuHeight)
+        .classed('hidden', false);
+    }
+  };
+
+  const zoomStart = () => {
+    if (hasSelected) {
+      d3.select(multiMenu)
+        .classed('hidden', true);
+    }
+  };
+
+  const zoomEnd = () => {
+    if (hasSelected) {
       d3.select(multiMenu)
         .classed('hidden', false);
     }
+  };
+
+  /**
+   * Use the selection bbox to compute where to put the context menu bar
+  */
+  const moveMenubar = (menubar, menuWidth, menuHeight) => {
+    const bbox = d3.select(svg)
+      .select('g.select-bbox-group rect.select-bbox');
+
+    const bboxPosition = bbox.node().getBoundingClientRect();
+    const panelBboxPosition = component.getBoundingClientRect();
+
+    let left = bboxPosition.x - panelBboxPosition.x + bboxPosition.width / 2 - menuWidth / 2;
+    let top = bboxPosition.y - panelBboxPosition.y - menuHeight - 20;
+
+    // Do not move the bar out of its parent
+    left = Math.max(0, left);
+    top = Math.max(0, top);
+
+    menubar.style('left', `${left}px`)
+      .style('top', `${top}px`);
   };
 
   const brushEndZoom = (event, xScale, yScale) => {
@@ -771,6 +803,10 @@
         .attr('y', d => curYScale(d.y1) - curPadding)
         .attr('width', d => curXScale(d.x2) - curXScale(d.x1) + 2 * curPadding)
         .attr('height', d => curYScale(d.y2) - curYScale(d.y1) + 2 * curPadding);
+
+      // Also transform the menu bar
+      d3.select(multiMenu)
+        .call(moveMenubar, menuWidth, menuHeight);
     }
 
     // Draw/update the grid
@@ -993,8 +1029,8 @@
   .context-menu-container {
     position: absolute;
     z-index: 5;
-    left: 250px;
-    bottom: 50px;
+    // left: 250px;
+    // bottom: 50px;
 
     &.hidden {
       visibility: hidden;
