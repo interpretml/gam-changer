@@ -21,6 +21,7 @@
   let component = null;
   let controlInfo = {
     moveMode: false,
+    toSwitchMoveMode: false,
     increment: 0
   };
   let tooltipConfig = {};
@@ -29,6 +30,12 @@
   // Store binding
   multiSelectMenuStore.subscribe(value => {
     controlInfo = value;
+
+    if (controlInfo.toSwitchMoveMode) {
+      switchMoveMode();
+      controlInfo.toSwitchMoveMode = false;
+      multiSelectMenuStore.set(controlInfo);
+    }
   });
 
   const dispatch = createEventDispatcher();
@@ -125,12 +132,7 @@
     dispatch('inputChanged');
   };
 
-  const moveButtonClicked = () => {
-    controlInfo.moveMode = !controlInfo.moveMode;
-
-    // Update the store
-    multiSelectMenuStore.set(controlInfo);
-
+  const switchMoveMode = () => {
     if (controlInfo.moveMode) {
       // Shrink the menu bar to make space for action
       d3.select(component)
@@ -156,7 +158,15 @@
         .ease(d3.easeCubicInOut)
         .style('width', '375px');
     }
+  };
 
+  const moveButtonClicked = () => {
+    controlInfo.moveMode = !controlInfo.moveMode;
+
+    switchMoveMode();
+
+    // Update the store
+    multiSelectMenuStore.set(controlInfo);
 
     dispatch('moveButtonClicked');
   };
