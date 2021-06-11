@@ -34,7 +34,8 @@
 
   onMount(async () => {
     console.log('loading data');
-    let loadedData = await d3.json('/data/iow-house-ebm.json');
+    // let loadedData = await d3.json('/data/iow-house-ebm.json');
+    let loadedData = await d3.json('/data/medical-ebm.json');
     // loadedData = processData(loadedData);
     data = loadedData;
     console.log('loaded data');
@@ -102,7 +103,7 @@
 
     <div class='feature-window'>
       <ContGlobalExplain
-        featureData = {data === null ? null : data.features[2]}
+        featureData = {data === null ? null : data.features[0]}
         scoreRange = {data === null ? null : data.scoreRange}
         svgHeight = 500
       />

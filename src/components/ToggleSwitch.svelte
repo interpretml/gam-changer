@@ -41,7 +41,6 @@
   const mouseoverHandler = (e, message, width, yOffset) => {
     let node = e.currentTarget;
     mouseoverTimeout = setTimeout(() => {
-      console.log('enter');
       let position = node.getBoundingClientRect();
       let curWidth = position.width;
 

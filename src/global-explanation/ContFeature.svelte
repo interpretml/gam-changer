@@ -48,6 +48,8 @@
   // Computed data
   let pointData = null;
   let additiveData = null;
+  let pointDataBuffer = null;
+  let additiveDataBuffer = null;
 
   // --- Interactions ---
   // Brush interactions
@@ -201,7 +203,9 @@
       x2: featureData.binEdge[featureData.additive.length],
       y2: featureData.additive[featureData.additive.length - 1],
       id: featureData.additive.length - 1,
-      pos: 'r'
+      pos: 'r',
+      sx: featureData.binEdge[featureData.additive.length - 1],
+      sy: featureData.additive[featureData.additive.length - 1]
     });
 
     return additiveData;
@@ -348,7 +352,7 @@
       .attr('class', 'line-chart-confidence-group');
 
     let lineGroup = lineChartContent.append('g')
-      .attr('class', 'line-chart-line-group')
+      .attr('class', 'line-chart-line-group real')
       .style('stroke', colors.line)
       .style('stroke-width', linePathWidth)
       .style('fill', 'none');
@@ -362,6 +366,13 @@
       .attr('d', d => {
         return `M ${xScale(d.x1)}, ${yScale(d.y1)} L ${xScale(d.x2)} ${yScale(d.y2)}`;
       });
+
+    let lineGroupClone = lineGroup.clone(true)
+      .classed('real', false)
+      .lower();
+    
+    lineGroupClone.selectAll('path')
+      .style('stroke', 'hsl(224, 50%, 82%)');
     
     // Draw nodes for editing
     let nodeGroup = lineChartContent.append('g')
@@ -377,7 +388,7 @@
       .attr('cy', d => yScale(d.y))
       .attr('r', rExtent[0])
       .style('stroke-width', nodeStrokeWidth);
-
+    
     // Draw the underlying confidence interval
     confidenceGroup.selectAll('rect')
       .data(confidenceData)
@@ -558,7 +569,7 @@
         );
 
       // Highlight the paths associated with the selected dots
-      svgSelect.select('g.line-chart-line-group')
+      svgSelect.select('g.line-chart-line-group.real')
         .selectAll('path.additive-line-segment')
         .classed('selected', d => 
           (d.sx >= xRange[0] && d.sx <= xRange[1] && d.sy >= yRange[0] && d.sy <= yRange[1]) ||
@@ -588,6 +599,11 @@
         multiMenuControlInfo.moveMode = false;
         multiMenuControlInfo.toSwitchMoveMode = true;
         multiSelectMenuStore.set(multiMenuControlInfo);
+
+        // TODO: CHANGE IT
+        // Update the data using current edits
+        pointData = pointDataBuffer;
+        additiveData = additiveDataBuffer;
 
         // Remove the selection bbox
         svgSelect.selectAll('g.line-chart-content-group g.select-bbox-group').remove();
@@ -626,7 +642,7 @@
         .selectAll('rect.select-bbox')
         .data(selectedInfo.boundingBox)
         .join('rect')
-        .attr('class', 'select-bbox')
+        .attr('class', 'select-bbox original-bbox')
         .attr('x', d => curXScale(d.x1) - curPadding)
         .attr('y', d => curYScale(d.y1) - curPadding)
         .attr('width', d => curXScale(d.x2) - curXScale(d.x1) + 2 * curPadding)
@@ -636,6 +652,7 @@
         .style('stroke-dasharray', '5 3');
 
       bbox.clone(true)
+        .classed('original-bbox', false)
         .style('stroke', 'white')
         .style('stroke-width', bboxStrokeWidth * 3)
         .lower();
@@ -708,8 +725,6 @@
       xScale.domain(initXDomain);
       yScale.domain(initYDomain);
     } else {
-      console.log(selection);
-
       // Rescale the x and y axises
       xScale.domain([xScale.invert(selection[0][0]), xScale.invert(selection[1][0])]);
       yScale.domain([yScale.invert(selection[1][1]), yScale.invert(selection[0][1])]);
@@ -783,7 +798,7 @@
       .call(d3.axisLeft(zYScale));
     
     // Transform the lines
-    let lineGroup = svgSelect.select('g.line-chart-line-group')
+    let lineGroup = svgSelect.selectAll('g.line-chart-line-group')
       .attr('transform', transform);
     
     // Rescale the stroke width a little bit
@@ -1018,8 +1033,10 @@
       additiveDataBuffer[2 * i].sy += dataYChange;
 
       // (i + 1)'s Left line
-      additiveDataBuffer[2 * i + 1].y1 += dataYChange;
-      additiveDataBuffer[2 * i + 1].sy += dataYChange;
+      if (2 * i + 1 < additiveDataBuffer.length) {
+        additiveDataBuffer[2 * i + 1].y1 += dataYChange;
+        additiveDataBuffer[2 * i + 1].sy += dataYChange;
+      }
     });
 
     // Step 1.3: update the bbox info
@@ -1034,8 +1051,10 @@
       .attr('cy', d => oriYScale(d.y));
 
     // Step 2.2: redraw the paths that are changed
-    let paths = svgSelect.select('g.line-chart-line-group')
+    let paths = svgSelect.select('g.line-chart-line-group.real')
       .selectAll('path.additive-line-segment');
+
+    console.log(paths);
 
     paths.data(additiveDataBuffer, d => `${d.id}-${d.pos}`)
       .join('path')
@@ -1058,16 +1077,19 @@
     // Enter the move mode
 
     // Step 1. create a pointdata clone for user to change
-    let pointDataBuffer = JSON.parse(JSON.stringify(pointData));
-    let additiveDataBuffer = JSON.parse(JSON.stringify(additiveData));
+    pointDataBuffer = JSON.parse(JSON.stringify(pointData));
+    additiveDataBuffer = JSON.parse(JSON.stringify(additiveData));
 
-    d3.select(svg)
+    let bboxGroup = d3.select(svg)
       .select('g.line-chart-content-group g.select-bbox-group')
       .style('cursor', 'row-resize')
       .call(d3.drag()
         .on('start', dragStarted)
         .on('drag', (e) => dragged(e, pointDataBuffer, additiveDataBuffer))
       );
+    
+    bboxGroup.select('rect.original-bbox')
+      .each((d, i, g) => animateLine(d, i, g, 0, -500));
 
   };
 
