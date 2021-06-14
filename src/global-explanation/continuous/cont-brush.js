@@ -1,6 +1,8 @@
 import * as d3 from 'd3';
-import { SelectedInfo } from './class';
-import { moveMenubar } from './bbox';
+import { SelectedInfo } from './cont-class';
+import { moveMenubar } from './cont-bbox';
+import { rScale } from './cont-zoom';
+import { state } from './cont-state';
 
 // Need a timer to avoid the brush event call after brush.move()
 let idleTimeout = null;
@@ -28,7 +30,7 @@ const stopAnimateLine = (svg) => {
     .classed('flow-line', false);
 };
 
-export const brushDuring = (event, svg, curXScale, curYScale, selectedInfo, multiMenu) => {
+export const brushDuring = (event, svg, multiMenu) => {
   // Get the selection boundary
   let selection = event.selection;
   let svgSelect = d3.select(svg);
@@ -39,12 +41,12 @@ export const brushDuring = (event, svg, curXScale, curYScale, selectedInfo, mult
     }
   } else {
     // Compute the selected data region
-    let xRange = [curXScale.invert(selection[0][0]), curXScale.invert(selection[1][0])];
-    let yRange = [curYScale.invert(selection[1][1]), curYScale.invert(selection[0][1])];
+    let xRange = [state.curXScale.invert(selection[0][0]), state.curXScale.invert(selection[1][0])];
+    let yRange = [state.curYScale.invert(selection[1][1]), state.curYScale.invert(selection[0][1])];
 
     // Clean up the previous flowing lines
     stopAnimateLine(svg);
-    selectedInfo = new SelectedInfo();
+    state.selectedInfo = new SelectedInfo();
 
     // Remove the selection bbox
     svgSelect.selectAll('g.line-chart-content-group g.select-bbox-group').remove();
@@ -69,9 +71,9 @@ export const brushDuring = (event, svg, curXScale, curYScale, selectedInfo, mult
   }
 };
 
-export const brushEndSelect = (event, svg, selectedInfo, multiMenu, multiMenuControlInfo,
-  multiSelectMenuStore, pointData, pointDataBuffer, additiveData, additiveDataBuffer,
-  curXScale, curYScale, rScale, curTransform, bboxPadding, bboxStrokeWidth, menuWidth,
+export const brushEndSelect = (event, svg, multiMenu, multiMenuControlInfo,
+  multiSelectMenuStore,
+  bboxPadding, bboxStrokeWidth, menuWidth,
   menuHeight, brush, component
 ) => {
   // Get the selection boundary
@@ -82,7 +84,7 @@ export const brushEndSelect = (event, svg, selectedInfo, multiMenu, multiMenuCon
     if (idleTimeout === null) {
       // Clean up the previous flowing lines
       stopAnimateLine();
-      selectedInfo = new SelectedInfo();
+      state.selectedInfo = new SelectedInfo();
 
       svgSelect.select('g.line-chart-content-group g.brush rect.overlay')
         .attr('cursor', null);
@@ -97,8 +99,8 @@ export const brushEndSelect = (event, svg, selectedInfo, multiMenu, multiMenuCon
 
       // TODO: CHANGE IT
       // Update the data using current edits
-      pointData = pointDataBuffer;
-      additiveData = additiveDataBuffer;
+      state.pointData = state.pointDataBuffer;
+      state.additiveData = state.additiveDataBuffer;
 
       // Remove the selection bbox
       svgSelect.selectAll('g.line-chart-content-group g.select-bbox-group').remove();
@@ -110,16 +112,16 @@ export const brushEndSelect = (event, svg, selectedInfo, multiMenu, multiMenuCon
     stopAnimateLine();
 
     // Compute the selected data region
-    let xRange = [curXScale.invert(selection[0][0]), curXScale.invert(selection[1][0])];
-    let yRange = [curYScale.invert(selection[1][1]), curYScale.invert(selection[0][1])];
+    let xRange = [state.curXScale.invert(selection[0][0]), state.curXScale.invert(selection[1][0])];
+    let yRange = [state.curYScale.invert(selection[1][1]), state.curYScale.invert(selection[0][1])];
 
     // Highlight the selected dots
     svgSelect.select('g.line-chart-node-group')
       .selectAll('circle.node')
       .classed('selected', d => {
         if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
-          selectedInfo.nodeData.push([d.x, d.y]);
-          selectedInfo.nodeIndexes.add(d.id);
+          state.selectedInfo.nodeData.push([d.x, d.y]);
+          state.selectedInfo.nodeIndexes.add(d.id);
           return true;
         } else {
           return false;
@@ -127,21 +129,21 @@ export const brushEndSelect = (event, svg, selectedInfo, multiMenu, multiMenuCon
       });
 
     // Compute the bounding box
-    selectedInfo.computeBBox();
+    state.selectedInfo.computeBBox();
 
-    let curPadding = (rScale(curTransform.k) + bboxPadding) * curTransform.k;
+    let curPadding = (rScale(state.curTransform.k) + bboxPadding) * state.curTransform.k;
 
     let bbox = svgSelect.select('g.line-chart-content-group')
       .append('g')
       .attr('class', 'select-bbox-group')
       .selectAll('rect.select-bbox')
-      .data(selectedInfo.boundingBox)
+      .data(state.selectedInfo.boundingBox)
       .join('rect')
       .attr('class', 'select-bbox original-bbox')
-      .attr('x', d => curXScale(d.x1) - curPadding)
-      .attr('y', d => curYScale(d.y1) - curPadding)
-      .attr('width', d => curXScale(d.x2) - curXScale(d.x1) + 2 * curPadding)
-      .attr('height', d => curYScale(d.y2) - curYScale(d.y1) + 2 * curPadding)
+      .attr('x', d => state.curXScale(d.x1) - curPadding)
+      .attr('y', d => state.curYScale(d.y1) - curPadding)
+      .attr('width', d => state.curXScale(d.x2) - state.curXScale(d.x1) + 2 * curPadding)
+      .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding)
       .style('stroke-width', bboxStrokeWidth)
       .style('stroke', 'hsl(230, 100%, 10%)')
       .style('stroke-dasharray', '5 3');
@@ -152,9 +154,9 @@ export const brushEndSelect = (event, svg, selectedInfo, multiMenu, multiMenuCon
       .style('stroke-width', bboxStrokeWidth * 3)
       .lower();
 
-    selectedInfo.hasSelected = svgSelect.selectAll('g.line-chart-node-group circle.node.selected').size() > 0;
+    state.selectedInfo.hasSelected = svgSelect.selectAll('g.line-chart-node-group circle.node.selected').size() > 0;
 
-    if (selectedInfo.hasSelected) {
+    if (state.selectedInfo.hasSelected) {
       // Show the context menu near the selected region
       d3.select(multiMenu)
         .call(moveMenubar, menuWidth, menuHeight, svg, component)

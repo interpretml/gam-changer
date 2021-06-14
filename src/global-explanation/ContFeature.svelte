@@ -4,10 +4,11 @@
   import { round } from '../utils';
   import { config } from '../config';
 
-  import { SelectedInfo } from './continuous/class';
-  import { createConfidenceData, createAdditiveData, createPointData } from './continuous/data';
-  import { brushDuring, brushEndSelect } from './continuous/brush';
-  import { moveMenubar } from './continuous/bbox';
+  import { SelectedInfo } from './continuous/cont-class';
+  import { createConfidenceData, createAdditiveData, createPointData } from './continuous/cont-data';
+  import { brushDuring, brushEndSelect } from './continuous/cont-brush';
+  import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent, rScale } from './continuous/cont-zoom';
+  import { state } from './continuous/cont-state';
 
   import selectIconSVG from '../img/select-icon.svg';
   import dragIconSVG from '../img/drag-icon.svg';
@@ -52,12 +53,6 @@
   const bboxStrokeWidth = 1;
   const nodeStrokeWidth = 1;
 
-  // Computed data
-  let pointData = null;
-  let additiveData = null;
-  let pointDataBuffer = null;
-  let additiveDataBuffer = null;
-
   // --- Interactions ---
   // Brush interactions
   let brush = null;
@@ -66,20 +61,15 @@
 
   // Panning and zooming
   let zoom = null;
-  const zoomScaleExtent = [1, 30];
-  const rExtent = [2, 16];
   let oriXScale = null;
   let oriYScale = null;
-  let curXScale = null;
-  let curYScale = null;
-  let curTransform = null;
   const bboxPadding = 1;
 
   // Select mode
   let selectMode = false;
+  state.selectedInfo = new SelectedInfo();
 
   // Editing mode
-  let selectedInfo = new SelectedInfo();
   const menuWidth = 375;
   const menuHeight = 50;
 
@@ -148,21 +138,21 @@
     
     oriXScale = xScale;
     oriYScale = yScale;
-    curXScale = xScale;
-    curYScale = yScale;
+    state.curXScale = xScale;
+    state.curYScale = yScale;
     
     // Store the initial domain for zooming
     initXDomain = [xMin, xMax];
     initYDomain = scoreRange; 
 
     // Create a data array by combining the bin edge and additive terms
-    additiveData = createAdditiveData(featureData);
+    state.additiveData = createAdditiveData(featureData);
 
     // Create the confidence interval region
     let confidenceData = createConfidenceData(featureData);
 
     // Create a data array to draw nodes
-    pointData = createPointData(featureData);
+    state.pointData = createPointData(featureData);
 
     // Create histogram chart group
     let histChart = content.append('g')
@@ -221,7 +211,7 @@
 
     // We draw the shape function with many line segments (path)
     lineGroup.selectAll('path')
-      .data(additiveData, d => `${d.id}-${d.pos}`)
+      .data(state.additiveData, d => `${d.id}-${d.pos}`)
       .join('path')
       .attr('class', 'additive-line-segment')
       .attr('id', d => d.id)
@@ -242,7 +232,7 @@
       .style('visibility', 'hidden');
     
     nodeGroup.selectAll('circle')
-      .data(pointData, d => d.id)
+      .data(state.pointData, d => d.id)
       .join('circle')
       .attr('class', 'node')
       .attr('id', d => `node-${d.id}`)
@@ -351,12 +341,12 @@
     // Add brush
     brush = d3.brush()
       .on('end', e => brushEndSelect(
-        e, svg, selectedInfo, multiMenu, multiMenuControlInfo,
-        multiSelectMenuStore, pointData, pointDataBuffer, additiveData, additiveDataBuffer,
-        curXScale, curYScale, rScale, curTransform, bboxPadding, bboxStrokeWidth, menuWidth,
+        e, svg, multiMenu, multiMenuControlInfo,
+        multiSelectMenuStore,
+        bboxPadding, bboxStrokeWidth, menuWidth,
         menuHeight, brush, component
       ))
-      .on('start brush', e => brushDuring(e, svg, curXScale, curYScale, selectedInfo, multiMenu))
+      .on('start brush', e => brushDuring(e, svg, multiMenu))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]])
       .filter((e) => {
         if (selectMode) {
@@ -377,9 +367,11 @@
     // Add panning and zooming
     zoom = d3.zoom()
       .scaleExtent(zoomScaleExtent)
-      .on('zoom', e => zoomed(e, xScale, yScale))
-      .on('start', zoomStart)
-      .on('end', zoomEnd)
+      .on('zoom', e => zoomed(e, xScale, yScale, svg, linePathWidth,
+        nodeStrokeWidth, yAxisWidth, lineChartWidth, lineChartHeight,
+        bboxPadding, multiMenu, menuWidth, menuHeight, component))
+      .on('start', () => zoomStart(multiMenu))
+      .on('end', () => zoomEnd(multiMenu))
       .filter(e => {
         // if (e.shiftKey) return false;
         if (selectMode) {
@@ -402,166 +394,6 @@
         .call(zoom.transform, d3.zoomIdentity);
     });
 
-  };
-
-  const zoomStart = () => {
-    if (selectedInfo.hasSelected) {
-      d3.select(multiMenu)
-        .classed('hidden', true);
-    }
-  };
-
-  const zoomEnd = () => {
-    if (selectedInfo.hasSelected) {
-      d3.select(multiMenu)
-        .classed('hidden', false);
-    }
-  };
-
-
-  /**
-   * Update the view with zoom transformation
-   * @param event Zoom event
-   * @param xScale Scale for the x-axis
-   * @param yScale Scale for the y-axis
-   */
-  const zoomed = (event, xScale, yScale) => {
-
-    let svgSelect = d3.select(svg);
-    let transform = event.transform;
-
-    // Transform the axises
-    let zXScale = transform.rescaleX(xScale);
-    let zYScale = transform.rescaleY(yScale);
-
-    curXScale = zXScale;
-    curYScale = zYScale;
-    curTransform = transform;
-
-    svgSelect.select('g.x-axis')
-      .call(d3.axisBottom(zXScale));
-
-    svgSelect.select('g.y-axis')
-      .call(d3.axisLeft(zYScale));
-    
-    // Transform the lines
-    let lineGroup = svgSelect.selectAll('g.line-chart-line-group')
-      .attr('transform', transform);
-    
-    // Rescale the stroke width a little bit
-    lineGroup.style('stroke-width', linePathWidth / transform.k);
-
-    // Transform the confidence rectangles
-    svgSelect.select('g.line-chart-confidence-group')
-      .attr('transform', transform);
-
-    // Transform the nodes
-    let nodeGroup = svgSelect.select('g.line-chart-node-group');
-
-    if (transform.k === 1 && nodeGroup.style('visibility') === 'visible') {
-      nodeGroup.transition()
-        .duration(300)
-        .style('opacity', 0)
-        .on('end', (d, i, g) => {
-          d3.select(g[i])
-            .style('visibility', 'hidden');
-        });
-    }
-
-    if (transform.k !== 1 && nodeGroup.style('visibility') === 'hidden') {
-      nodeGroup.style('opacity', 0);
-      nodeGroup.style('visibility', 'visible')
-        .transition()
-        .duration(500)
-        .style('opacity', 1);
-    }
-
-    svgSelect.select('g.line-chart-node-group')
-      .attr('transform', transform)
-      .selectAll('circle.node')
-      .attr('r', rScale(transform.k))
-      .style('stroke-width', nodeStrokeWidth / transform.k);
-
-    // Transform the density rectangles
-    // Here we want to translate and scale the x axis, and keep y axis consistent
-    svgSelect.select('g.hist-chart-content-group')
-      .attr('transform', `translate(${yAxisWidth + transform.x},
-        ${lineChartHeight})scale(${transform.k}, 1)`);
-
-    // Transform the selection bbox if applicable
-    if (selectedInfo.hasSelected) {
-      // Here we don't use transform, because we want to keep the gap between
-      // the nodes and bounding box border constant across all scales
-
-      // We want to compute the world coordinate here
-      // Need to transfer back the scale factor from the node radius
-      let curPadding = (rScale(curTransform.k) + bboxPadding) * curTransform.k;
-
-      svgSelect.select('g.line-chart-content-group')
-        .selectAll('rect.select-bbox')
-        .attr('x', d => curXScale(d.x1) - curPadding)
-        .attr('y', d => curYScale(d.y1) - curPadding)
-        .attr('width', d => curXScale(d.x2) - curXScale(d.x1) + 2 * curPadding)
-        .attr('height', d => curYScale(d.y2) - curYScale(d.y1) + 2 * curPadding);
-
-      // Also transform the menu bar
-      d3.select(multiMenu)
-        .call(moveMenubar, menuWidth, menuHeight, svg, component);
-    }
-
-    // Draw/update the grid
-    svgSelect.select('g.line-chart-grid-group')
-      .call(drawGrid, zXScale, zYScale);
-
-  };
-
-  /**
-   * Use linear interpolation to scale the node radius during zooming
-   * It is actually kind of tricky, there should be better functions
-   * (1) In overview, we want the radius to be small to avoid overdrawing;
-   * (2) When zooming in, we want the radius to increase (slowly)
-   * (3) Need to counter the zoom's scaling effect
-   * @param k Scale factor
-   */
-  const rScale = (k) => {
-    let alpha = (k - zoomScaleExtent[0]) / (zoomScaleExtent[1] - zoomScaleExtent[0]);
-    alpha = d3.easeLinear(alpha);
-    let target = alpha * (rExtent[1] - rExtent[0]) + rExtent[0];
-    return target / k;
-  };
-
-  const drawGrid = (g, xScale, yScale) => {
-    g.style('stroke', 'black')
-      .style('stroke-opacity', 0.08);
-    
-    // Add vertical lines based on the xScale ticks
-    g.call(g => g.selectAll('line.grid-line-x')
-      .data(xScale.ticks(), d => d)
-      .join(
-        enter => enter.append('line')
-          .attr('class', 'grid-line-x')
-          .attr('y2', lineChartHeight),
-        update => update,
-        exit => exit.remove()
-      )
-      .attr('x1', d => 0.5 + xScale(d))
-      .attr('x2', d => 0.5 + xScale(d))
-    );
-
-    // Add horizontal lines based on the yScale ticks
-    return g.call(g => g.selectAll('line.grid-line-y')
-      .data(yScale.ticks(), d => d)
-      .join(
-        enter => enter.append('line')
-          .attr('class', 'grid-line-y')
-          .classed('grid-line-y-0', d => d === 0)
-          .attr('x2', lineChartWidth),
-        update => update,
-        exit => exit.remove()
-      )
-      .attr('y1', d => yScale(d))
-      .attr('y2', d => yScale(d))
-    );
   };
 
   // ---- Interaction Functions ----
@@ -592,7 +424,7 @@
       .ease(d3.easeLinear)
       .attr('stroke-dashoffset', initOffset + offsetRate)
       .on('end', (d, i, g) => {
-        if (selectedInfo.hasSelected) {
+        if (state.selectedInfo.hasSelected) {
           animateLine(d, i, g, initOffset + offsetRate, offsetRate);
         }
       });
@@ -632,7 +464,7 @@
     let nodes = svgSelect.select('g.line-chart-node-group')
       .selectAll('circle.node');
 
-    let dataYChange = curYScale.invert(e.y) - curYScale.invert(e.y - e.dy);
+    let dataYChange = state.curYScale.invert(e.y) - state.curYScale.invert(e.y - e.dy);
 
     // Another way to directly change the node's y position
     // let worldY = oriYScale(curYScale.invert(e.y));
@@ -646,7 +478,7 @@
     //   });
 
     // Change the data based on the y-value changes, then redraw nodes (preferred method)
-    selectedInfo.nodeIndexes.forEach(i => {
+    state.selectedInfo.nodeIndexes.forEach(i => {
       // Step 1.1: update point data
       pointDataBuffer[i].y += dataYChange;
 
@@ -675,8 +507,8 @@
     });
 
     // Step 1.3: update the bbox info
-    selectedInfo.updateNodeDataY(dataYChange);
-    selectedInfo.computeBBox();
+    state.selectedInfo.updateNodeDataY(dataYChange);
+    state.selectedInfo.computeBBox();
 
     // Update the visualization with new data
 
@@ -689,8 +521,6 @@
     let paths = svgSelect.select('g.line-chart-line-group.real')
       .selectAll('path.additive-line-segment');
 
-    console.log(paths);
-
     paths.data(additiveDataBuffer, d => `${d.id}-${d.pos}`)
       .join('path')
       .attr('d', d => {
@@ -698,12 +528,12 @@
       });
 
     // Step 2.3: move the selected bbox
-    let curPadding = (rScale(curTransform.k) + bboxPadding) * curTransform.k;
+    let curPadding = (rScale(state.curTransform.k) + bboxPadding) * state.curTransform.k;
 
     svgSelect.select('g.line-chart-content-group g.select-bbox-group')
       .selectAll('rect.select-bbox')
-      .datum(selectedInfo.boundingBox[0])
-      .attr('y', d => curYScale(d.y1) - curPadding);
+      .datum(state.selectedInfo.boundingBox[0])
+      .attr('y', d => state.curYScale(d.y1) - curPadding);
   };
 
   const multiMenuButtonClicked = async () => {
@@ -716,15 +546,15 @@
     // Enter the move mode
 
     // Step 1. create a pointdata clone for user to change
-    pointDataBuffer = JSON.parse(JSON.stringify(pointData));
-    additiveDataBuffer = JSON.parse(JSON.stringify(additiveData));
+    state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+    state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
 
     let bboxGroup = d3.select(svg)
       .select('g.line-chart-content-group g.select-bbox-group')
       .style('cursor', 'row-resize')
       .call(d3.drag()
         .on('start', dragStarted)
-        .on('drag', (e) => dragged(e, pointDataBuffer, additiveDataBuffer))
+        .on('drag', (e) => dragged(e, state.pointDataBuffer, state.additiveDataBuffer))
       );
     
     bboxGroup.select('rect.original-bbox')
