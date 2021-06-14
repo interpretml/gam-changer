@@ -56,3 +56,13 @@ export const drawHorizontalColorLegend = (legendGroup, legendConfig, largestAbs)
     .style('text-anchor', 'end')
     .text('Score');
 };
+
+export const fadeRemove = (g, time = 500, ease = d3.easeCubicInOut) => {
+  g.transition()
+    .duration(time)
+    .ease(ease)
+    .style('opacity', 0)
+    .on('end', (d, i, g) => {
+      d3.select(g[i]).remove();
+    });
+};
