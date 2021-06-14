@@ -3,6 +3,12 @@
   // import { initIsotonicRegression } from 'isotonic';
   import { round } from '../utils';
   import { config } from '../config';
+
+  import { SelectedInfo } from './continuous/class';
+  import { createConfidenceData, createAdditiveData, createPointData } from './continuous/data';
+  import { brushDuring, brushEndSelect } from './continuous/brush';
+  import { moveMenubar } from './continuous/bbox';
+
   import selectIconSVG from '../img/select-icon.svg';
   import dragIconSVG from '../img/drag-icon.svg';
 
@@ -58,13 +64,6 @@
   let initXDomain = null;
   let initYDomain = null;
 
-  // Need a timer to avoid the brush event call after brush.move()
-  let idleTimeout = null;
-  const idleDelay = 300;
-
-  // Brush zooming
-  const zoomTransitionTime = 700;
-
   // Panning and zooming
   let zoom = null;
   const zoomScaleExtent = [1, 30];
@@ -80,36 +79,6 @@
   let selectMode = false;
 
   // Editing mode
-  // let hasSelected = false;
-  // let nodeIndexes = new Set();
-  class SelectedInfo {
-    constructor() {
-      this.hasSelected = false;
-      this.nodeIndexes = new Set();
-      this.nodeData = [];
-      this.boundingBox = [];
-    }
-
-    updateNodeDataY(yChange) {
-      for (let i = 0; i < this.nodeData.length; i++) {
-        this.nodeData[i][1] += yChange;
-      }
-    }
-
-    computeBBox() {
-      if (this.nodeData.length > 0) {
-        this.boundingBox = [{
-          x1: d3.min(this.nodeData.map(d => d[0])),
-          y1: d3.max(this.nodeData.map(d => d[1])),
-          x2: d3.max(this.nodeData.map(d => d[0])),
-          y2: d3.min(this.nodeData.map(d => d[1]))
-        }];
-      } else {
-        this.boundingBox = [];
-      }
-    }
-  }
-
   let selectedInfo = new SelectedInfo();
   const menuWidth = 375;
   const menuHeight = 50;
@@ -119,116 +88,6 @@
   multiSelectMenuStore.subscribe(value => {
     multiMenuControlInfo = value;
   });
-
-  /**
-   * Create rectangles in SVG path format tracing the standard deviations at each
-   * point in the model.
-   * @param featureData
-   */
-  const createConfidenceData = (featureData) => {
-
-    let confidenceData = [];
-
-    for (let i = 0; i < featureData.additive.length; i++) {
-      let curValue = featureData.additive[i];
-      let curError = featureData.error[i];
-
-      confidenceData.push({
-        x1: featureData.binEdge[i],
-        y1: curValue + curError,
-        x2: featureData.binEdge[i + 1],
-        y2: curValue - curError
-      });
-    }
-
-    // Right bound
-    let rightValue = featureData.additive[featureData.additive.length - 1];
-    let rightError = featureData.error[featureData.additive.length - 1];
-
-    confidenceData.push({
-      x1: featureData.binEdge[featureData.additive.length - 1],
-      y1: rightValue + rightError,
-      x2: featureData.binEdge[featureData.additive.length - 1],
-      y2: rightValue - rightError
-    });
-
-    return confidenceData;
-  };
-
-  /**
-   * Create line segments (path) to trace the additive term at each bin in the
-   * model.
-   * @param featureData
-   */
-  const createAdditiveData = (featureData) => {
-    let additiveData = [];
-
-    for (let i = 0; i < featureData.additive.length - 1; i++) {
-
-      // Compute the source point and the target point
-      let sx = featureData.binEdge[i];
-      let sy = featureData.additive[i];
-      let tx = featureData.binEdge[i + 1];
-      let ty = featureData.additive[i + 1];
-
-      // Add line segments (need two segments to connect two points)
-      // We separate these two lines so it is easier to drag
-      additiveData.push({
-        x1: sx,
-        y1: sy,
-        x2: tx,
-        y2: sy,
-        id: i,
-        pos: 'r',
-        sx: sx,
-        sy: sy
-      });
-
-      additiveData.push({
-        x1: tx,
-        y1: sy,
-        x2: tx,
-        y2: ty,
-        id: i + 1,
-        pos: 'l',
-        sx: sx,
-        sy: sy
-      });
-    }
-
-    // Connect the last two points (because max point has no additive value, it
-    // does not have a left edge)
-    additiveData.push({
-      x1: featureData.binEdge[featureData.additive.length - 1],
-      y1: featureData.additive[featureData.additive.length - 1],
-      x2: featureData.binEdge[featureData.additive.length],
-      y2: featureData.additive[featureData.additive.length - 1],
-      id: featureData.additive.length - 1,
-      pos: 'r',
-      sx: featureData.binEdge[featureData.additive.length - 1],
-      sy: featureData.additive[featureData.additive.length - 1]
-    });
-
-    return additiveData;
-  };
-
-  /**
-   * Create nodes where each step function begins
-   * @param featureData
-   */
-  const createPointData = (featureData) => {
-    let pointData = [];
-
-    for (let i = 0; i < featureData.additive.length; i++) {
-      pointData.push({
-        x: featureData.binEdge[i],
-        y: featureData.additive[i],
-        id: i
-      });
-    }
-
-    return pointData;
-  };
 
   /**
    * Draw the plot in the SVG component
@@ -491,8 +350,13 @@
 
     // Add brush
     brush = d3.brush()
-      .on('end', e => brushEndSelect(e, xScale, yScale))
-      .on('start brush', e => brushDuring(e, xScale, yScale))
+      .on('end', e => brushEndSelect(
+        e, svg, selectedInfo, multiMenu, multiMenuControlInfo,
+        multiSelectMenuStore, pointData, pointDataBuffer, additiveData, additiveDataBuffer,
+        curXScale, curYScale, rScale, curTransform, bboxPadding, bboxStrokeWidth, menuWidth,
+        menuHeight, brush, component
+      ))
+      .on('start brush', e => brushDuring(e, svg, curXScale, curYScale, selectedInfo, multiMenu))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]])
       .filter((e) => {
         if (selectMode) {
@@ -540,143 +404,6 @@
 
   };
 
-  const brushDuring = (event) => {
-    // Get the selection boundary
-    let selection = event.selection;
-    let svgSelect = d3.select(svg);
-
-    if (selection === null) {
-      if (idleTimeout === null) {
-        return idleTimeout = setTimeout(idled, idleDelay);
-      }
-    } else {
-      // Compute the selected data region
-      let xRange = [curXScale.invert(selection[0][0]), curXScale.invert(selection[1][0])];
-      let yRange = [curYScale.invert(selection[1][1]), curYScale.invert(selection[0][1])];
-
-      // Clean up the previous flowing lines
-      stopAnimateLine();
-      selectedInfo = new SelectedInfo();
-      
-      // Remove the selection bbox
-      svgSelect.selectAll('g.line-chart-content-group g.select-bbox-group').remove();
-
-      d3.select(multiMenu)
-        .classed('hidden', true);
-
-      // Highlight the selected dots
-      svgSelect.select('g.line-chart-node-group')
-        .selectAll('circle.node')
-        .classed('selected', d => 
-          (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1])
-        );
-
-      // Highlight the paths associated with the selected dots
-      svgSelect.select('g.line-chart-line-group.real')
-        .selectAll('path.additive-line-segment')
-        .classed('selected', d => 
-          (d.sx >= xRange[0] && d.sx <= xRange[1] && d.sy >= yRange[0] && d.sy <= yRange[1]) ||
-          (d.x1 === d.x2 && d.x2 >= xRange[0] && d.x2 <= xRange[1] && d.y2 >= yRange[0] && d.y2 <= yRange[1])
-        );
-    }
-  };
-
-  const brushEndSelect = (event) => {
-    // Get the selection boundary
-    let selection = event.selection;
-    let svgSelect = d3.select(svg);
-
-    if (selection === null) {
-      if (idleTimeout === null) {
-        // Clean up the previous flowing lines
-        stopAnimateLine();
-        selectedInfo = new SelectedInfo();
-
-        svgSelect.select('g.line-chart-content-group g.brush rect.overlay')
-          .attr('cursor', null);
-
-        d3.select(multiMenu)
-          .classed('hidden', true);
-        
-        // End move mode
-        multiMenuControlInfo.moveMode = false;
-        multiMenuControlInfo.toSwitchMoveMode = true;
-        multiSelectMenuStore.set(multiMenuControlInfo);
-
-        // TODO: CHANGE IT
-        // Update the data using current edits
-        pointData = pointDataBuffer;
-        additiveData = additiveDataBuffer;
-
-        // Remove the selection bbox
-        svgSelect.selectAll('g.line-chart-content-group g.select-bbox-group').remove();
-
-        return idleTimeout = setTimeout(idled, idleDelay);
-      }
-    } else {
-      // Clean up the previous flowing lines
-      stopAnimateLine();
-
-      // Compute the selected data region
-      let xRange = [curXScale.invert(selection[0][0]), curXScale.invert(selection[1][0])];
-      let yRange = [curYScale.invert(selection[1][1]), curYScale.invert(selection[0][1])];
-
-      // Highlight the selected dots
-      svgSelect.select('g.line-chart-node-group')
-        .selectAll('circle.node')
-        .classed('selected', d => {
-          if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
-            selectedInfo.nodeData.push([d.x, d.y]);
-            selectedInfo.nodeIndexes.add(d.id);
-            return true;
-          } else {
-            return false;
-          }
-        });
-
-      // Compute the bounding box
-      selectedInfo.computeBBox();
-
-      let curPadding = (rScale(curTransform.k) + bboxPadding) * curTransform.k;
-
-      let bbox = svgSelect.select('g.line-chart-content-group')
-        .append('g')
-        .attr('class', 'select-bbox-group')
-        .selectAll('rect.select-bbox')
-        .data(selectedInfo.boundingBox)
-        .join('rect')
-        .attr('class', 'select-bbox original-bbox')
-        .attr('x', d => curXScale(d.x1) - curPadding)
-        .attr('y', d => curYScale(d.y1) - curPadding)
-        .attr('width', d => curXScale(d.x2) - curXScale(d.x1) + 2 * curPadding)
-        .attr('height', d => curYScale(d.y2) - curYScale(d.y1) + 2 * curPadding)
-        .style('stroke-width', bboxStrokeWidth)
-        .style('stroke', 'hsl(230, 100%, 10%)')
-        .style('stroke-dasharray', '5 3');
-
-      bbox.clone(true)
-        .classed('original-bbox', false)
-        .style('stroke', 'white')
-        .style('stroke-width', bboxStrokeWidth * 3)
-        .lower();
-
-      selectedInfo.hasSelected = svgSelect.selectAll('g.line-chart-node-group circle.node.selected').size() > 0;
-
-      if (selectedInfo.hasSelected) {
-        // Show the context menu near the selected region
-        d3.select(multiMenu)
-          .call(moveMenubar, menuWidth, menuHeight)
-          .classed('hidden', false);
-      }
-      
-      // Remove the brush box
-      svgSelect.select('g.line-chart-content-group g.brush')
-        .call(brush.move, null)
-        .select('rect.overlay')
-        .attr('cursor', null);
-    }
-  };
-
   const zoomStart = () => {
     if (selectedInfo.hasSelected) {
       d3.select(multiMenu)
@@ -691,89 +418,6 @@
     }
   };
 
-  /**
-   * Use the selection bbox to compute where to put the context menu bar
-  */
-  const moveMenubar = (menubar, menuWidth, menuHeight) => {
-    const bbox = d3.select(svg)
-      .select('g.select-bbox-group rect.select-bbox');
-
-    if (bbox.node() === null) return;
-
-    const bboxPosition = bbox.node().getBoundingClientRect();
-    const panelBboxPosition = component.getBoundingClientRect();
-
-    let left = bboxPosition.x - panelBboxPosition.x + bboxPosition.width / 2 - menuWidth / 2;
-    let top = bboxPosition.y - panelBboxPosition.y - menuHeight - 20;
-
-    // Do not move the bar out of its parent
-    left = Math.max(0, left);
-    top = Math.max(0, top);
-
-    menubar.style('left', `${left}px`)
-      .style('top', `${top}px`);
-  };
-
-  const brushEndZoom = (event, xScale, yScale) => {
-    // Get the selection boundary
-    let selection = event.selection;
-
-    // If there is no selection, return to the initial stage
-    // Double click returns to the initial stage
-    if (selection === null) {
-      if (idleTimeout === null) {
-        return idleTimeout = setTimeout(idled, idleDelay);
-      }
-
-      xScale.domain(initXDomain);
-      yScale.domain(initYDomain);
-    } else {
-      // Rescale the x and y axises
-      xScale.domain([xScale.invert(selection[0][0]), xScale.invert(selection[1][0])]);
-      yScale.domain([yScale.invert(selection[1][1]), yScale.invert(selection[0][1])]);
-
-      // Remove the brush box
-      d3.select(svg)
-        .select('g.line-chart-content-group g.brush')
-        .call(brush.move, null);
-    }
-
-    // Zoom in to the new selection
-    brushZoom(xScale, yScale);
-  };
-
-  /**
-   * Reset the idleTimeout timer
-   */
-  const idled = () => {
-    idleTimeout = null;
-  };
-
-  const brushZoom = (xScale, yScale) => {
-
-    // Create a common transition
-    let svgSelect = d3.select(svg);
-    let trans = svgSelect.transition('zoom')
-      .duration(zoomTransitionTime);
-
-    // Update the axises
-    svgSelect.select('g.x-axis')
-      .transition(trans)
-      .call(d3.axisBottom(xScale));
-
-    svgSelect.select('g.y-axis')
-      .transition(trans)
-      .call(d3.axisLeft(yScale));
-
-    // Redraw the lines using the new scale
-    svgSelect.select('g.line-chart-line-group')
-      .selectAll('path.additive-line-segment')
-      .transition(trans)
-      .attr('d', d => {
-        return `M ${xScale(d.x1)}, ${yScale(d.y1)} L ${xScale(d.x2)} ${yScale(d.y2)}`;
-      });
-    
-  };
 
   /**
    * Update the view with zoom transformation
@@ -862,7 +506,7 @@
 
       // Also transform the menu bar
       d3.select(multiMenu)
-        .call(moveMenubar, menuWidth, menuHeight);
+        .call(moveMenubar, menuWidth, menuHeight, svg, component);
     }
 
     // Draw/update the grid
@@ -952,18 +596,6 @@
           animateLine(d, i, g, initOffset + offsetRate, offsetRate);
         }
       });
-  };
-
-  /**
-   * Stop animating all flowing lines
-   */
-  const stopAnimateLine = () => {
-    d3.select(svg)
-      .select('g.line-chart-line-group')
-      .selectAll('path.additive-line-segment.flow-line')
-      .interrupt()
-      .attr('stroke-dasharray', '0 0')
-      .classed('flow-line', false);
   };
 
   /**
