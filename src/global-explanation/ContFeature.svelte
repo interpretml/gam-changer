@@ -1,5 +1,6 @@
 <script>
   import * as d3 from 'd3';
+  // import { initIsotonicRegression } from 'isotonic';
   import { round } from '../utils';
   import { config } from '../config';
   import selectIconSVG from '../img/select-icon.svg';
@@ -244,7 +245,9 @@
     svgSelect.attr('viewBox', '0 0 600 400')
       .attr('preserveAspectRatio', 'xMinYMin meet')
       .attr('width', svgWidth)
-      .attr('height', svgHeight);
+      .attr('height', svgHeight)
+      // WebKit bug workaround (see https://bugs.webkit.org/show_bug.cgi?id=226683)
+      .on('wheel', () => {});
     
     // Disable the default context menu when right click
     svgSelect.on('contextmenu', (event) => {
@@ -1071,8 +1074,12 @@
       .attr('y', d => curYScale(d.y1) - curPadding);
   };
 
-  const multiMenuButtonClicked = () => {
+  const multiMenuButtonClicked = async () => {
     console.log(multiMenuControlInfo.moveMode);
+
+    // let model = await initIsotonicRegression();
+    // model.fit([1, 2, 3, 4, 5], [20, 30, 40, 30, 50]);
+    // console.log(model.predict([1, 2, 3, 4, 5]));
 
     // Enter the move mode
 
