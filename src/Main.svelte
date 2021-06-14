@@ -1,6 +1,6 @@
 <script>
   import Header from './Header.svelte';
-  import ContGlobalExplain from './global-explanation/continuous/ContFeature.svelte';
+  import ContGlobalExplain from './global-explanation/ContFeature.svelte';
   import CatGlobalExplain from './global-explanation/CatFeature.svelte';
   import InterContCatGlobalExplain from './global-explanation/InterContCatFeature.svelte';
   import InterContContGlobalExplain from './global-explanation/InterContContFeature.svelte';
