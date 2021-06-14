@@ -1,6 +1,6 @@
 <script>
   import Header from './Header.svelte';
-  import ContGlobalExplain from './global-explanation/ContFeature.svelte';
+  import ContGlobalExplain from './global-explanation/continuous/ContFeature.svelte';
   import CatGlobalExplain from './global-explanation/CatFeature.svelte';
   import InterContCatGlobalExplain from './global-explanation/InterContCatFeature.svelte';
   import InterContContGlobalExplain from './global-explanation/InterContContFeature.svelte';
@@ -34,8 +34,8 @@
 
   onMount(async () => {
     console.log('loading data');
-    // let loadedData = await d3.json('/data/iow-house-ebm.json');
-    let loadedData = await d3.json('/data/medical-ebm.json');
+    let loadedData = await d3.json('/data/iow-house-ebm.json');
+    // let loadedData = await d3.json('/data/medical-ebm.json');
     // loadedData = processData(loadedData);
     data = loadedData;
     console.log('loaded data');
@@ -103,7 +103,7 @@
 
     <div class='feature-window'>
       <ContGlobalExplain
-        featureData = {data === null ? null : data.features[0]}
+        featureData = {data === null ? null : data.features[2]}
         scoreRange = {data === null ? null : data.scoreRange}
         svgHeight = 500
       />
