@@ -3,7 +3,7 @@ import { SelectedInfo } from './cont-class';
 import { moveMenubar } from './cont-bbox';
 import { rScale } from './cont-zoom';
 import { state } from './cont-state';
-import { redrawOriginal } from './cont-drag';
+import { redrawOriginal } from './cont-edit';
 
 // Need a timer to avoid the brush event call after brush.move()
 let idleTimeout = null;

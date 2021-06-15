@@ -1,5 +1,3 @@
-import { sample } from '/wasm/isotonic-regression.wasm';
-
 // Runtime header offsets
 const ID_OFFSET = -8;
 const SIZE_OFFSET = -4;
@@ -79,7 +77,7 @@ function preInstantiate(imports) {
 }
 
 const E_NOEXPORTRUNTIME = "Operation requires compiling with --exportRuntime";
-const F_NOEXPORTRUNTIME = function () { throw Error(E_NOEXPORTRUNTIME); };
+const F_NOEXPORTRUNTIME = function() { throw Error(E_NOEXPORTRUNTIME); };
 
 /** Prepares the final module once instantiation is complete. */
 function postInstantiate(extendedExports, instance) {
@@ -302,7 +300,7 @@ function postInstantiate(extendedExports, instance) {
 
   // Pull basic exports to extendedExports so code in preInstantiate can use them
   extendedExports.memory = extendedExports.memory || memory;
-  extendedExports.table = extendedExports.table || table;
+  extendedExports.table  = extendedExports.table  || table;
 
   // Demangle exports and provide the usual utility on the prototype
   return demangle(exports, extendedExports);
@@ -372,13 +370,13 @@ function demangle(exports, extendedExports = {}) {
       const className = name.substring(0, hash);
       const classElem = curr[className];
       if (typeof classElem === "undefined" || !classElem.prototype) {
-        const ctor = function (...args) {
+        const ctor = function(...args) {
           return ctor.wrap(ctor.prototype.constructor(0, ...args));
         };
         ctor.prototype = {
           valueOf() { return this[THIS]; }
         };
-        ctor.wrap = function (thisValue) {
+        ctor.wrap = function(thisValue) {
           return Object.create(ctor.prototype, { [THIS]: { value: thisValue, writable: false } });
         };
         if (classElem) Object.getOwnPropertyNames(classElem).forEach(name =>
@@ -405,7 +403,7 @@ function demangle(exports, extendedExports = {}) {
             return elem(...args);
           }).original = elem;
         } else { // instance method
-          (curr[name] = function (...args) { // !
+          (curr[name] = function(...args) { // !
             setArgumentsLength(args.length);
             return elem(this[THIS], ...args);
           }).original = elem;
@@ -440,11 +438,13 @@ var loader = {
   demangle
 };
 
-const testWASM = () => {
-  sample({}).then((result) => {
-    console.log(result);
-  });
-};
+// import { sample } from '../build/optimized.wasm';
+
+// export const testWASM = () => {
+//   sample({}).then((result) => {
+//     console.log(result);
+//   });
+// };
 
 const initIsotonicRegression = () => {
   return loader.instantiate(
@@ -525,6 +525,13 @@ const initIsotonicRegression = () => {
       }
 
       /**
+       * Reset the learned weights of this isotonic regression model.
+       */
+      reset() {
+        this.iso.reset();
+      }
+
+      /**
        * Run this function when the model is no longer needed. It is necessary because
        * WASM won't garbage collect the model until we manually __unpin() it from JS
        * (memory leak)
@@ -566,4 +573,4 @@ const initIsotonicRegression = () => {
   });
 };
 
-export { initIsotonicRegression, testWASM };
+export { initIsotonicRegression };

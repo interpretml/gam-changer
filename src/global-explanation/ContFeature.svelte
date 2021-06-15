@@ -9,7 +9,7 @@
   import { createConfidenceData, createAdditiveData, createPointData } from './continuous/cont-data';
   import { brushDuring, brushEndSelect } from './continuous/cont-brush';
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './continuous/cont-zoom';
-  import { dragged, redrawOriginal } from './continuous/cont-drag';
+  import { dragged, redrawOriginal, redrawMonotone } from './continuous/cont-edit';
   import { state } from './continuous/cont-state';
   import { moveMenubar } from './continuous/cont-bbox';
 
@@ -529,8 +529,32 @@
     console.log(multiMenuControlInfo.increment);
   };
 
-  const multiMenuIncreasingClicked = () => {
+  const multiMenuIncreasingClicked = async () => {
     console.log('increasing clicked');
+
+    // Check if the selected nodes are in a continuous range
+
+    // Fit an isotonic regression model
+    let xs = [];
+    let ys = [];
+
+    // TODO: re-structure the selectedInfo so that each object has (x, y, z)
+    state.selectedInfo.nodeData.forEach((d, i) => {
+      xs.push(i);
+      ys.push(d[1]);
+    });
+
+    // WASM only uses 1-3ms for the whole graph!
+    iso.reset();
+    iso.fit(xs,ys);
+    let isoYs = iso.predict(xs);
+
+    state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+    state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
+
+    console.log(ys, isoYs);
+
+    redrawMonotone(svg, isoYs);
   };
   
   const multiMenuDecreasingClicked = () => {
