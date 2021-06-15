@@ -1,6 +1,7 @@
 <script>
   import * as d3 from 'd3';
   // import { initIsotonicRegression } from 'isotonic';
+  import { initIsotonicRegression } from '../isotonic-regression';
   import { round } from '../utils';
   import { config } from '../config';
 
@@ -72,6 +73,9 @@
   const menuWidth = 375;
   const menuHeight = 50;
 
+  // Isotonic regression
+  let iso = null;
+
   // Store binding
   let multiMenuControlInfo = null;
   multiSelectMenuStore.subscribe(value => {
@@ -88,6 +92,9 @@
 
     // Bind inline SVG elements in the header
     bindInlineSVG();
+
+    // Initialize the isotonic regression model
+    initIsoModel();
 
     // Set svg viewBox (3:2 WH ratio)
     svgSelect.attr('viewBox', '0 0 600 400')
@@ -442,12 +449,15 @@
       .html(selectIconSVG.replaceAll('black', 'currentcolor'));
   };
 
+  const initIsoModel = async () => {
+    iso = await initIsotonicRegression();
+  };
+
   const multiMenuMoveClicked = async () => {
     console.log(multiMenuControlInfo.moveMode);
 
-    // let model = await initIsotonicRegression();
-    // model.fit([1, 2, 3, 4, 5], [20, 30, 40, 30, 50]);
-    // console.log(model.predict([1, 2, 3, 4, 5]));
+    iso.fit([1, 2, 3, 4, 5], [20, 30, 40, 30, 50]);
+    console.log(iso.predict([1, 2, 3, 4, 5]));
 
     // Enter the move mode
 
