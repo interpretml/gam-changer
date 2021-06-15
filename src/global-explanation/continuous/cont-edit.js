@@ -6,19 +6,10 @@ export const dragged = (e, svg) => {
 
   let dataYChange = state.curYScale.invert(e.y) - state.curYScale.invert(e.y - e.dy);
 
-  // Another way to directly change the node's y position
-  // let worldY = oriYScale(curYScale.invert(e.y));
-  // let worldYChange = worldY - oriYScale(curYScale.invert(e.y - e.dy));
-  // nodes.filter(d => nodeIndexes.has(d.id))
-  //   .each((d, i, g) => {
-  //     let curNode = d3.select(g[i]);
-  //     let newY = +curNode.attr('cy') + worldYChange;
-  //     pointDataBuffer[d.id].y += dataYChange;
-  //     curNode.attr('cy', newY);
-  //   });
-
   // Change the data based on the y-value changes, then redraw nodes (preferred method)
-  state.selectedInfo.nodeIndexes.forEach(i => {
+  state.selectedInfo.nodeData.forEach(d => {
+    let i = d.id;
+
     // Step 1.1: update point data
     state.pointDataBuffer[i].y += dataYChange;
 
@@ -112,7 +103,9 @@ export const redrawOriginal = (svg, bounce=true, animationEndFunc=undefined) => 
 export const redrawMonotone = (svg, isoYs) => {
 
   // Change the data based on the y-value changes, then redraw nodes (preferred method)
-  state.selectedInfo.nodeIndexes.forEach((i, j) => {
+  state.selectedInfo.nodeData.forEach((d, j) => {
+    let i = d.id;
+
     // Step 1.1: update point data
     state.pointDataBuffer[i].y = isoYs[j];
 

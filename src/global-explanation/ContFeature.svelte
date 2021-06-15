@@ -538,10 +538,9 @@
     let xs = [];
     let ys = [];
 
-    // TODO: re-structure the selectedInfo so that each object has (x, y, z)
-    state.selectedInfo.nodeData.forEach((d, i) => {
-      xs.push(i);
-      ys.push(d[1]);
+    state.selectedInfo.nodeData.forEach(d => {
+      xs.push(d.id);
+      ys.push(d.y);
     });
 
     // WASM only uses 1-3ms for the whole graph!
@@ -551,8 +550,6 @@
 
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
-
-    console.log(ys, isoYs);
 
     redrawMonotone(svg, isoYs);
   };

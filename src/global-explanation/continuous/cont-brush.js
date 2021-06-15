@@ -121,8 +121,7 @@ export const brushEndSelect = (event, svg, multiMenu, multiMenuControlInfo,
       .selectAll('circle.node')
       .classed('selected', d => {
         if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
-          state.selectedInfo.nodeData.push([d.x, d.y]);
-          state.selectedInfo.nodeIndexes.push(d.id);
+          state.selectedInfo.nodeData.push({x: d.x, y: d.y, id: d.id});
           return true;
         } else {
           return false;
