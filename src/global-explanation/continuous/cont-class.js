@@ -3,15 +3,9 @@ import * as d3 from 'd3';
 export class SelectedInfo {
   constructor() {
     this.hasSelected = false;
-    this.nodeIndexes = new Set();
+    this.nodeIndexes = [];
     this.nodeData = [];
     this.boundingBox = [];
-  }
-
-  updateNodeDataY(yChange) {
-    for (let i = 0; i < this.nodeData.length; i++) {
-      this.nodeData[i][1] += yChange;
-    }
   }
 
   computeBBox() {
@@ -25,5 +19,11 @@ export class SelectedInfo {
     } else {
       this.boundingBox = [];
     }
+  }
+
+  updateNodeData(pointData) {
+    this.nodeIndexes.forEach( (d, i) => {
+      this.nodeData[i][1] = pointData[d].y;
+    });
   }
 }

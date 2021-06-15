@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import { state } from './cont-state';
 import { rScale } from './cont-zoom';
 
-export const dragged = (e, svg, oriXScale, oriYScale, bboxPadding) => {
+export const dragged = (e, svg) => {
 
   const svgSelect = d3.select(svg);
 
@@ -53,7 +53,7 @@ export const dragged = (e, svg, oriXScale, oriYScale, bboxPadding) => {
   });
 
   // Step 1.3: update the bbox info
-  state.selectedInfo.updateNodeDataY(dataYChange);
+  state.selectedInfo.updateNodeData(state.pointDataBuffer);
   state.selectedInfo.computeBBox();
 
   // Update the visualization with new data
@@ -61,7 +61,7 @@ export const dragged = (e, svg, oriXScale, oriYScale, bboxPadding) => {
   // Step 2.1: redraw the nodes that are changed
   nodes.data(state.pointDataBuffer, d => d.id)
     .join('circle')
-    .attr('cy', d => oriYScale(d.y));
+    .attr('cy', d => state.oriYScale(d.y));
 
   // Step 2.2: redraw the paths that are changed
   let paths = svgSelect.select('g.line-chart-line-group.real')
@@ -70,11 +70,55 @@ export const dragged = (e, svg, oriXScale, oriYScale, bboxPadding) => {
   paths.data(state.additiveDataBuffer, d => `${d.id}-${d.pos}`)
     .join('path')
     .attr('d', d => {
-      return `M ${oriXScale(d.x1)}, ${oriYScale(d.y1)} L ${oriXScale(d.x2)} ${oriYScale(d.y2)}`;
+      return `M ${state.oriXScale(d.x1)}, ${state.oriYScale(d.y1)}
+        L ${state.oriXScale(d.x2)} ${state.oriYScale(d.y2)}`;
     });
 
   // Step 2.3: move the selected bbox
-  let curPadding = (rScale(state.curTransform.k) + bboxPadding) * state.curTransform.k;
+  let curPadding = (rScale(state.curTransform.k) + state.bboxPadding) * state.curTransform.k;
+
+  svgSelect.select('g.line-chart-content-group g.select-bbox-group')
+    .selectAll('rect.select-bbox')
+    .datum(state.selectedInfo.boundingBox[0])
+    .attr('y', d => state.curYScale(d.y1) - curPadding);
+};
+
+
+export const redrawOriginal = (svg) => {
+  const svgSelect = d3.select(svg);
+  let trans = d3.transition('restore')
+    .duration(500)
+    .ease(d3.easeElasticOut
+      .period(0.35)
+    );
+
+  // Step 1: update the bbox info
+  state.selectedInfo.updateNodeData(state.pointData);
+  state.selectedInfo.computeBBox();
+
+  // Step 2: redraw the nodes with original data
+  let nodes = svgSelect.select('g.line-chart-node-group')
+    .selectAll('circle.node');
+
+  nodes.data(state.pointData, d => d.id)
+    .join('circle')
+    .transition(trans)
+    .attr('cy', d => state.oriYScale(d.y));
+
+  // Step 3: redraw the paths with original data
+  let paths = svgSelect.select('g.line-chart-line-group.real')
+    .selectAll('path.additive-line-segment');
+
+  paths.data(state.additiveData, d => `${d.id}-${d.pos}`)
+    .join('path')
+    .transition(trans)
+    .attr('d', d => {
+      return `M ${state.oriXScale(d.x1)}, ${state.oriYScale(d.y1)}
+        L ${state.oriXScale(d.x2)} ${state.oriYScale(d.y2)}`;
+    });
+
+  // Step 4: move the selected bbox to their original place
+  let curPadding = (rScale(state.curTransform.k) + state.bboxPadding) * state.curTransform.k;
 
   svgSelect.select('g.line-chart-content-group g.select-bbox-group')
     .selectAll('rect.select-bbox')

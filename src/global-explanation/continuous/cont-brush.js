@@ -3,6 +3,7 @@ import { SelectedInfo } from './cont-class';
 import { moveMenubar } from './cont-bbox';
 import { rScale } from './cont-zoom';
 import { state } from './cont-state';
+import { redrawOriginal } from './cont-drag';
 
 // Need a timer to avoid the brush event call after brush.move()
 let idleTimeout = null;
@@ -45,7 +46,6 @@ export const brushDuring = (event, svg, multiMenu) => {
     let yRange = [state.curYScale.invert(selection[1][1]), state.curYScale.invert(selection[0][1])];
 
     // Clean up the previous flowing lines
-    stopAnimateLine(svg);
     state.selectedInfo = new SelectedInfo();
 
     // Remove the selection bbox
@@ -73,7 +73,7 @@ export const brushDuring = (event, svg, multiMenu) => {
 
 export const brushEndSelect = (event, svg, multiMenu, multiMenuControlInfo,
   multiSelectMenuStore,
-  bboxPadding, bboxStrokeWidth, menuWidth,
+  bboxStrokeWidth, menuWidth,
   menuHeight, brush, component
 ) => {
   // Get the selection boundary
@@ -97,10 +97,13 @@ export const brushEndSelect = (event, svg, multiMenu, multiMenuControlInfo,
       multiMenuControlInfo.toSwitchMoveMode = true;
       multiSelectMenuStore.set(multiMenuControlInfo);
 
-      // TODO: CHANGE IT
-      // Update the data using current edits
-      state.pointData = state.pointDataBuffer;
-      state.additiveData = state.additiveDataBuffer;
+      // Do not save the user's change (same as clicking the cancel button)
+      // Redraw the graph with original data
+      redrawOriginal(svg);
+
+      // DO not update the data
+      state.pointDataBuffer = null;
+      state.additiveDataBuffer = null;
 
       // Remove the selection bbox
       svgSelect.selectAll('g.line-chart-content-group g.select-bbox-group').remove();
@@ -108,8 +111,6 @@ export const brushEndSelect = (event, svg, multiMenu, multiMenuControlInfo,
       return idleTimeout = setTimeout(idled, idleDelay);
     }
   } else {
-    // Clean up the previous flowing lines
-    stopAnimateLine();
 
     // Compute the selected data region
     let xRange = [state.curXScale.invert(selection[0][0]), state.curXScale.invert(selection[1][0])];
@@ -121,7 +122,7 @@ export const brushEndSelect = (event, svg, multiMenu, multiMenuControlInfo,
       .classed('selected', d => {
         if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
           state.selectedInfo.nodeData.push([d.x, d.y]);
-          state.selectedInfo.nodeIndexes.add(d.id);
+          state.selectedInfo.nodeIndexes.push(d.id);
           return true;
         } else {
           return false;
@@ -131,7 +132,7 @@ export const brushEndSelect = (event, svg, multiMenu, multiMenuControlInfo,
     // Compute the bounding box
     state.selectedInfo.computeBBox();
 
-    let curPadding = (rScale(state.curTransform.k) + bboxPadding) * state.curTransform.k;
+    let curPadding = (rScale(state.curTransform.k) + state.bboxPadding) * state.curTransform.k;
 
     let bbox = svgSelect.select('g.line-chart-content-group')
       .append('g')

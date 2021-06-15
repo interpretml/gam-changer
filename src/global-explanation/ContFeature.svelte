@@ -62,9 +62,6 @@
 
   // Panning and zooming
   let zoom = null;
-  let oriXScale = null;
-  let oriYScale = null;
-  const bboxPadding = 1;
 
   // Select mode
   let selectMode = false;
@@ -137,8 +134,8 @@
       .domain(scoreRange)
       .range([lineChartHeight, 0]);
     
-    oriXScale = xScale;
-    oriYScale = yScale;
+    state.oriXScale = xScale;
+    state.oriYScale = yScale;
     state.curXScale = xScale;
     state.curYScale = yScale;
     
@@ -344,7 +341,7 @@
       .on('end', e => brushEndSelect(
         e, svg, multiMenu, multiMenuControlInfo,
         multiSelectMenuStore,
-        bboxPadding, bboxStrokeWidth, menuWidth,
+        bboxStrokeWidth, menuWidth,
         menuHeight, brush, component
       ))
       .on('start brush', e => brushDuring(e, svg, multiMenu))
@@ -370,7 +367,7 @@
       .scaleExtent(zoomScaleExtent)
       .on('zoom', e => zoomed(e, xScale, yScale, svg, linePathWidth,
         nodeStrokeWidth, yAxisWidth, lineChartWidth, lineChartHeight,
-        bboxPadding, multiMenu, menuWidth, menuHeight, component))
+        multiMenu, menuWidth, menuHeight, component))
       .on('start', () => zoomStart(multiMenu))
       .on('end', () => zoomEnd(multiMenu))
       .filter(e => {
@@ -418,15 +415,15 @@
    * @param initOffset The initial stroke-dashoffset
    * @param offsetRate Use this to control the moving speed, each loop is 1 minute
    */
-  const animateLine = (d, i, g, initOffset, offsetRate) => {
+  const animateBBox = (d, i, g, initOffset, offsetRate) => {
     let curPath = d3.select(g[i]);
     curPath.transition()
       .duration(60000)
       .ease(d3.easeLinear)
       .attr('stroke-dashoffset', initOffset + offsetRate)
       .on('end', (d, i, g) => {
-        if (state.selectedInfo.hasSelected) {
-          animateLine(d, i, g, initOffset + offsetRate, offsetRate);
+        if (multiMenuControlInfo.moveMode) {
+          animateBBox(d, i, g, initOffset + offsetRate, offsetRate);
         }
       });
   };
@@ -444,7 +441,7 @@
       .html(selectIconSVG.replaceAll('black', 'currentcolor'));
   };
 
-  const multiMenuButtonClicked = async () => {
+  const multiMenuMoveClicked = async () => {
     console.log(multiMenuControlInfo.moveMode);
 
     // let model = await initIsotonicRegression();
@@ -453,7 +450,7 @@
 
     // Enter the move mode
 
-    // Step 1. create a pointdata clone for user to change
+    // Step 1. create data clone buffers for user to change
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
 
@@ -461,12 +458,30 @@
       .select('g.line-chart-content-group g.select-bbox-group')
       .style('cursor', 'row-resize')
       .call(d3.drag()
-        .on('drag', (e) => dragged(e, svg, oriXScale, oriYScale, bboxPadding))
+        .on('drag', (e) => dragged(e, svg))
       );
     
     bboxGroup.select('rect.original-bbox')
-      .each((d, i, g) => animateLine(d, i, g, 0, -500));
+      .each((d, i, g) => animateBBox(d, i, g, 0, -500));
+  };
 
+  /**
+   * Call this handler when users click the check button
+   */
+  const multiMenuMoveCheckClicked = () => {
+    // Save the changes
+    state.pointData = JSON.parse(JSON.stringify(state.pointDataBuffer));
+    state.additiveData = JSON.parse(JSON.stringify(state.additiveDataBuffer));
+
+    // Remove the drag
+    let bboxGroup = d3.select(svg)
+      .select('g.line-chart-content-group g.select-bbox-group')
+      .style('cursor', null)
+      .on('.drag', null);
+    
+    // stop the animation
+    bboxGroup.select('rect.original-bbox')
+      .interrupt();
   };
 
   const multiMenuInputChanged = () => {
@@ -659,12 +674,13 @@
     <div class='context-menu-container hidden' bind:this={multiMenu}>
       <ContextMenu 
         on:inputChanged={multiMenuInputChanged}
-        on:moveButtonClicked={multiMenuButtonClicked}
+        on:moveButtonClicked={multiMenuMoveClicked}
         on:increasingClicked={multiMenuIncreasingClicked}
         on:decreasingClicked={multiMenuDecreasingClicked}
         on:interpolationClicked={multiMenuInterpolationClicked}
         on:mergeClicked={multiMenuMergeClicked}
         on:deleteClicked={multiMenuDeleteClicked}
+        on:moveCheckClicked={multiMenuMoveCheckClicked}
       /> 
     </div>
 

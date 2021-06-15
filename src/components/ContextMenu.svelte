@@ -171,6 +171,18 @@
     dispatch('moveButtonClicked');
   };
 
+  const moveCheckClicked = () => {
+
+    controlInfo.moveMode = !controlInfo.moveMode;
+
+    switchMoveMode();
+
+    // Update the store
+    multiSelectMenuStore.set(controlInfo);
+
+    dispatch('moveCheckClicked');
+  };
+
   const mouseoverHandler = (e, message, width, yOffset) => {
     let node = e.currentTarget;
 
@@ -388,7 +400,7 @@
 
     <div class='collapse-item'>
       <!-- Check button -->
-      <div class='item' on:click={() => dispatch('moveCheckClicked')}>
+      <div class='item' on:click={moveCheckClicked}>
         <div class='svg-icon' id='icon-check'></div>
       </div>
 

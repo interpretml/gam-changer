@@ -27,7 +27,7 @@ export const zoomEnd = (multiMenu) => {
  */
 export const zoomed = (event, xScale, yScale, svg,
   linePathWidth, nodeStrokeWidth, yAxisWidth, lineChartWidth, lineChartHeight,
-  selectedInfo, bboxPadding, multiMenu, menuWidth, menuHeight, component
+  selectedInfo, multiMenu, menuWidth, menuHeight, component
 ) => {
 
   let svgSelect = d3.select(svg);
@@ -98,7 +98,7 @@ export const zoomed = (event, xScale, yScale, svg,
 
     // We want to compute the world coordinate here
     // Need to transfer back the scale factor from the node radius
-    let curPadding = (rScale(state.curTransform.k) + bboxPadding) * state.curTransform.k;
+    let curPadding = (rScale(state.curTransform.k) + state.bboxPadding) * state.curTransform.k;
 
     svgSelect.select('g.line-chart-content-group')
       .selectAll('rect.select-bbox')
