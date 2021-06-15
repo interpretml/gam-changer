@@ -84,13 +84,24 @@ export const dragged = (e, svg) => {
 };
 
 
-export const redrawOriginal = (svg) => {
+export const redrawOriginal = (svg, bounce=true, animationEndFunc=undefined) => {
   const svgSelect = d3.select(svg);
+
   let trans = d3.transition('restore')
     .duration(500)
     .ease(d3.easeElasticOut
       .period(0.35)
     );
+  
+  if (!bounce) {
+    trans = d3.transition('restore')
+      .duration(500)
+      .ease(d3.easeCubicInOut);
+  }
+
+  if (animationEndFunc !== undefined) {
+    trans.on('end', animationEndFunc);
+  }
 
   // Step 1: update the bbox info
   state.selectedInfo.updateNodeData(state.pointData);
@@ -123,5 +134,6 @@ export const redrawOriginal = (svg) => {
   svgSelect.select('g.line-chart-content-group g.select-bbox-group')
     .selectAll('rect.select-bbox')
     .datum(state.selectedInfo.boundingBox[0])
+    .transition(trans)
     .attr('y', d => state.curYScale(d.y1) - curPadding);
 };

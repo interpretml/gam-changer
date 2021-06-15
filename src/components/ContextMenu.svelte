@@ -174,13 +174,22 @@
   const moveCheckClicked = () => {
 
     controlInfo.moveMode = !controlInfo.moveMode;
-
     switchMoveMode();
 
     // Update the store
     multiSelectMenuStore.set(controlInfo);
 
     dispatch('moveCheckClicked');
+  };
+
+  const moveCancelClicked = () => {
+    controlInfo.moveMode = !controlInfo.moveMode;
+    switchMoveMode();
+
+    // Update the store
+    multiSelectMenuStore.set(controlInfo);
+
+    dispatch('moveCancelClicked');
   };
 
   const mouseoverHandler = (e, message, width, yOffset) => {
@@ -257,7 +266,6 @@
     display: flex;
     align-items: center;
     padding: 0 5px;
-    cursor: pointer;
     overflow: hidden;
     width: 100%;
     height: 100%;
@@ -267,6 +275,7 @@
     width: 40px;
     height: 50px;
     display: flex;
+    cursor: pointer;
     justify-content: center;
     align-items: center;
     position: relative;
@@ -286,6 +295,11 @@
       &:hover {
         color: $blue-600;
       }
+    }
+
+    &.disabled {
+      cursor: no-drop;
+      pointer-events: none;
     }
 
     &:hover {
@@ -390,6 +404,7 @@
     <!-- Move button -->
     <div class='item' on:click={moveButtonClicked}
       class:selected={controlInfo.moveMode}
+      class:disabled={controlInfo.moveMode}
       on:mouseenter={(e) => mouseoverHandler(e, 'move', 55, 30)}
       on:mouseleave={mouseleaveHandler}
     >
@@ -405,7 +420,7 @@
       </div>
 
       <!-- Cancel button -->
-      <div class='item' on:click={() => dispatch('moveCancelClicked')}>
+      <div class='item' on:click={moveCancelClicked}>
         <div class='svg-icon' id='icon-refresh'></div>
       </div>
 

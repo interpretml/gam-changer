@@ -27,7 +27,7 @@ export const zoomEnd = (multiMenu) => {
  */
 export const zoomed = (event, xScale, yScale, svg,
   linePathWidth, nodeStrokeWidth, yAxisWidth, lineChartWidth, lineChartHeight,
-  selectedInfo, multiMenu, menuWidth, menuHeight, component
+  multiMenu, menuWidth, menuHeight, component
 ) => {
 
   let svgSelect = d3.select(svg);
@@ -92,7 +92,7 @@ export const zoomed = (event, xScale, yScale, svg,
         ${lineChartHeight})scale(${transform.k}, 1)`);
 
   // Transform the selection bbox if applicable
-  if (selectedInfo.hasSelected) {
+  if (state.selectedInfo.hasSelected) {
     // Here we don't use transform, because we want to keep the gap between
     // the nodes and bounding box border constant across all scales
 

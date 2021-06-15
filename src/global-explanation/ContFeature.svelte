@@ -8,8 +8,9 @@
   import { createConfidenceData, createAdditiveData, createPointData } from './continuous/cont-data';
   import { brushDuring, brushEndSelect } from './continuous/cont-brush';
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './continuous/cont-zoom';
-  import { dragged } from './continuous/cont-drag';
+  import { dragged, redrawOriginal } from './continuous/cont-drag';
   import { state } from './continuous/cont-state';
+  import { moveMenubar } from './continuous/cont-bbox';
 
   import selectIconSVG from '../img/select-icon.svg';
   import dragIconSVG from '../img/drag-icon.svg';
@@ -482,6 +483,36 @@
     // stop the animation
     bboxGroup.select('rect.original-bbox')
       .interrupt();
+
+    // Move the menu bar
+    d3.select(multiMenu)
+      .call(moveMenubar, menuWidth, menuHeight, svg, component);
+  };
+
+  /**
+   * Call this handler when users click the cancel button
+   */
+  const multiMenuMoveCancelClicked = () => {
+    // Discard the changes
+    state.pointDataBuffer = null;
+    state.additiveDataBuffer = null;
+    
+    // Recover the original graph
+    redrawOriginal(svg, false, () => {
+      // Move the menu bar after animation
+      d3.select(multiMenu)
+        .call(moveMenubar, menuWidth, menuHeight, svg, component);
+    });
+
+    // Remove the drag
+    let bboxGroup = d3.select(svg)
+      .select('g.line-chart-content-group g.select-bbox-group')
+      .style('cursor', null)
+      .on('.drag', null);
+    
+    // stop the animation
+    bboxGroup.select('rect.original-bbox')
+      .interrupt();
   };
 
   const multiMenuInputChanged = () => {
@@ -681,6 +712,7 @@
         on:mergeClicked={multiMenuMergeClicked}
         on:deleteClicked={multiMenuDeleteClicked}
         on:moveCheckClicked={multiMenuMoveCheckClicked}
+        on:moveCancelClicked={multiMenuMoveCancelClicked}
       /> 
     </div>
 
