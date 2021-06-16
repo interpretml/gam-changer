@@ -257,7 +257,7 @@
       let componentSelect = d3.select(component);
 
       componentSelect.select('.items')
-        .style('overflow', null);
+        .style('overflow', 'visible');
       
       componentSelect.select(`.sub-item-${option}`)
         .classed('hidden', false);
@@ -284,6 +284,15 @@
 
   const mouseoverHandler = (e, message, width, yOffset) => {
     let node = e.currentTarget;
+
+    // Do not show tooltip in sub-menu mode if hovering over the sub-menu items
+    if (controlInfo.subItemMode !== null) {
+      if (d3.select(e.explicitOriginalTarget).classed('sub-item-child') ||
+        d3.select(e.explicitOriginalTarget).classed('sub-item')
+      ) {
+        return;
+      }
+    }
 
     mouseoverTimeout = setTimeout(() => {
       let position = node.getBoundingClientRect();
@@ -356,7 +365,7 @@
     display: flex;
     align-items: center;
     padding: 0 5px;
-    // overflow: hidden;
+    overflow: hidden;
     width: 100%;
     height: 100%;
   }
@@ -477,6 +486,16 @@
         }
       }
     }
+
+    &.hidden {
+      visibility: hidden;
+      pointer-events: none;
+
+      .item {
+        visibility: hidden;
+        pointer-events: none;
+      }
+    }
   }
 
   .svg-icon.item-input-up {
@@ -588,14 +607,14 @@
     >
       <div class='svg-icon' id='icon-increasing'></div>
       
-      <div class='sub-item sub-item-increasing hidden' on:hover={(e) => {e.stopPropagation();}}>
+      <div class='sub-item sub-item-increasing hidden'>
         <!-- Check button -->
-        <div class='item' on:click={subItemCheckClicked} on:hover={(e) => {e.stopPropagation();}}>
+        <div class='item sub-item-child' on:click={subItemCheckClicked}>
           <div class='svg-icon icon-check'></div>
         </div>
 
         <!-- Cancel button -->
-        <div class='item' on:click={subItemCancelClicked} on:hover={(e) => {e.stopPropagation();}}>
+        <div class='item sub-item-child' on:click={subItemCancelClicked}>
           <div class='svg-icon icon-refresh'></div>
         </div>
 
@@ -610,14 +629,14 @@
     >
       <div class='svg-icon' id='icon-decreasing'></div>
 
-      <div class='sub-item sub-item-decreasing hidden' on:hover={(e) => {e.stopPropagation();}}>
+      <div class='sub-item sub-item-decreasing hidden'>
         <!-- Check button -->
-        <div class='item' on:click={subItemCheckClicked} on:hover={(e) => {e.stopPropagation();}}>
+        <div class='item sub-item-child' on:click={subItemCheckClicked}>
           <div class='svg-icon icon-check'></div>
         </div>
 
         <!-- Cancel button -->
-        <div class='item' on:click={subItemCancelClicked} on:hover={(e) => {e.stopPropagation();}}>
+        <div class='item sub-item-child' on:click={subItemCancelClicked}>
           <div class='svg-icon icon-refresh'></div>
         </div>
 

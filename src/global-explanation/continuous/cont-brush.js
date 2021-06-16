@@ -169,6 +169,7 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth, menuWidth
     bbox.clone(true)
       .classed('original-bbox', false)
       .style('stroke', 'white')
+      .style('stroke-dasharray', null)
       .style('stroke-width', bboxStrokeWidth * 3)
       .lower();
 

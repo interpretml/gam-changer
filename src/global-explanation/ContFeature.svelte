@@ -430,7 +430,7 @@
       .ease(d3.easeLinear)
       .attr('stroke-dashoffset', initOffset + offsetRate)
       .on('end', (d, i, g) => {
-        if (multiMenuControlInfo.moveMode) {
+        if (multiMenuControlInfo.moveMode || multiMenuControlInfo.subItemMode !== null) {
           animateBBox(d, i, g, initOffset + offsetRate, offsetRate);
         }
       });
@@ -530,6 +530,12 @@
   const multiMenuIncreasingClicked = async () => {
     console.log('increasing clicked');
 
+    // Animate the bbox
+    d3.select(svg)
+      .select('g.line-chart-content-group g.select-bbox-group')
+      .select('rect.original-bbox')
+      .each((d, i, g) => animateBBox(d, i, g, 0, -500));
+
     // Check if the selected nodes are in a continuous range
 
     // Fit an isotonic regression model
@@ -555,6 +561,12 @@
   
   const multiMenuDecreasingClicked = () => {
     console.log('decreasing clicked');
+
+    // Animate the bbox
+    d3.select(svg)
+      .select('g.line-chart-content-group g.select-bbox-group')
+      .select('rect.original-bbox')
+      .each((d, i, g) => animateBBox(d, i, g, 0, -500));
 
     // Check if the selected nodes are in a continuous range
 
@@ -596,6 +608,7 @@
    */
   const multiMenuSubItemCheckClicked = () => {
     console.log('sub item check clicked');
+
     if (multiMenuControlInfo.subItemMode === null) {
       console.error('No sub item is selected but check is clicked!');
     }
@@ -604,6 +617,12 @@
     if (!existingModes.has(multiMenuControlInfo.subItemMode)) {
       console.error(`Encountered unknown subItemMode: ${multiMenuControlInfo.subItemMode}`);
     }
+
+    // Stop the bbox animation
+    d3.select(svg)
+      .select('g.line-chart-content-group g.select-bbox-group')
+      .select('rect.original-bbox')
+      .interrupt();
 
     // Save the changes
     state.pointData = JSON.parse(JSON.stringify(state.pointDataBuffer));
@@ -634,6 +653,12 @@
     if (!existingModes.has(multiMenuControlInfo.subItemMode)) {
       console.error(`Encountered unknown subItemMode: ${multiMenuControlInfo.subItemMode}`);
     }
+
+    // Stop the bbox animation
+    d3.select(svg)
+      .select('g.line-chart-content-group g.select-bbox-group')
+      .select('rect.original-bbox')
+      .interrupt();
 
     // Discard the change
     state.pointDataBuffer = null;
@@ -764,12 +789,12 @@
   }
 
   :global(.explain-panel circle.node.selected) {
-    fill: hsl(35, 100%, 50%);
+    fill: $orange-400;
     stroke: white;
   }
 
   :global(.explain-panel path.additive-line-segment.selected) {
-    stroke: hsl(35, 100%, 40%);
+    stroke: adjust-color($orange-400, $lightness: -8%);
   }
 
   @keyframes dash {
