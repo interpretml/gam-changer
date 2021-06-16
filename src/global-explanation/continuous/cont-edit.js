@@ -1,6 +1,7 @@
 import * as d3 from 'd3';
 import { state } from './cont-state';
 import { rScale } from './cont-zoom';
+import { updateAdditiveDataBufferFromPointDataBuffer } from './cont-data';
 
 export const dragged = (e, svg) => {
 
@@ -142,6 +143,45 @@ export const redrawMonotone = (svg, isoYs) => {
 
 };
 
+export const inplaceInterpolate = (svg) => {
+  // Regional interpolation
+  // We use the points in between as interpolation steps
+  let leftPoint = { x: Infinity, y: null, id: null };
+  let rightPoint = { x: -Infinity, y: null, id: null };
+
+  state.selectedInfo.nodeData.forEach(d => {
+    if (d.x < leftPoint.x) {
+      leftPoint = state.pointDataBuffer[d.id];
+    }
+    if (d.x > rightPoint.x) {
+      rightPoint = state.pointDataBuffer[d.id];
+    }
+  });
+
+  const xRange = rightPoint.x - leftPoint.x;
+  const yRange = rightPoint.y - leftPoint.y;
+
+  // Iterate the point from left to right using their pointers and modify
+  // both the node data and path data
+
+  // Step 1: Update the point data
+  let curPoint = state.pointDataBuffer[leftPoint.rightPointID];
+
+  while (curPoint.id !== rightPoint.id) {
+    let alpha = (curPoint.x - leftPoint.x) / xRange;
+    let newY = leftPoint.y + yRange * alpha;
+    curPoint.y = newY;
+
+    curPoint = state.pointDataBuffer[curPoint.rightPointID];
+  }
+
+  // Step 2: Recreate the path data using updated point data  
+  updateAdditiveDataBufferFromPointDataBuffer();
+
+  // Step 3: Update the graph using new data
+  drawBufferGraph(svg, true);
+};
+
 const drawBufferGraph = (svg, animated=true) => {
 
   const svgSelect = d3.select(svg);
@@ -205,5 +245,4 @@ const drawBufferGraph = (svg, animated=true) => {
   }
 
 };
-
 

@@ -1,3 +1,5 @@
+import { state } from './cont-state';
+
 /**
  * Create rectangles in SVG path format tracing the standard deviations at each
  * point in the model.
@@ -87,6 +89,7 @@ export const createAdditiveData = (featureData) => {
     sy: featureData.additive[featureData.additive.length - 1]
   });
 
+  console.log(additiveData);
   return additiveData;
 };
 
@@ -120,4 +123,74 @@ export const linkPointToAdditive = (pointData, additiveData) => {
       pointData[d.id].leftLineIndex = i;
     }
   });
+};
+
+/**
+ * Create a new additiveDataBuffer array from the current pointDataBuffer object
+ * This function modifies the state in-place
+ * This function also update the leftLineIndex/rightLineIndex in the pointDataBuffer
+ */
+export const updateAdditiveDataBufferFromPointDataBuffer = () => {
+  let newAdditiveData = [];
+
+  // Find the start point of all graph
+  let curPoint = state.pointDataBuffer[Object.keys(state.pointDataBuffer)[0]];
+  while (curPoint.leftPointID !== null) {
+    curPoint = state.pointDataBuffer[curPoint.leftPointID];
+  }
+
+  // Iterate through all the points from the starting point
+  let curLineIndex = 0;
+  let nextPoint = state.pointDataBuffer[curPoint.rightPointID];
+  while (curPoint.rightPointID !== null) {
+
+    newAdditiveData.push({
+      x1: curPoint.x,
+      y1: curPoint.y,
+      x2: nextPoint.x,
+      y2: curPoint.y,
+      id: curPoint.id,
+      pos: 'r',
+      sx: curPoint.x,
+      sy: curPoint.y
+    });
+
+    curPoint.rightLineIndex = curLineIndex;
+    curLineIndex++;
+
+    newAdditiveData.push({
+      x1: nextPoint.x,
+      y1: curPoint.y,
+      x2: nextPoint.x,
+      y2: nextPoint.y,
+      id: nextPoint.id,
+      pos: 'l',
+      sx: curPoint.x,
+      sy: curPoint.y
+    });
+
+    nextPoint.leftLineIndex = curLineIndex;
+    curLineIndex++;
+
+    curPoint = nextPoint;
+    nextPoint = state.pointDataBuffer[curPoint.rightPointID];
+  }
+
+  // Connect the last two points (because max point has no additive value, it
+  // does not have a left edge)
+  let prePoint = state.pointDataBuffer[curPoint.leftPointID];
+  newAdditiveData.push({
+    x1: curPoint.x,
+    y1: curPoint.y,
+    x2: state.oriXScale.domain()[1],
+    y2: curPoint.y,
+    id: curPoint.id,
+    pos: 'r',
+    sx: prePoint.x,
+    sy: prePoint.y
+  });
+
+  curPoint.rightLineIndex = curLineIndex;
+
+  state.additiveDataBuffer = newAdditiveData;
 };

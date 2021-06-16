@@ -9,7 +9,7 @@
   import { createConfidenceData, createAdditiveData, createPointData, linkPointToAdditive } from './continuous/cont-data';
   import { brushDuring, brushEndSelect } from './continuous/cont-brush';
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './continuous/cont-zoom';
-  import { dragged, redrawOriginal, redrawMonotone } from './continuous/cont-edit';
+  import { dragged, redrawOriginal, redrawMonotone, inplaceInterpolate } from './continuous/cont-edit';
   import { state } from './continuous/cont-state';
   import { moveMenubar } from './continuous/cont-bbox';
 
@@ -532,6 +532,9 @@
     console.log(multiMenuControlInfo.increment);
   };
 
+  /**
+   * Event handler when user clicks the increasing button
+  */
   const multiMenuIncreasingClicked = async () => {
     console.log('increasing clicked');
 
@@ -564,6 +567,9 @@
     myContextMenu.showConfirmation('increasing', 600);
   };
   
+  /**
+   * Event handler when user clicks the decreasing button
+   */
   const multiMenuDecreasingClicked = () => {
     console.log('decreasing clicked');
 
@@ -596,8 +602,18 @@
     myContextMenu.showConfirmation('decreasing', 600);
   };
 
+  /**
+   * Event handler when user clicks the interpolation button
+   */
   const multiMenuInterpolationClicked = () => {
     console.log('interpolate clicked');
+
+    state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+    state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
+
+    inplaceInterpolate(svg);
+    myContextMenu.showConfirmation('interpolation', 600);
+
   };
 
   const multiMenuMergeClicked = () => {
