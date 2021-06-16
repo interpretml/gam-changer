@@ -22,11 +22,7 @@
   let controlInfo = {
     moveMode: false,
     toSwitchMoveMode: false,
-    increasingMode: false,
-    decreasingMode: false,
-    interpolateMode: false,
-    mergeMode: false,
-    deleteMode: false,
+    subItemMode: null,
     increment: 0
   };
   let tooltipConfig = {};
@@ -198,17 +194,62 @@
   };
 
   const increasingClicked = () => {
-    controlInfo.increasingMode = true;
+    // Need to handle the case where people change mode without checking/crossing
+    if (controlInfo.subItemMode !== null) {
+    // Hide the confirmation panel
+      hideConfirmation(controlInfo.subItemMode);
+
+      // Exit the sub-item mode
+      controlInfo.subItemMode = null;
+      multiSelectMenuStore.set(controlInfo);
+    }
+
+    controlInfo.subItemMode = 'increasing';
     multiSelectMenuStore.set(controlInfo);
 
+    hideToolTipDuringSubMenu();
+
+    dispatch('increasingClicked');
+  };
+
+  const decreasingClicked = () => {
+    // Need to handle the case where people change mode without checking/crossing
+    // We don't need to recover the original graph then enter new mode preview
+    // We can directly enter the new mode with animation
+    if (controlInfo.subItemMode !== null) {
+    // Hide the confirmation panel
+      hideConfirmation(controlInfo.subItemMode);
+
+      // Exit the sub-item mode
+      controlInfo.subItemMode = null;
+      multiSelectMenuStore.set(controlInfo);
+    }
+
+    controlInfo.subItemMode = 'decreasing';
+    multiSelectMenuStore.set(controlInfo);
+
+    hideToolTipDuringSubMenu();
+
+    dispatch('decreasingClicked');
+  };
+
+  const hideToolTipDuringSubMenu = () => {
     // hide the tooltip
     clearTimeout(mouseoverTimeout);
     mouseoverTimeout = null;
     tooltipConfig.show = false;
     tooltipConfig.hideAnimated = false;
     tooltipConfigStore.set(tooltipConfig);
+  };
 
-    dispatch('increasingClicked');
+  const subItemCheckClicked = (e) => {
+    e.stopPropagation();
+    dispatch('subItemCheckClicked');
+  };
+
+  const subItemCancelClicked = (e) => {
+    e.stopPropagation();
+    dispatch('subItemCancelClicked');
   };
 
   export const showConfirmation = (option, delay=500) => {
@@ -549,12 +590,12 @@
       
       <div class='sub-item sub-item-increasing hidden' on:hover={(e) => {e.stopPropagation();}}>
         <!-- Check button -->
-        <div class='item' on:click={moveCheckClicked}>
+        <div class='item' on:click={subItemCheckClicked} on:hover={(e) => {e.stopPropagation();}}>
           <div class='svg-icon icon-check'></div>
         </div>
 
         <!-- Cancel button -->
-        <div class='item' on:click={moveCancelClicked}>
+        <div class='item' on:click={subItemCancelClicked} on:hover={(e) => {e.stopPropagation();}}>
           <div class='svg-icon icon-refresh'></div>
         </div>
 
@@ -563,11 +604,24 @@
 
     <!-- Decreasing -->
     <div class='item'
-      on:click={() => dispatch('decreasingClicked')}
+      on:click={decreasingClicked}
       on:mouseenter={(e) => mouseoverHandler(e, 'monotonically decreasing', 120, 52)}
       on:mouseleave={mouseleaveHandler}
     >
       <div class='svg-icon' id='icon-decreasing'></div>
+
+      <div class='sub-item sub-item-decreasing hidden' on:hover={(e) => {e.stopPropagation();}}>
+        <!-- Check button -->
+        <div class='item' on:click={subItemCheckClicked} on:hover={(e) => {e.stopPropagation();}}>
+          <div class='svg-icon icon-check'></div>
+        </div>
+
+        <!-- Cancel button -->
+        <div class='item' on:click={subItemCancelClicked} on:hover={(e) => {e.stopPropagation();}}>
+          <div class='svg-icon icon-refresh'></div>
+        </div>
+
+      </div>
     </div>
 
     <div class='separator'></div>

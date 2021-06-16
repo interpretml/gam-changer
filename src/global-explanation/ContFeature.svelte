@@ -75,7 +75,8 @@
   const menuHeight = 50;
 
   // Isotonic regression
-  let iso = null;
+  let increasingISO = null;
+  let decreasingISO = null;
 
   // Store binding
   let multiMenuControlInfo = null;
@@ -449,14 +450,12 @@
   };
 
   const initIsoModel = async () => {
-    iso = await initIsotonicRegression();
+    increasingISO = await initIsotonicRegression(true);
+    decreasingISO = await initIsotonicRegression(false);
   };
 
   const multiMenuMoveClicked = async () => {
     console.log(multiMenuControlInfo.moveMode);
-
-    iso.fit([1, 2, 3, 4, 5], [20, 30, 40, 30, 50]);
-    console.log(iso.predict([1, 2, 3, 4, 5]));
 
     // Enter the move mode
 
@@ -539,13 +538,13 @@
 
     state.selectedInfo.nodeData.forEach(d => {
       xs.push(d.id);
-      ys.push(d.y);
+      ys.push(state.pointData[d.id].y);
     });
 
     // WASM only uses 1-3ms for the whole graph!
-    iso.reset();
-    iso.fit(xs,ys);
-    let isoYs = iso.predict(xs);
+    increasingISO.reset();
+    increasingISO.fit(xs,ys);
+    let isoYs = increasingISO.predict(xs);
 
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
@@ -556,6 +555,28 @@
   
   const multiMenuDecreasingClicked = () => {
     console.log('decreasing clicked');
+
+    // Check if the selected nodes are in a continuous range
+
+    // Fit an isotonic regression model
+    let xs = [];
+    let ys = [];
+
+    state.selectedInfo.nodeData.forEach(d => {
+      xs.push(d.id);
+      ys.push(state.pointData[d.id].y);
+    });
+
+    // WASM only uses 1-3ms for the whole graph!
+    decreasingISO.reset();
+    decreasingISO.fit(xs,ys);
+    let isoYs = decreasingISO.predict(xs);
+
+    state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+    state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
+
+    redrawMonotone(svg, isoYs);
+    myContextMenu.showConfirmation('decreasing', 600);
   };
 
   const multiMenuInterpolationClicked = () => {
@@ -568,6 +589,69 @@
 
   const multiMenuDeleteClicked = () => {
     console.log('delete clicked');
+  };
+
+  /**
+   * Event handler when user clicks the check icon in the sub-menu
+   */
+  const multiMenuSubItemCheckClicked = () => {
+    console.log('sub item check clicked');
+    if (multiMenuControlInfo.subItemMode === null) {
+      console.error('No sub item is selected but check is clicked!');
+    }
+
+    const existingModes = new Set(['increasing', 'decreasing', 'interpolate', 'merge', 'delete']);
+    if (!existingModes.has(multiMenuControlInfo.subItemMode)) {
+      console.error(`Encountered unknown subItemMode: ${multiMenuControlInfo.subItemMode}`);
+    }
+
+    // Save the changes
+    state.pointData = JSON.parse(JSON.stringify(state.pointDataBuffer));
+    state.additiveData = JSON.parse(JSON.stringify(state.additiveDataBuffer));
+
+    // Hide the confirmation panel
+    myContextMenu.hideConfirmation(multiMenuControlInfo.subItemMode);
+
+    // Move the menu bar
+    d3.select(multiMenu)
+      .call(moveMenubar, menuWidth, menuHeight, svg, component);
+    
+    // Exit the sub-item mode
+    multiMenuControlInfo.subItemMode = null;
+    multiSelectMenuStore.set(multiMenuControlInfo);
+  };
+
+  /**
+   * Event handler when user clicks the cross icon in the sub-menu
+   */
+  const multiMenuSubItemCancelClicked = () => {
+    console.log('sub item cancel clicked');
+    if (multiMenuControlInfo.subItemMode === null) {
+      console.error('No sub item is selected but check is clicked!');
+    }
+
+    const existingModes = new Set(['increasing', 'decreasing', 'interpolate', 'merge', 'delete']);
+    if (!existingModes.has(multiMenuControlInfo.subItemMode)) {
+      console.error(`Encountered unknown subItemMode: ${multiMenuControlInfo.subItemMode}`);
+    }
+
+    // Discard the change
+    state.pointDataBuffer = null;
+    state.additiveDataBuffer = null;
+
+    // Recover the original graph
+    redrawOriginal(svg, true, () => {
+      // Move the menu bar after the animation
+      d3.select(multiMenu)
+        .call(moveMenubar, menuWidth, menuHeight, svg, component);
+    });
+
+    // Hide the confirmation panel
+    myContextMenu.hideConfirmation(multiMenuControlInfo.subItemMode);
+
+    // Exit the sub-item mode
+    multiMenuControlInfo.subItemMode = null;
+    multiSelectMenuStore.set(multiMenuControlInfo);
   };
 
   $: featureData && drawFeature(featureData);
@@ -744,6 +828,8 @@
         on:deleteClicked={multiMenuDeleteClicked}
         on:moveCheckClicked={multiMenuMoveCheckClicked}
         on:moveCancelClicked={multiMenuMoveCancelClicked}
+        on:subItemCheckClicked={multiMenuSubItemCheckClicked}
+        on:subItemCancelClicked={multiMenuSubItemCancelClicked}
       /> 
     </div>
 

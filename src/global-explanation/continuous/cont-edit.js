@@ -97,7 +97,8 @@ export const redrawOriginal = (svg, bounce=true, animationEndFunc=undefined) => 
     .selectAll('rect.select-bbox')
     .datum(state.selectedInfo.boundingBox[0])
     .transition(trans)
-    .attr('y', d => state.curYScale(d.y1) - curPadding);
+    .attr('y', d => state.curYScale(d.y1) - curPadding)
+    .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding);
 };
 
 export const redrawMonotone = (svg, isoYs) => {

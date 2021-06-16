@@ -110,8 +110,8 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth, menuWidth
       }
 
       // End increasing mode
-      if (multiMenuControlInfo.increasingMode) {
-        multiMenuControlInfo.increasingMode = false;
+      if (multiMenuControlInfo.subItemMode === 'increasing') {
+        multiMenuControlInfo.subItemMode = null;
         multiSelectMenuStore.set(multiMenuControlInfo);
 
         // Hide the confirmation panel

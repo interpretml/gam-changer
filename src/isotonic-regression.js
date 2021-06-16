@@ -446,7 +446,7 @@ var loader = {
 //   });
 // };
 
-const initIsotonicRegression = () => {
+const initIsotonicRegression = (increasing) => {
   return loader.instantiate(
     fetch('/wasm/isotonic-regression.wasm').then((result) => result.arrayBuffer()),
     {}
@@ -567,7 +567,7 @@ const initIsotonicRegression = () => {
       }
     }
 
-    let model = new IsotonicRegression();
+    let model = new IsotonicRegression({ increasing: increasing});
     return model;
 
   });
