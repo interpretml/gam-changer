@@ -6,7 +6,7 @@
   import { config } from '../config';
 
   import { SelectedInfo } from './continuous/cont-class';
-  import { createConfidenceData, createAdditiveData, createPointData } from './continuous/cont-data';
+  import { createConfidenceData, createAdditiveData, createPointData, linkPointToAdditive } from './continuous/cont-data';
   import { brushDuring, brushEndSelect } from './continuous/cont-brush';
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './continuous/cont-zoom';
   import { dragged, redrawOriginal, redrawMonotone } from './continuous/cont-edit';
@@ -162,6 +162,11 @@
     // Create a data array to draw nodes
     state.pointData = createPointData(featureData);
 
+    // Link the point data and additive data (only need to call this function
+    // we we initialize them from the data, no need to call it when we add new
+    // bins in run time)
+    linkPointToAdditive(state.pointData, state.additiveData);
+
     // Create histogram chart group
     let histChart = content.append('g')
       .attr('class', 'hist-chart-group');
@@ -240,7 +245,7 @@
       .style('visibility', 'hidden');
     
     nodeGroup.selectAll('circle')
-      .data(state.pointData, d => d.id)
+      .data(Object.values(state.pointData), d => d.id)
       .join('circle')
       .attr('class', 'node')
       .attr('id', d => `node-${d.id}`)

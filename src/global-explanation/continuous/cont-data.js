@@ -95,15 +95,29 @@ export const createAdditiveData = (featureData) => {
  * @param featureData
  */
 export const createPointData = (featureData) => {
-  let pointData = [];
+  let pointData = {};
 
   for (let i = 0; i < featureData.additive.length; i++) {
-    pointData.push({
+    pointData[i] = {
       x: featureData.binEdge[i],
       y: featureData.additive[i],
-      id: i
-    });
+      id: i,
+      leftPointID: i == 0 ? null : i - 1,
+      rightPointID: i == featureData.additive.length - 1 ? null : i + 1,
+      leftLineIndex: null,
+      rightLineIndex: null
+    };
   }
 
   return pointData;
+};
+
+export const linkPointToAdditive = (pointData, additiveData) => {
+  additiveData.forEach( (d, i) => {
+    if (d.pos === 'r') {
+      pointData[d.id].rightLineIndex = i;
+    } else {
+      pointData[d.id].leftLineIndex = i;
+    }
+  });
 };
