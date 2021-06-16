@@ -13,7 +13,7 @@ export const moveMenubar = (menubar, menuWidth, menuHeight, svg, component) => {
   const panelBboxPosition = component.getBoundingClientRect();
 
   let left = bboxPosition.x - panelBboxPosition.x + bboxPosition.width / 2 - menuWidth / 2;
-  let top = bboxPosition.y - panelBboxPosition.y - menuHeight - 20;
+  let top = bboxPosition.y - panelBboxPosition.y - menuHeight - 40;
 
   // Do not move the bar out of its parent
   left = Math.max(0, left);

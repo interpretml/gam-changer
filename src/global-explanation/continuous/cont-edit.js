@@ -138,7 +138,7 @@ export const redrawMonotone = (svg, isoYs) => {
   state.selectedInfo.computeBBox();
 
   // Step 2 Update the visualization with new data
-  drawBufferGraph(svg);
+  drawBufferGraph(svg, true);
 
 };
 
@@ -194,12 +194,14 @@ const drawBufferGraph = (svg, animated=true) => {
       .selectAll('rect.select-bbox')
       .datum(state.selectedInfo.boundingBox[0])
       .transition(trans)
-      .attr('y', d => state.curYScale(d.y1) - curPadding);
+      .attr('y', d => state.curYScale(d.y1) - curPadding)
+      .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding);
   } else {
     svgSelect.select('g.line-chart-content-group g.select-bbox-group')
       .selectAll('rect.select-bbox')
       .datum(state.selectedInfo.boundingBox[0])
-      .attr('y', d => state.curYScale(d.y1) - curPadding);
+      .attr('y', d => state.curYScale(d.y1) - curPadding)
+      .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding);
   }
 
 };

@@ -5,6 +5,7 @@
 
   let tooltipConfig = {
     show: false,
+    hideAnimated: true,
     html: 'null',
     left: 0,
     top: 0,
@@ -47,17 +48,26 @@
 
     } else {
       if (currentShow) {
-        d3.select(tooltip)
-          .transition('show')
-          .delay(100)
-          .duration(200)
-          .ease(d3.easeQuadInOut)
-          .style('opacity', 0)
-          .on('end', function() {
-            d3.select(this)
-              .style('visibility', 'hidden');
-            currentShow = false;
-          });
+        // Hide with animation
+        if (value.hideAnimated) {
+          d3.select(tooltip)
+            .transition('show')
+            .delay(100)
+            .duration(200)
+            .ease(d3.easeQuadInOut)
+            .style('opacity', 0)
+            .on('end', function() {
+              d3.select(this)
+                .style('visibility', 'hidden');
+              currentShow = false;
+            });
+        } else {
+          d3.select(tooltip)
+            .style('visibility', 'hidden');
+          currentShow = false;
+          value.hideAnimated = true;
+        }
+
       }
       tooltipConfig = value;
     }

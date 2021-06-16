@@ -28,6 +28,7 @@
   let svg = null;
   let component = null;
   let multiMenu = null;
+  let myContextMenu = null;
 
   // Visualization constants
   const svgPadding = config.svgPadding;
@@ -347,10 +348,8 @@
     // Add brush
     brush = d3.brush()
       .on('end', e => brushEndSelect(
-        e, svg, multiMenu, multiMenuControlInfo,
-        multiSelectMenuStore,
-        bboxStrokeWidth, menuWidth,
-        menuHeight, brush, component
+        e, svg, multiMenu, bboxStrokeWidth, menuWidth, menuHeight, brush,
+        component, myContextMenu
       ))
       .on('start brush', e => brushDuring(e, svg, multiMenu))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]])
@@ -552,6 +551,7 @@
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
 
     redrawMonotone(svg, isoYs);
+    myContextMenu.showConfirmation('increasing', 600);
   };
   
   const multiMenuDecreasingClicked = () => {
@@ -734,7 +734,7 @@
 <div class='explain-panel' bind:this={component}>
 
     <div class='context-menu-container hidden' bind:this={multiMenu}>
-      <ContextMenu 
+      <ContextMenu bind:this={myContextMenu} 
         on:inputChanged={multiMenuInputChanged}
         on:moveButtonClicked={multiMenuMoveClicked}
         on:increasingClicked={multiMenuIncreasingClicked}

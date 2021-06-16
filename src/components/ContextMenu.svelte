@@ -22,6 +22,11 @@
   let controlInfo = {
     moveMode: false,
     toSwitchMoveMode: false,
+    increasingMode: false,
+    decreasingMode: false,
+    interpolateMode: false,
+    mergeMode: false,
+    deleteMode: false,
     increment: 0
   };
   let tooltipConfig = {};
@@ -63,7 +68,7 @@
       .html(decreasingIconSVG.replaceAll('black', 'currentcolor'));
 
     d3.select(component)
-      .selectAll('.svg-icon#icon-updown')
+      .select('.svg-icon#icon-updown')
       .html(preProcessSVG(upDownIconSVG));
 
     d3.select(component)
@@ -83,11 +88,11 @@
       .html(interpolateIconSVG.replaceAll('black', 'currentcolor'));
 
     d3.select(component)
-      .select('.svg-icon#icon-check')
+      .selectAll('.svg-icon.icon-check')
       .html(checkIconSVG.replaceAll('black', 'currentcolor'));
 
     d3.select(component)
-      .select('.svg-icon#icon-refresh')
+      .selectAll('.svg-icon.icon-refresh')
       .html(refreshIconSVG.replaceAll('black', 'currentcolor'));
 
   };
@@ -192,6 +197,50 @@
     dispatch('moveCancelClicked');
   };
 
+  const increasingClicked = () => {
+    controlInfo.increasingMode = true;
+    multiSelectMenuStore.set(controlInfo);
+
+    // hide the tooltip
+    clearTimeout(mouseoverTimeout);
+    mouseoverTimeout = null;
+    tooltipConfig.show = false;
+    tooltipConfig.hideAnimated = false;
+    tooltipConfigStore.set(tooltipConfig);
+
+    dispatch('increasingClicked');
+  };
+
+  export const showConfirmation = (option, delay=500) => {
+    d3.timeout(() => {
+      let componentSelect = d3.select(component);
+
+      componentSelect.select('.items')
+        .style('overflow', null);
+      
+      componentSelect.select(`.sub-item-${option}`)
+        .classed('hidden', false);
+    }, delay);
+  };
+
+  export const hideConfirmation = (option, delay=0) => {
+    const _hideConfirmation = (option) => {
+      let componentSelect = d3.select(component);
+
+      componentSelect.select('.items')
+        .style('overflow', 'hidden');
+      
+      componentSelect.select(`.sub-item-${option}`)
+        .classed('hidden', true);
+    };
+
+    if (delay > 0) {
+      d3.timeout(() => _hideConfirmation(option), delay);
+    } else {
+      _hideConfirmation(option);
+    }
+  };
+
   const mouseoverHandler = (e, message, width, yOffset) => {
     let node = e.currentTarget;
 
@@ -266,7 +315,7 @@
     display: flex;
     align-items: center;
     padding: 0 5px;
-    overflow: hidden;
+    // overflow: hidden;
     width: 100%;
     height: 100%;
   }
@@ -351,6 +400,44 @@
     }
   }
 
+  .sub-item {
+    position: absolute;
+    left: 50%;
+    top: 50px;
+    width: 70px;
+    height: 30px;
+    z-index: 1;
+    transform: translate(-50%);
+    background: white;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 6px 2px hsla(205, 5%, 25%, 0.15);
+    border-radius: 4px;
+
+    .item {
+      width: 30px;
+
+      .svg-icon {
+        color: hsl(0, 0%, 85%);
+
+        :global(svg) {
+          width: 1em;
+          height: 1em;
+        }
+      }
+
+      &:hover {
+        color: $blue-600;
+
+        .svg-icon {
+          color: currentcolor;
+        }
+      }
+    }
+  }
+
   .svg-icon.item-input-up {
     @include item-input-arrow;
 
@@ -395,6 +482,11 @@
     height: 5px;
   }
 
+  .hidden {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
 </style>
 
 <div class='menu-wrapper' bind:this={component}>
@@ -416,12 +508,12 @@
     <div class='collapse-item'>
       <!-- Check button -->
       <div class='item' on:click={moveCheckClicked}>
-        <div class='svg-icon' id='icon-check'></div>
+        <div class='svg-icon icon-check'></div>
       </div>
 
       <!-- Cancel button -->
       <div class='item' on:click={moveCancelClicked}>
-        <div class='svg-icon' id='icon-refresh'></div>
+        <div class='svg-icon icon-refresh'></div>
       </div>
 
     </div>
@@ -449,11 +541,24 @@
 
     <!-- Increasing -->
     <div class='item'
-      on:click={() => dispatch('increasingClicked')}
+      on:click={increasingClicked}
       on:mouseenter={(e) => mouseoverHandler(e, 'monotonically increasing', 120, 52)}
       on:mouseleave={mouseleaveHandler}
     >
       <div class='svg-icon' id='icon-increasing'></div>
+      
+      <div class='sub-item sub-item-increasing hidden' on:hover={(e) => {e.stopPropagation();}}>
+        <!-- Check button -->
+        <div class='item' on:click={moveCheckClicked}>
+          <div class='svg-icon icon-check'></div>
+        </div>
+
+        <!-- Cancel button -->
+        <div class='item' on:click={moveCancelClicked}>
+          <div class='svg-icon icon-refresh'></div>
+        </div>
+
+      </div>
     </div>
 
     <!-- Decreasing -->

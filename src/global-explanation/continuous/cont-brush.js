@@ -5,9 +5,17 @@ import { rScale } from './cont-zoom';
 import { state } from './cont-state';
 import { redrawOriginal } from './cont-edit';
 
+import { multiSelectMenuStore } from '../../store';
+
 // Need a timer to avoid the brush event call after brush.move()
 let idleTimeout = null;
 const idleDelay = 300;
+
+// Store binding
+let multiMenuControlInfo = null;
+multiSelectMenuStore.subscribe(value => {
+  multiMenuControlInfo = value;
+});
 
 // Brush zooming
 const zoomTransitionTime = 700;
@@ -71,10 +79,8 @@ export const brushDuring = (event, svg, multiMenu) => {
   }
 };
 
-export const brushEndSelect = (event, svg, multiMenu, multiMenuControlInfo,
-  multiSelectMenuStore,
-  bboxStrokeWidth, menuWidth,
-  menuHeight, brush, component
+export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth, menuWidth,
+  menuHeight, brush, component, myContextMenu
 ) => {
   // Get the selection boundary
   let selection = event.selection;
@@ -93,17 +99,29 @@ export const brushEndSelect = (event, svg, multiMenu, multiMenuControlInfo,
         .classed('hidden', true);
 
       // End move mode
-      multiMenuControlInfo.moveMode = false;
-      multiMenuControlInfo.toSwitchMoveMode = true;
-      multiSelectMenuStore.set(multiMenuControlInfo);
+      if (multiMenuControlInfo.moveMode) {
+        multiMenuControlInfo.moveMode = false;
+        multiMenuControlInfo.toSwitchMoveMode = true;
+        multiSelectMenuStore.set(multiMenuControlInfo);
+
+        // DO not update the data
+        state.pointDataBuffer = null;
+        state.additiveDataBuffer = null;
+      }
+
+      // End increasing mode
+      if (multiMenuControlInfo.increasingMode) {
+        multiMenuControlInfo.increasingMode = false;
+        multiSelectMenuStore.set(multiMenuControlInfo);
+
+        // Hide the confirmation panel
+        myContextMenu.hideConfirmation('increasing');
+
+      }
 
       // Do not save the user's change (same as clicking the cancel button)
       // Redraw the graph with original data
       redrawOriginal(svg);
-
-      // DO not update the data
-      state.pointDataBuffer = null;
-      state.additiveDataBuffer = null;
 
       // Remove the selection bbox
       svgSelect.selectAll('g.line-chart-content-group g.select-bbox-group').remove();
