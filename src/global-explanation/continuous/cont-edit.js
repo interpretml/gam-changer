@@ -83,6 +83,7 @@ export const redrawOriginal = (svg, bounce=true, animationEndFunc=undefined) => 
     .join(
       enter => enter.append('circle')
         .attr('class', 'node')
+        .classed('selected', state.selectedInfo.hasSelected)
         .attr('id', d => `node-${d.id}`)
         .attr('cx', d => state.oriXScale(d.x))
         .attr('cy', d => state.oriYScale(d.y))
@@ -109,6 +110,7 @@ export const redrawOriginal = (svg, bounce=true, animationEndFunc=undefined) => 
     .join(
       enter => enter.append('path')
         .attr('class', 'additive-line-segment')
+        .classed('selected', state.selectedInfo.hasSelected)
         .attr('id', d => d.id)
         .attr('d', d => `M ${state.oriXScale(d.x1)}, ${state.oriYScale(d.y1)}
           L ${state.oriXScale(d.x2)} ${state.oriYScale(d.y2)}`)
@@ -274,11 +276,23 @@ export const stepInterpolate = (svg, steps) => {
   leftPoint.rightPointID = `(${leftPoint.id}):(${rightPoint.id})-${1}`;
   rightPoint.leftPointID = `(${leftPoint.id}):(${rightPoint.id})-${steps}`;
 
-  console.log(state.pointDataBuffer);
   // Step 4: Recreate the path data using the updated point data  
   updateAdditiveDataBufferFromPointDataBuffer();
 
-  // Step 5: Update the graph using new data
+  // Step 5: Update the selectedInfo to reflect new middle nodes
+  curPoint = leftPoint;
+  state.selectedInfo.nodeDataBuffer = [];
+
+  while (curPoint.id !== rightPoint.id) {
+    const nextID = curPoint.rightPointID;
+    state.selectedInfo.nodeDataBuffer.push({x: curPoint.x, y: curPoint.y, id: curPoint.id});
+    curPoint = state.pointDataBuffer[nextID];
+  }
+  
+  // Add the right point too
+  state.selectedInfo.nodeDataBuffer.push({ x: curPoint.x, y: curPoint.y, id: curPoint.id });
+
+  // Step 6: Update the graph using new data
   drawBufferGraph(svg, true, 800);
 
 };
@@ -423,9 +437,12 @@ const drawBufferGraph = (svg, animated=true, duration=400) => {
  */
 const projectTriangleSide = (d) => {
   const theta = Math.atan2(d.ty, d.tx);
-  const pLen = Math.abs(d.tx - d.sx) * Math.cos(theta);
-  const len = Math.abs(d.ty - d.sy) / Math.sin(theta);
-  const pRatio = pLen / len;
+  const pLen = (d.tx - d.sx) * Math.cos(theta);
+  const len = Math.sqrt((d.ty - d.sy) ** 2 + (d.tx - d.sx) ** 2);
+  let pRatio = pLen / len;
+  // let xRange = Math.abs(d.tx - d.sx);
+  // let yRange = Math.abs(d.ty - d.sy);
+  // pRatio = xRange / (xRange + yRange);
   const pX = d.sx + pRatio * (d.tx - d.sx);
   const pY = d.sy + pRatio * (d.ty - d.sy);
   return {x: pX, y: pY};

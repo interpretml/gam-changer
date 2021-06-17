@@ -5,6 +5,7 @@ export class SelectedInfo {
     this.hasSelected = false;
     this.nodeData = [];
     this.boundingBox = [];
+    this.nodeDataBuffer = null;
   }
 
   computeBBox() {

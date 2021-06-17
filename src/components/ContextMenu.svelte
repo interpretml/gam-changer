@@ -233,6 +233,24 @@
     dispatch('decreasingClicked');
   };
 
+  const interpolationClicked = () => {
+    if (controlInfo.subItemMode !== null) {
+    // Hide the confirmation panel
+      hideConfirmation(controlInfo.subItemMode);
+
+      // Exit the sub-item mode
+      controlInfo.subItemMode = null;
+      multiSelectMenuStore.set(controlInfo);
+    }
+
+    controlInfo.subItemMode = 'interpolation';
+    multiSelectMenuStore.set(controlInfo);
+
+    hideToolTipDuringSubMenu();
+
+    dispatch('interpolationClicked');
+  };
+
   const hideToolTipDuringSubMenu = () => {
     // hide the tooltip
     clearTimeout(mouseoverTimeout);
@@ -647,11 +665,24 @@
 
     <!-- Interpolation -->
     <div class='item'
-      on:click={() => dispatch('interpolationClicked')}
+      on:click={interpolationClicked}
       on:mouseenter={(e) => mouseoverHandler(e, 'interpolate', 85, 30)}
       on:mouseleave={mouseleaveHandler}
     >
       <div class='svg-icon' id='icon-interpolate'></div>
+
+      <div class='sub-item sub-item-interpolation hidden'>
+        <!-- Check button -->
+        <div class='item sub-item-child' on:click={subItemCheckClicked}>
+          <div class='svg-icon icon-check'></div>
+        </div>
+
+        <!-- Cancel button -->
+        <div class='item sub-item-child' on:click={subItemCancelClicked}>
+          <div class='svg-icon icon-refresh'></div>
+        </div>
+      </div>
+
     </div>
 
     <div class='separator'></div>

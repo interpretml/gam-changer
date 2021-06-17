@@ -606,15 +606,25 @@
    * Event handler when user clicks the interpolation button
    */
   const multiMenuInterpolationClicked = () => {
-    console.log('interpolate clicked');
+    console.log('interpolation clicked');
+
+    // Animate the bbox
+    d3.select(svg)
+      .select('g.line-chart-content-group g.select-bbox-group')
+      .select('rect.original-bbox')
+      .each((d, i, g) => animateBBox(d, i, g, 0, -500));
 
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
 
-    // inplaceInterpolate(svg);
-    // myContextMenu.showConfirmation('interpolation', 600);
+    // Special for interpolation: we need to create a buffer for the selectedInfo
+    // as well (selectedInfo.boundingBox would not change, no need to buffer it)
+    state.selectedInfo.nodeDataBuffer = [];
 
     stepInterpolate(svg, 3);
+    // inplaceInterpolate(svg);
+
+    myContextMenu.showConfirmation('interpolation', 800);
 
   };
 
@@ -636,7 +646,7 @@
       console.error('No sub item is selected but check is clicked!');
     }
 
-    const existingModes = new Set(['increasing', 'decreasing', 'interpolate', 'merge', 'delete']);
+    const existingModes = new Set(['increasing', 'decreasing', 'interpolation', 'merge', 'delete']);
     if (!existingModes.has(multiMenuControlInfo.subItemMode)) {
       console.error(`Encountered unknown subItemMode: ${multiMenuControlInfo.subItemMode}`);
     }
@@ -650,6 +660,12 @@
     // Save the changes
     state.pointData = JSON.parse(JSON.stringify(state.pointDataBuffer));
     state.additiveData = JSON.parse(JSON.stringify(state.additiveDataBuffer));
+
+    // Special [interpolation]: need to save the new selectedInfo as well
+    if (multiMenuControlInfo.subItemMode === 'interpolation') {
+      state.selectedInfo.nodeData = JSON.parse(JSON.stringify(state.selectedInfo.nodeDataBuffer));
+      state.selectedInfo.nodeDataBuffer = null;
+    }
 
     // Hide the confirmation panel
     myContextMenu.hideConfirmation(multiMenuControlInfo.subItemMode);
@@ -672,7 +688,7 @@
       console.error('No sub item is selected but check is clicked!');
     }
 
-    const existingModes = new Set(['increasing', 'decreasing', 'interpolate', 'merge', 'delete']);
+    const existingModes = new Set(['increasing', 'decreasing', 'interpolation', 'merge', 'delete']);
     if (!existingModes.has(multiMenuControlInfo.subItemMode)) {
       console.error(`Encountered unknown subItemMode: ${multiMenuControlInfo.subItemMode}`);
     }

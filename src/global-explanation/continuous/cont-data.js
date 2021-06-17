@@ -95,7 +95,6 @@ export const createAdditiveData = (featureData) => {
     ty: featureData.additive[featureData.additive.length - 1]
   });
 
-  console.log(additiveData);
   return additiveData;
 };
 
