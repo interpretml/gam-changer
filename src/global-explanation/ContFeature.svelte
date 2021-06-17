@@ -9,7 +9,7 @@
   import { createConfidenceData, createAdditiveData, createPointData, linkPointToAdditive } from './continuous/cont-data';
   import { brushDuring, brushEndSelect } from './continuous/cont-brush';
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './continuous/cont-zoom';
-  import { dragged, redrawOriginal, redrawMonotone, inplaceInterpolate } from './continuous/cont-edit';
+  import { dragged, redrawOriginal, redrawMonotone, inplaceInterpolate, stepInterpolate } from './continuous/cont-edit';
   import { state } from './continuous/cont-state';
   import { moveMenubar } from './continuous/cont-bbox';
 
@@ -611,8 +611,10 @@
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
 
-    inplaceInterpolate(svg);
-    myContextMenu.showConfirmation('interpolation', 600);
+    // inplaceInterpolate(svg);
+    // myContextMenu.showConfirmation('interpolation', 600);
+
+    stepInterpolate(svg, 3);
 
   };
 

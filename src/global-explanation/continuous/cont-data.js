@@ -58,10 +58,12 @@ export const createAdditiveData = (featureData) => {
       y1: sy,
       x2: tx,
       y2: sy,
-      id: i,
+      id: `${i}-${i+1}-r`,
       pos: 'r',
       sx: sx,
-      sy: sy
+      sy: sy,
+      tx: tx,
+      ty: ty
     });
 
     additiveData.push({
@@ -69,10 +71,12 @@ export const createAdditiveData = (featureData) => {
       y1: sy,
       x2: tx,
       y2: ty,
-      id: i + 1,
+      id: `${i}-${i + 1}-l`,
       pos: 'l',
       sx: sx,
-      sy: sy
+      sy: sy,
+      tx: tx,
+      ty: ty
     });
   }
 
@@ -83,10 +87,12 @@ export const createAdditiveData = (featureData) => {
     y1: featureData.additive[featureData.additive.length - 1],
     x2: featureData.binEdge[featureData.additive.length],
     y2: featureData.additive[featureData.additive.length - 1],
-    id: featureData.additive.length - 1,
+    id: `${featureData.additive.length - 1}-${featureData.additive.length - 1}-r`,
     pos: 'r',
     sx: featureData.binEdge[featureData.additive.length - 1],
-    sy: featureData.additive[featureData.additive.length - 1]
+    sy: featureData.additive[featureData.additive.length - 1],
+    tx: featureData.binEdge[featureData.additive.length],
+    ty: featureData.additive[featureData.additive.length - 1]
   });
 
   console.log(additiveData);
@@ -118,9 +124,11 @@ export const createPointData = (featureData) => {
 export const linkPointToAdditive = (pointData, additiveData) => {
   additiveData.forEach( (d, i) => {
     if (d.pos === 'r') {
-      pointData[d.id].rightLineIndex = i;
+      let curID = d.id.replace(/(\d+)-(\d+)-[lr]/, '$1');
+      pointData[curID].rightLineIndex = i;
     } else {
-      pointData[d.id].leftLineIndex = i;
+      let curID = d.id.replace(/(\d+)-(\d+)-[lr]/, '$2');
+      pointData[curID].leftLineIndex = i;
     }
   });
 };
@@ -149,10 +157,12 @@ export const updateAdditiveDataBufferFromPointDataBuffer = () => {
       y1: curPoint.y,
       x2: nextPoint.x,
       y2: curPoint.y,
-      id: curPoint.id,
+      id: `${curPoint.id}-${nextPoint.id}-r`,
       pos: 'r',
       sx: curPoint.x,
-      sy: curPoint.y
+      sy: curPoint.y,
+      tx: nextPoint.x,
+      ty: nextPoint.y
     });
 
     curPoint.rightLineIndex = curLineIndex;
@@ -163,10 +173,12 @@ export const updateAdditiveDataBufferFromPointDataBuffer = () => {
       y1: curPoint.y,
       x2: nextPoint.x,
       y2: nextPoint.y,
-      id: nextPoint.id,
+      id: `${curPoint.id}-${nextPoint.id}-l`,
       pos: 'l',
       sx: curPoint.x,
-      sy: curPoint.y
+      sy: curPoint.y,
+      tx: nextPoint.x,
+      ty: nextPoint.y
     });
 
     nextPoint.leftLineIndex = curLineIndex;
@@ -178,16 +190,17 @@ export const updateAdditiveDataBufferFromPointDataBuffer = () => {
 
   // Connect the last two points (because max point has no additive value, it
   // does not have a left edge)
-  let prePoint = state.pointDataBuffer[curPoint.leftPointID];
   newAdditiveData.push({
     x1: curPoint.x,
     y1: curPoint.y,
     x2: state.oriXScale.domain()[1],
     y2: curPoint.y,
-    id: curPoint.id,
+    id: `${curPoint.id}-${curPoint.id}-r`,
     pos: 'r',
-    sx: prePoint.x,
-    sy: prePoint.y
+    sx: curPoint.x,
+    sy: curPoint.y,
+    tx: state.oriXScale.domain()[1],
+    ty: curPoint.y
   });
 
   curPoint.rightLineIndex = curLineIndex;
