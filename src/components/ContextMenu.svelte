@@ -16,6 +16,9 @@
   import interpolateIconSVG from '../img/interpolate-icon.svg';
   import checkIconSVG from '../img/check-icon.svg';
   import refreshIconSVG from '../img/refresh-icon.svg';
+  import minusIconSVG from '../img/minus-icon.svg';
+  import plusIconSVG from '../img/plus-icon.svg';
+  import inplaceIconSVG from '../img/inplace-icon.svg';
 
   // Component variables
   let component = null;
@@ -23,7 +26,8 @@
     moveMode: false,
     toSwitchMoveMode: false,
     subItemMode: null,
-    increment: 0
+    increment: 0,
+    step: 3
   };
   let tooltipConfig = {};
   let mouseoverTimeout = null;
@@ -68,11 +72,11 @@
       .html(preProcessSVG(upDownIconSVG));
 
     d3.select(component)
-      .select('.svg-icon#icon-input-up')
+      .selectAll('.svg-icon.icon-input-up')
       .html(upIconSVG.replaceAll('black', 'currentcolor'));
 
     d3.select(component)
-      .select('.svg-icon#icon-input-down')
+      .selectAll('.svg-icon.icon-input-down')
       .html(downIconSVG.replaceAll('black', 'currentcolor'));
 
     d3.select(component)
@@ -90,6 +94,18 @@
     d3.select(component)
       .selectAll('.svg-icon.icon-refresh')
       .html(refreshIconSVG.replaceAll('black', 'currentcolor'));
+
+    d3.select(component)
+      .selectAll('.svg-icon.icon-minus')
+      .html(minusIconSVG.replaceAll('black', 'currentcolor'));
+
+    d3.select(component)
+      .selectAll('.svg-icon.icon-plus')
+      .html(plusIconSVG.replaceAll('black', 'currentcolor'));
+
+    d3.select(component)
+      .selectAll('.svg-icon.icon-inplace')
+      .html(inplaceIconSVG.replaceAll('black', 'currentcolor'));
 
   };
 
@@ -305,10 +321,11 @@
 
     // Do not show tooltip in sub-menu mode if hovering over the sub-menu items
     if (controlInfo.subItemMode !== null) {
-      if (d3.select(e.explicitOriginalTarget).classed('sub-item-child') ||
-        d3.select(e.explicitOriginalTarget).classed('sub-item')
-      ) {
-        return;
+      const target = d3.select(e.explicitOriginalTarget);
+      if (!target.classed('show-tooltip')) {
+        if (target.classed('sub-item-child') || target.classed('sub-item')) {
+          return;
+        }
       }
     }
 
@@ -484,8 +501,13 @@
     box-shadow: 0 2px 6px 2px hsla(205, 5%, 25%, 0.15);
     border-radius: 4px;
 
+    &.sub-item-interpolation {
+      width: 220px;
+    }
+
     .item {
       width: 30px;
+      height: 30px;
 
       .svg-icon {
         color: hsl(0, 0%, 85%);
@@ -523,6 +545,22 @@
     padding-bottom: 5px;
 
     top: 0;
+  }
+
+  .interpolate-step {
+    display: flex;
+    align-items: center;
+    border: 2px solid $gray-200;
+    border-radius: 4px;
+    height: 24px;
+  }
+
+  .item-step-text {
+    border-right: 2px solid $gray-200;
+    border-left: 2px solid $gray-200;
+    height: 24px;
+    width: 30px;
+    text-align: center;
   }
 
   .svg-icon.item-input-down {
@@ -606,11 +644,11 @@
         on:change={inputChanged}
       >
 
-      <div class='svg-icon item-input-up' id='icon-input-up'
+      <div class='svg-icon item-input-up icon-input-up'
         on:click={inputAdd}
       ></div>
 
-      <div class='svg-icon item-input-down' id='icon-input-down'
+      <div class='svg-icon item-input-down icon-input-down'
         on:click={inputMinus}
       ></div>
     </div>
@@ -672,6 +710,35 @@
       <div class='svg-icon' id='icon-interpolate'></div>
 
       <div class='sub-item sub-item-interpolation hidden'>
+
+        <!-- Inplace interpolation button -->
+        <div class='item sub-item-child show-tooltip'
+          on:mouseenter={(e) => mouseoverHandler(e, 'inplace', 70, 30)}
+          on:mouseleave={mouseleaveHandler}
+          on:click={subItemCheckClicked}
+        >
+          <div class='svg-icon icon-inplace'></div>
+        </div>
+
+        <div class='separator'></div>
+
+        <div class='interpolate-step'>
+          <!-- Minus button -->
+          <div class='item sub-item-child' on:click={subItemCheckClicked}>
+            <div class='svg-icon icon-minus'></div>
+          </div>
+
+          <!-- Interpolation step input -->
+          <div class='item-step-text'>{controlInfo.step}</div>
+
+          <!-- Plus button -->
+          <div class='item sub-item-child' on:click={subItemCheckClicked}>
+            <div class='svg-icon icon-plus'></div>
+          </div>
+        </div>
+
+        <div class='separator'></div>
+
         <!-- Check button -->
         <div class='item sub-item-child' on:click={subItemCheckClicked}>
           <div class='svg-icon icon-check'></div>
