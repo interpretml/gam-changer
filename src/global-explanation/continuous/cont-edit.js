@@ -192,7 +192,7 @@ export const inplaceInterpolate = (svg) => {
   let leftPoint = { x: Infinity, y: null, id: null };
   let rightPoint = { x: -Infinity, y: null, id: null };
 
-  state.selectedInfo.nodeData.forEach(d => {
+  state.selectedInfo.nodeDataBuffer.forEach(d => {
     if (d.x < leftPoint.x) {
       leftPoint = state.pointDataBuffer[d.id];
     }
@@ -222,7 +222,7 @@ export const inplaceInterpolate = (svg) => {
   updateAdditiveDataBufferFromPointDataBuffer();
 
   // Step 3: Update the graph using new data
-  drawBufferGraph(svg, true);
+  drawBufferGraph(svg, true, 800);
 };
 
 export const stepInterpolate = (svg, steps) => {
@@ -230,7 +230,7 @@ export const stepInterpolate = (svg, steps) => {
   let leftPoint = { x: Infinity, y: null, id: null };
   let rightPoint = { x: -Infinity, y: null, id: null };
 
-  state.selectedInfo.nodeData.forEach(d => {
+  state.selectedInfo.nodeDataBuffer.forEach(d => {
     if (d.x < leftPoint.x) {
       leftPoint = state.pointDataBuffer[d.id];
     }

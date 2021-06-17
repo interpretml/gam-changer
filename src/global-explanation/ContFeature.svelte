@@ -550,8 +550,8 @@
     let xs = [];
     let ys = [];
 
-    state.selectedInfo.nodeData.forEach(d => {
-      xs.push(d.id);
+    state.selectedInfo.nodeData.forEach((d, i) => {
+      xs.push(i);
       ys.push(state.pointData[d.id].y);
     });
 
@@ -619,13 +619,42 @@
 
     // Special for interpolation: we need to create a buffer for the selectedInfo
     // as well (selectedInfo.boundingBox would not change, no need to buffer it)
-    state.selectedInfo.nodeDataBuffer = [];
+    state.selectedInfo.nodeDataBuffer = JSON.parse(JSON.stringify(state.selectedInfo.nodeData));
 
-    stepInterpolate(svg, 3);
-    // inplaceInterpolate(svg);
+    // Determine whether to use in-place interpolation
+    if (state.selectedInfo.nodeData.length == 1) {
+      return;
+    } else if (state.selectedInfo.nodeData.length == 2) {
+      multiMenuControlInfo.inplaceInterpolation = false;
+      multiSelectMenuStore.set(multiMenuControlInfo);
+      stepInterpolate(svg, multiMenuControlInfo.step);
+    } else {
+      multiMenuControlInfo.inplaceInterpolation = true;
+      multiSelectMenuStore.set(multiMenuControlInfo);
+      inplaceInterpolate(svg);
+    }
 
     myContextMenu.showConfirmation('interpolation', 800);
 
+  };
+
+  /**
+   * Event handler when user clicks the control button in the interpolation sub-menu
+  */
+  const multiMenuInterpolateUpdated = () => {
+    console.log('interpolation updated');
+
+    if (multiMenuControlInfo.inplaceInterpolation) {
+      // Special case: we want to do inplace interpolation from the original data
+      // Recover data
+      state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+      state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
+
+      state.selectedInfo.nodeDataBuffer = JSON.parse(JSON.stringify(state.selectedInfo.nodeData));
+      inplaceInterpolate(svg);
+    } else {
+      stepInterpolate(svg, multiMenuControlInfo.step);
+    }
   };
 
   const multiMenuMergeClicked = () => {
@@ -894,6 +923,7 @@
         on:moveCancelClicked={multiMenuMoveCancelClicked}
         on:subItemCheckClicked={multiMenuSubItemCheckClicked}
         on:subItemCancelClicked={multiMenuSubItemCancelClicked}
+        on:interpolateUpdated={multiMenuInterpolateUpdated}
       /> 
     </div>
 

@@ -27,7 +27,8 @@
     toSwitchMoveMode: false,
     subItemMode: null,
     increment: 0,
-    step: 3
+    step: 3,
+    inplaceInterpolation: true
   };
   let tooltipConfig = {};
   let mouseoverTimeout = null;
@@ -267,6 +268,40 @@
     dispatch('interpolationClicked');
   };
 
+  const interpolateMinusClicked = (e) => {
+    e.stopPropagation();
+    if (controlInfo.step - 1 !== 0) {
+      controlInfo.step --;
+      controlInfo.inplaceInterpolation = false;
+      multiSelectMenuStore.set(controlInfo);
+      dispatch('interpolateUpdated');
+    }
+  };
+
+  const interpolatePlusClicked = (e) => {
+    e.stopPropagation();
+    if (controlInfo.step + 1 !== 21) {
+      controlInfo.step ++;
+      controlInfo.inplaceInterpolation = false;
+      multiSelectMenuStore.set(controlInfo);
+      dispatch('interpolateUpdated');
+    }
+  };
+
+  const interpolateInplaceClicked = (e) => {
+    e.stopPropagation();
+    controlInfo.inplaceInterpolation = true;
+    multiSelectMenuStore.set(controlInfo);
+    dispatch('interpolateUpdated');
+  };
+
+  const interpolateTextClicked = (e) => {
+    e.stopPropagation();
+    controlInfo.inplaceInterpolation = false;
+    multiSelectMenuStore.set(controlInfo);
+    dispatch('interpolateUpdated');
+  };
+
   const hideToolTipDuringSubMenu = () => {
     // hide the tooltip
     clearTimeout(mouseoverTimeout);
@@ -317,14 +352,17 @@
   };
 
   const mouseoverHandler = (e, message, width, yOffset) => {
+    e.stopPropagation();
     let node = e.currentTarget;
 
     // Do not show tooltip in sub-menu mode if hovering over the sub-menu items
     if (controlInfo.subItemMode !== null) {
       const target = d3.select(e.explicitOriginalTarget);
-      if (!target.classed('show-tooltip')) {
-        if (target.classed('sub-item-child') || target.classed('sub-item')) {
-          return;
+      if (target.size() > 0) {
+        if (!target.classed('show-tooltip')) {
+          if (target.classed('sub-item-child') || target.classed('sub-item')) {
+            return;
+          }
         }
       }
     }
@@ -538,6 +576,12 @@
     }
   }
 
+  .sub-item-child.selected {
+    .svg-icon {
+      color: $blue-600;
+    }
+  }
+
   .svg-icon.item-input-up {
     @include item-input-arrow;
 
@@ -553,6 +597,18 @@
     border: 2px solid $gray-200;
     border-radius: 4px;
     height: 24px;
+
+    &.selected {
+      border: 2px solid change-color($blue-600, $lightness: 80%);
+      
+      .sub-item-child .svg-icon {
+        color: change-color($blue-600, $lightness: 80%);
+
+        &:hover {
+          color: $blue-600;
+        }
+      }
+    }
   }
 
   .item-step-text {
@@ -560,7 +616,18 @@
     border-left: 2px solid $gray-200;
     height: 24px;
     width: 30px;
+    color: hsl(0, 0%, 85%);
     text-align: center;
+
+    &:hover {
+      color: $blue-600;
+    }
+
+    &.selected {
+      color: $blue-600;
+      border-right: 2px solid change-color($blue-600, $lightness: 80%);
+      border-left: 2px solid change-color($blue-600, $lightness: 80%);
+    }
   }
 
   .svg-icon.item-input-down {
@@ -657,6 +724,7 @@
 
     <!-- Increasing -->
     <div class='item'
+      class:selected={controlInfo.subItemMode==='increasing'}
       on:click={increasingClicked}
       on:mouseenter={(e) => mouseoverHandler(e, 'monotonically increasing', 120, 52)}
       on:mouseleave={mouseleaveHandler}
@@ -679,6 +747,7 @@
 
     <!-- Decreasing -->
     <div class='item'
+      class:selected={controlInfo.subItemMode==='decreasing'}
       on:click={decreasingClicked}
       on:mouseenter={(e) => mouseoverHandler(e, 'monotonically decreasing', 120, 52)}
       on:mouseleave={mouseleaveHandler}
@@ -703,6 +772,7 @@
 
     <!-- Interpolation -->
     <div class='item'
+      class:selected={controlInfo.subItemMode==='interpolation'}
       on:click={interpolationClicked}
       on:mouseenter={(e) => mouseoverHandler(e, 'interpolate', 85, 30)}
       on:mouseleave={mouseleaveHandler}
@@ -713,26 +783,35 @@
 
         <!-- Inplace interpolation button -->
         <div class='item sub-item-child show-tooltip'
+          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.inplaceInterpolation}
           on:mouseenter={(e) => mouseoverHandler(e, 'inplace', 70, 30)}
           on:mouseleave={mouseleaveHandler}
-          on:click={subItemCheckClicked}
+          on:click={interpolateInplaceClicked}
         >
           <div class='svg-icon icon-inplace'></div>
         </div>
 
         <div class='separator'></div>
 
-        <div class='interpolate-step'>
+        <div class='interpolate-step'
+          class:selected={controlInfo.subItemMode==='interpolation' && !controlInfo.inplaceInterpolation}
+          on:mouseenter={(e) => mouseoverHandler(e, 'equal steps', 95, 30)}
+          on:mouseleave={mouseleaveHandler}
+        >
           <!-- Minus button -->
-          <div class='item sub-item-child' on:click={subItemCheckClicked}>
+          <div class='item sub-item-child show-tooltip' on:click={interpolateMinusClicked}>
             <div class='svg-icon icon-minus'></div>
           </div>
 
           <!-- Interpolation step input -->
-          <div class='item-step-text'>{controlInfo.step}</div>
+          <div class='item-step-text'
+            on:click={interpolateTextClicked}
+            class:selected={controlInfo.subItemMode==='interpolation' && !controlInfo.inplaceInterpolation}
+            >
+          {controlInfo.step}</div>
 
           <!-- Plus button -->
-          <div class='item sub-item-child' on:click={subItemCheckClicked}>
+          <div class='item sub-item-child' on:click={interpolatePlusClicked}>
             <div class='svg-icon icon-plus'></div>
           </div>
         </div>
@@ -756,6 +835,7 @@
 
     <!-- Merge -->
     <div class='item'
+      class:selected={controlInfo.subItemMode==='merge'}
       on:click={() => dispatch('mergeClicked')}
       on:mouseenter={(e) => mouseoverHandler(e, 'merge', 60, 30)}
       on:mouseleave={mouseleaveHandler}
@@ -767,6 +847,7 @@
 
     <!-- Deletion -->
     <div class='item'
+      class:selected={controlInfo.subItemMode==='delete'}
       on:click={() => dispatch('deleteClicked')}
       on:mouseenter={(e) => mouseoverHandler(e, 'delete', 60, 30)}
       on:mouseleave={mouseleaveHandler}
