@@ -4,7 +4,7 @@ export const multiSelectMenuStore = writable({
   moveMode: false,
   toSwitchMoveMode: false,
   subItemMode: null,
-  increment: 0,
+  setValue: null,
   step: 3,
   inplaceInterpolation: true
 });

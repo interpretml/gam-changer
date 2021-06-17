@@ -9,7 +9,8 @@
   import { createConfidenceData, createAdditiveData, createPointData, linkPointToAdditive } from './continuous/cont-data';
   import { brushDuring, brushEndSelect } from './continuous/cont-brush';
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './continuous/cont-zoom';
-  import { dragged, redrawOriginal, redrawMonotone, inplaceInterpolate, stepInterpolate } from './continuous/cont-edit';
+  import { dragged, redrawOriginal, redrawMonotone, inplaceInterpolate,
+    stepInterpolate, merge } from './continuous/cont-edit';
   import { state } from './continuous/cont-state';
   import { moveMenubar } from './continuous/cont-bbox';
 
@@ -465,8 +466,12 @@
     // Enter the move mode
 
     // Step 1. create data clone buffers for user to change
-    state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
-    state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
+    // We only do this when buffer has not been created --- it is possible that
+    // user switch to move from other editing mode
+    if (state.pointDataBuffer === null) {
+      state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+      state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
+    }
 
     let bboxGroup = d3.select(svg)
       .select('g.line-chart-content-group g.select-bbox-group')
@@ -511,7 +516,7 @@
     state.additiveDataBuffer = null;
     
     // Recover the original graph
-    redrawOriginal(svg, false, () => {
+    redrawOriginal(svg, true, () => {
       // Move the menu bar after animation
       d3.select(multiMenu)
         .call(moveMenubar, menuWidth, menuHeight, svg, component);
@@ -526,10 +531,6 @@
     // stop the animation
     bboxGroup.select('rect.original-bbox')
       .interrupt();
-  };
-
-  const multiMenuInputChanged = () => {
-    console.log(multiMenuControlInfo.increment);
   };
 
   /**
@@ -634,7 +635,7 @@
       inplaceInterpolate(svg);
     }
 
-    myContextMenu.showConfirmation('interpolation', 800);
+    myContextMenu.showConfirmation('interpolation', 600);
 
   };
 
@@ -659,10 +660,53 @@
 
   const multiMenuMergeClicked = () => {
     console.log('merge clicked');
+
+    // Animate the bbox
+    d3.select(svg)
+      .select('g.line-chart-content-group g.select-bbox-group')
+      .select('rect.original-bbox')
+      .each((d, i, g) => animateBBox(d, i, g, 0, -500));
+
+    state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+    state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
+
+    merge(svg);
+
+    myContextMenu.showConfirmation('merge', 600);
+  };
+
+  const multiMenuInputChanged = () => {
+    console.log(multiMenuControlInfo.setValue);
+
+    // Animate the bbox
+    d3.select(svg)
+      .select('g.line-chart-content-group g.select-bbox-group')
+      .select('rect.original-bbox')
+      .each((d, i, g) => animateBBox(d, i, g, 0, -500));
+
+    state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+    state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
+
+    merge(svg, multiMenuControlInfo.setValue);
+
+    myContextMenu.showConfirmation('change', 600);
   };
 
   const multiMenuDeleteClicked = () => {
     console.log('delete clicked');
+
+    // Animate the bbox
+    d3.select(svg)
+      .select('g.line-chart-content-group g.select-bbox-group')
+      .select('rect.original-bbox')
+      .each((d, i, g) => animateBBox(d, i, g, 0, -500));
+
+    state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+    state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
+
+    merge(svg, 0);
+
+    myContextMenu.showConfirmation('delete', 600);
   };
 
   /**
@@ -675,7 +719,7 @@
       console.error('No sub item is selected but check is clicked!');
     }
 
-    const existingModes = new Set(['increasing', 'decreasing', 'interpolation', 'merge', 'delete']);
+    const existingModes = new Set(['increasing', 'decreasing', 'interpolation', 'change', 'merge', 'delete']);
     if (!existingModes.has(multiMenuControlInfo.subItemMode)) {
       console.error(`Encountered unknown subItemMode: ${multiMenuControlInfo.subItemMode}`);
     }
@@ -717,7 +761,7 @@
       console.error('No sub item is selected but check is clicked!');
     }
 
-    const existingModes = new Set(['increasing', 'decreasing', 'interpolation', 'merge', 'delete']);
+    const existingModes = new Set(['increasing', 'decreasing', 'interpolation', 'change', 'merge', 'delete']);
     if (!existingModes.has(multiMenuControlInfo.subItemMode)) {
       console.error(`Encountered unknown subItemMode: ${multiMenuControlInfo.subItemMode}`);
     }

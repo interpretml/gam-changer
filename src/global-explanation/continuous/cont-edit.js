@@ -221,7 +221,11 @@ export const inplaceInterpolate = (svg) => {
   // Step 2: Recreate the path data using the updated point data  
   updateAdditiveDataBufferFromPointDataBuffer();
 
-  // Step 3: Update the graph using new data
+  // Step 3: update the bbox info
+  state.selectedInfo.updateNodeData(state.pointDataBuffer);
+  state.selectedInfo.computeBBox();
+
+  // Step 4: Update the graph using new data
   drawBufferGraph(svg, true, 800);
 };
 
@@ -292,9 +296,50 @@ export const stepInterpolate = (svg, steps) => {
   // Add the right point too
   state.selectedInfo.nodeDataBuffer.push({ x: curPoint.x, y: curPoint.y, id: curPoint.id });
 
+  state.selectedInfo.computeBBoxBuffer();
+
   // Step 6: Update the graph using new data
   drawBufferGraph(svg, true, 800);
 
+};
+
+export const merge = (svg, value=undefined) => {
+  // Step 1: Find the left and right point in the selected region
+  let leftPoint = { x: Infinity, y: null, id: null };
+  let rightPoint = { x: -Infinity, y: null, id: null };
+
+  state.selectedInfo.nodeData.forEach(d => {
+    if (d.x < leftPoint.x) {
+      leftPoint = state.pointDataBuffer[d.id];
+    }
+    if (d.x > rightPoint.x) {
+      rightPoint = state.pointDataBuffer[d.id];
+    }
+  });
+
+  // Step 2: Iterate through all nodes in the region and assign left node value
+  // or the given value to them
+  let curPoint = state.pointDataBuffer[leftPoint.id];
+
+  while (curPoint.id !== rightPoint.rightPointID) {
+    const nextID = curPoint.rightPointID;
+    state.pointDataBuffer[curPoint.id].y = value === undefined ? leftPoint.y : value;
+
+    if (nextID === null) {
+      break;
+    }
+    curPoint = state.pointDataBuffer[nextID];
+  }
+
+  // Step 3: Recreate the path data using the updated point data  
+  updateAdditiveDataBufferFromPointDataBuffer();
+
+  // Step 4: update the bbox info
+  state.selectedInfo.updateNodeData(state.pointDataBuffer);
+  state.selectedInfo.computeBBox();
+
+  // Step 5: Update the graph using new data
+  drawBufferGraph(svg, true, 500);
 };
 
 const drawBufferGraph = (svg, animated=true, duration=400) => {

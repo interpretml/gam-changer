@@ -26,7 +26,7 @@
     moveMode: false,
     toSwitchMoveMode: false,
     subItemMode: null,
-    increment: 0,
+    setValue: 0,
     step: 3,
     inplaceInterpolation: true
   };
@@ -110,13 +110,30 @@
 
   };
 
+  const prepareSubMenu = (newMode) => {
+    if (controlInfo.subItemMode !== null && controlInfo.subItemMode !== newMode) {
+    // Hide the confirmation panel
+      hideConfirmation(controlInfo.subItemMode);
+
+      // Exit the sub-item mode
+      controlInfo.subItemMode = null;
+      multiSelectMenuStore.set(controlInfo);
+    }
+
+    controlInfo.subItemMode = newMode;
+    multiSelectMenuStore.set(controlInfo);
+
+    hideToolTipDuringSubMenu();
+  };
+
   const inputChanged = (e) => {
+    prepareSubMenu('change');
+
     e.preventDefault();
-    let value = parseInt(e.target.value);
+    let value = parseFloat(e.target.value);
 
     if (isNaN(value)) value = 0;
-    controlInfo.increment = value;
-    e.target.value = `${value >= 0 ? '+' : ''}${value}`;
+    controlInfo.setValue = value;
 
     // Update the store
     multiSelectMenuStore.set(controlInfo);
@@ -125,11 +142,13 @@
   };
 
   const inputAdd = () => {
-    controlInfo.increment++;
-    d3.select(component)
-      .select('.item-input')
-      .node()
-      .value = `${controlInfo.increment >= 0 ? '+' : ''}${controlInfo.increment}`;
+    prepareSubMenu('change');
+
+    if (controlInfo.setValue === null) {
+      controlInfo.setValue = 0;
+    } else {
+      controlInfo.setValue++;
+    }
 
     // Update the store
     multiSelectMenuStore.set(controlInfo);
@@ -138,12 +157,14 @@
   };
 
   const inputMinus = () => {
-    controlInfo.increment--;
-    d3.select(component)
-      .select('.item-input')
-      .node()
-      .value = `${controlInfo.increment >= 0 ? '+' : ''}${controlInfo.increment}`;
+    prepareSubMenu('change');
 
+    if (controlInfo.setValue === null) {
+      controlInfo.setValue = 0;
+    } else {
+      controlInfo.setValue--;
+    }
+    
     // Update the store
     multiSelectMenuStore.set(controlInfo);
 
@@ -179,6 +200,8 @@
   };
 
   const moveButtonClicked = () => {
+    prepareSubMenu(null);
+
     controlInfo.moveMode = !controlInfo.moveMode;
 
     switchMoveMode();
@@ -211,20 +234,7 @@
   };
 
   const increasingClicked = () => {
-    // Need to handle the case where people change mode without checking/crossing
-    if (controlInfo.subItemMode !== null) {
-    // Hide the confirmation panel
-      hideConfirmation(controlInfo.subItemMode);
-
-      // Exit the sub-item mode
-      controlInfo.subItemMode = null;
-      multiSelectMenuStore.set(controlInfo);
-    }
-
-    controlInfo.subItemMode = 'increasing';
-    multiSelectMenuStore.set(controlInfo);
-
-    hideToolTipDuringSubMenu();
+    prepareSubMenu('increasing');
 
     dispatch('increasingClicked');
   };
@@ -233,37 +243,13 @@
     // Need to handle the case where people change mode without checking/crossing
     // We don't need to recover the original graph then enter new mode preview
     // We can directly enter the new mode with animation
-    if (controlInfo.subItemMode !== null) {
-    // Hide the confirmation panel
-      hideConfirmation(controlInfo.subItemMode);
-
-      // Exit the sub-item mode
-      controlInfo.subItemMode = null;
-      multiSelectMenuStore.set(controlInfo);
-    }
-
-    controlInfo.subItemMode = 'decreasing';
-    multiSelectMenuStore.set(controlInfo);
-
-    hideToolTipDuringSubMenu();
+    prepareSubMenu('decreasing');
 
     dispatch('decreasingClicked');
   };
 
   const interpolationClicked = () => {
-    if (controlInfo.subItemMode !== null) {
-    // Hide the confirmation panel
-      hideConfirmation(controlInfo.subItemMode);
-
-      // Exit the sub-item mode
-      controlInfo.subItemMode = null;
-      multiSelectMenuStore.set(controlInfo);
-    }
-
-    controlInfo.subItemMode = 'interpolation';
-    multiSelectMenuStore.set(controlInfo);
-
-    hideToolTipDuringSubMenu();
+    prepareSubMenu('interpolation');
 
     dispatch('interpolationClicked');
   };
@@ -300,6 +286,18 @@
     controlInfo.inplaceInterpolation = false;
     multiSelectMenuStore.set(controlInfo);
     dispatch('interpolateUpdated');
+  };
+
+  const mergeClicked = () => {
+    prepareSubMenu('merge');
+
+    dispatch('mergeClicked');
+  };
+
+  const deleteClicked = () => {
+    prepareSubMenu('delete');
+
+    dispatch('deleteClicked');
   };
 
   const hideToolTipDuringSubMenu = () => {
@@ -457,7 +455,7 @@
     color: $indigo-dark;
 
     &.has-input {
-      width: 70px;
+      width: 80px;
       justify-content: flex-start;
     }
 
@@ -484,11 +482,11 @@
     font-size: 1em;
     line-height: 35px;
     height: 35px;
-    max-width: 52px;
+    max-width: 65px;
     color: $indigo-dark;
     opacity: 0.8;
     border-radius: 2px;
-    border: 1px solid transparent;
+    border: 1px solid $gray-300;
     outline: none;
 
     &:focus {
@@ -701,27 +699,6 @@
 
     </div>
 
-    <!-- Input field -->
-    <div class='item has-input'
-      on:mouseenter={(e) => mouseoverHandler(e, 'change scores', 120, 30)}
-      on:mouseleave={mouseleaveHandler}
-    >
-      <input class='item-input'
-        placeholder={`${controlInfo.increment >= 0 ? '+' : '-'}${controlInfo.increment}`}
-        on:change={inputChanged}
-      >
-
-      <div class='svg-icon item-input-up icon-input-up'
-        on:click={inputAdd}
-      ></div>
-
-      <div class='svg-icon item-input-down icon-input-down'
-        on:click={inputMinus}
-      ></div>
-    </div>
-
-    <div class='separator'></div>
-
     <!-- Increasing -->
     <div class='item'
       class:selected={controlInfo.subItemMode==='increasing'}
@@ -836,11 +813,58 @@
     <!-- Merge -->
     <div class='item'
       class:selected={controlInfo.subItemMode==='merge'}
-      on:click={() => dispatch('mergeClicked')}
+      on:click={mergeClicked}
       on:mouseenter={(e) => mouseoverHandler(e, 'merge', 60, 30)}
       on:mouseleave={mouseleaveHandler}
     >
       <div class='svg-icon' id='icon-merge'></div>
+
+      <div class='sub-item sub-item-merge hidden'>
+        <!-- Check button -->
+        <div class='item sub-item-child' on:click={subItemCheckClicked}>
+          <div class='svg-icon icon-check'></div>
+        </div>
+
+        <!-- Cancel button -->
+        <div class='item sub-item-child' on:click={subItemCancelClicked}>
+          <div class='svg-icon icon-refresh'></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- <div class='separator'></div> -->
+
+    <!-- Input field -->
+    <div class='item has-input'
+      on:mouseenter={(e) => mouseoverHandler(e, 'set scores', 90, 30)}
+      on:mouseleave={mouseleaveHandler}
+    >
+      <input class='item-input'
+        placeholder={'score'} bind:value={controlInfo.setValue}
+        on:change={inputChanged}
+      >
+
+      <div class='svg-icon item-input-up icon-input-up'
+        on:click={inputAdd}
+      ></div>
+
+      <div class='svg-icon item-input-down icon-input-down'
+        on:click={inputMinus}
+      ></div>
+
+      <div class='sub-item sub-item-change hidden'>
+        <!-- Check button -->
+        <div class='item sub-item-child' on:click={subItemCheckClicked}>
+          <div class='svg-icon icon-check'></div>
+        </div>
+
+        <!-- Cancel button -->
+        <div class='item sub-item-child' on:click={subItemCancelClicked}>
+          <div class='svg-icon icon-refresh'></div>
+        </div>
+
+      </div>
     </div>
 
     <div class='separator'></div>
@@ -848,11 +872,24 @@
     <!-- Deletion -->
     <div class='item'
       class:selected={controlInfo.subItemMode==='delete'}
-      on:click={() => dispatch('deleteClicked')}
+      on:click={deleteClicked}
       on:mouseenter={(e) => mouseoverHandler(e, 'delete', 60, 30)}
       on:mouseleave={mouseleaveHandler}
     >
       <div class='svg-icon' id='icon-delete'></div>
+
+      <div class='sub-item sub-item-delete hidden'>
+        <!-- Check button -->
+        <div class='item sub-item-child' on:click={subItemCheckClicked}>
+          <div class='svg-icon icon-check'></div>
+        </div>
+
+        <!-- Cancel button -->
+        <div class='item sub-item-child' on:click={subItemCancelClicked}>
+          <div class='svg-icon icon-refresh'></div>
+        </div>
+
+      </div>
     </div>
 
   </div>
