@@ -23,7 +23,7 @@ export class SelectedInfo {
 
   computeBBoxBuffer() {
     if (this.nodeDataBuffer.length > 0) {
-      this.nodeDataBuffer = [{
+      this.boundingBox = [{
         x1: d3.min(this.nodeDataBuffer.map(d => d.x)),
         y1: d3.max(this.nodeDataBuffer.map(d => d.y)),
         x2: d3.max(this.nodeDataBuffer.map(d => d.x)),

@@ -689,7 +689,6 @@
       state.selectedInfo.nodeDataBuffer = JSON.parse(JSON.stringify(state.selectedInfo.nodeData));
       inplaceInterpolate(svg);
     } else {
-      state.selectedInfo.nodeDataBuffer = JSON.parse(JSON.stringify(state.selectedInfo.nodeData));
       stepInterpolate(svg, multiMenuControlInfo.step);
     }
   };

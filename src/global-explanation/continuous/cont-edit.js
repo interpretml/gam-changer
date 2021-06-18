@@ -245,7 +245,7 @@ export const stepInterpolate = (svg, steps) => {
 
   const xRange = rightPoint.x - leftPoint.x;
   const yRange = rightPoint.y - leftPoint.y;
-  console.log(leftPoint, rightPoint);
+
   // Step 2: Remove all the points (if any) in between
   let curPoint = state.pointDataBuffer[leftPoint.rightPointID];
 
