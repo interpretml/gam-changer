@@ -245,7 +245,7 @@ export const stepInterpolate = (svg, steps) => {
 
   const xRange = rightPoint.x - leftPoint.x;
   const yRange = rightPoint.y - leftPoint.y;
-
+  console.log(leftPoint, rightPoint);
   // Step 2: Remove all the points (if any) in between
   let curPoint = state.pointDataBuffer[leftPoint.rightPointID];
 
@@ -346,7 +346,7 @@ const drawBufferGraph = (svg, animated=true, duration=400) => {
 
   const svgSelect = d3.select(svg);
 
-  let trans = d3.transition('monotone')
+  let trans = d3.transition('buffer')
     .duration(duration)
     .ease(d3.easeCubicInOut);
 
@@ -447,7 +447,7 @@ const drawBufferGraph = (svg, animated=true, duration=400) => {
         enter => enter.append('path')
           .attr('class', 'additive-line-segment selected')
           .attr('id', d => d.id)
-          .attr('d', 'd', d => `M ${state.oriXScale(d.x1)}, ${state.oriYScale(d.y1)}
+          .attr('d', d => `M ${state.oriXScale(d.x1)}, ${state.oriYScale(d.y1)}
                   L ${state.oriXScale(d.x2)} ${state.oriYScale(d.y2)}`),
         update => update.attr('d', d => `M ${state.oriXScale(d.x1)}, ${state.oriYScale(d.y1)}
           L ${state.oriXScale(d.x2)} ${state.oriYScale(d.y2)}`),
@@ -473,6 +473,39 @@ const drawBufferGraph = (svg, animated=true, duration=400) => {
       .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding);
   }
 
+};
+
+export const drawLastEdit = (svg) => {
+
+  if (state.additiveDataLastEdit === undefined) {
+    return;
+  }
+
+  const svgSelect = d3.select(svg);
+
+  let trans = d3.transition('lastEdit')
+    .duration(400)
+    .ease(d3.easeCubicInOut);
+
+  // Step 2.2: redraw the paths that are changed
+  let paths = svgSelect.select('g.line-chart-line-group.last-edit')
+    .selectAll('path.additive-line-segment');
+
+  paths.data(state.additiveDataLastEdit, d => `${d.id}-${d.pos}`)
+    .join(
+      enter => enter.append('path')
+        .attr('class', 'additive-line-segment selected')
+        .attr('id', d => d.id)
+        .attr('d',  d => `M ${state.oriXScale(d.x1)}, ${state.oriYScale(d.y1)}
+                L ${state.oriXScale(d.x2)} ${state.oriYScale(d.y2)}`)
+        .style('stroke', 'hsl(35.1, 100%, 90%)'),
+      update => update.call(
+        update => update.transition(trans)
+          .attr('d', d => `M ${state.oriXScale(d.x1)}, ${state.oriYScale(d.y1)}
+              L ${state.oriXScale(d.x2)} ${state.oriYScale(d.y2)}`)
+      ),
+      exit => exit.remove()
+    );
 };
 
 /**
