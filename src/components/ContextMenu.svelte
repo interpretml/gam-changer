@@ -19,6 +19,8 @@
   import minusIconSVG from '../img/minus-icon.svg';
   import plusIconSVG from '../img/plus-icon.svg';
   import inplaceIconSVG from '../img/inplace-icon.svg';
+  import interpolationIconSVG from '../img/interpolation-icon.svg';
+  import regressionIconSVG from '../img/regression-icon.svg';
 
   // Component variables
   let component = null;
@@ -28,7 +30,7 @@
     subItemMode: null,
     setValue: 0,
     step: 3,
-    inplaceInterpolation: true
+    interpolationMode: 'inplace',
   };
   let tooltipConfig = {};
   let mouseoverTimeout = null;
@@ -107,6 +109,14 @@
     d3.select(component)
       .selectAll('.svg-icon.icon-inplace')
       .html(inplaceIconSVG.replaceAll('black', 'currentcolor'));
+
+    d3.select(component)
+      .selectAll('.svg-icon.icon-interpolation')
+      .html(interpolationIconSVG.replaceAll('black', 'currentcolor'));
+
+    d3.select(component)
+      .selectAll('.svg-icon.icon-regression')
+      .html(regressionIconSVG.replaceAll('black', 'currentcolor'));
 
   };
 
@@ -258,7 +268,7 @@
     e.stopPropagation();
     if (controlInfo.step - 1 !== 0) {
       controlInfo.step --;
-      controlInfo.inplaceInterpolation = false;
+      if (controlInfo.interpolationMode === 'inplace') controlInfo.interpolationMode = 'equal';
       multiSelectMenuStore.set(controlInfo);
       dispatch('interpolateUpdated');
     }
@@ -268,7 +278,7 @@
     e.stopPropagation();
     if (controlInfo.step + 1 !== 21) {
       controlInfo.step ++;
-      controlInfo.inplaceInterpolation = false;
+      if (controlInfo.interpolationMode === 'inplace') controlInfo.interpolationMode = 'equal';
       multiSelectMenuStore.set(controlInfo);
       dispatch('interpolateUpdated');
     }
@@ -276,14 +286,28 @@
 
   const interpolateInplaceClicked = (e) => {
     e.stopPropagation();
-    controlInfo.inplaceInterpolation = true;
+    controlInfo.interpolationMode = 'inplace';
+    multiSelectMenuStore.set(controlInfo);
+    dispatch('interpolateUpdated');
+  };
+
+  const interpolateEqualClicked = (e) => {
+    e.stopPropagation();
+    controlInfo.interpolationMode = 'equal';
+    multiSelectMenuStore.set(controlInfo);
+    dispatch('interpolateUpdated');
+  };
+
+  const interpolateRegressionClicked = (e) => {
+    e.stopPropagation();
+    controlInfo.interpolationMode = 'regression';
     multiSelectMenuStore.set(controlInfo);
     dispatch('interpolateUpdated');
   };
 
   const interpolateTextClicked = (e) => {
     e.stopPropagation();
-    controlInfo.inplaceInterpolation = false;
+    if (controlInfo.interpolationMode === 'inplace') controlInfo.interpolationMode = 'equal';
     multiSelectMenuStore.set(controlInfo);
     dispatch('interpolateUpdated');
   };
@@ -525,8 +549,8 @@
     position: absolute;
     left: 50%;
     top: 50px;
-    width: 70px;
     height: 30px;
+    padding: 0 5px;
     z-index: 1;
     transform: translate(-50%);
     background: white;
@@ -536,10 +560,6 @@
     align-items: center;
     box-shadow: 0 2px 6px 2px hsla(205, 5%, 25%, 0.15);
     border-radius: 4px;
-
-    &.sub-item-interpolation {
-      width: 220px;
-    }
 
     .item {
       width: 30px;
@@ -595,6 +615,7 @@
     border: 2px solid $gray-200;
     border-radius: 4px;
     height: 24px;
+    margin-left: 5px;
 
     &.selected {
       border: 2px solid change-color($blue-600, $lightness: 80%);
@@ -760,7 +781,7 @@
 
         <!-- Inplace interpolation button -->
         <div class='item sub-item-child show-tooltip'
-          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.inplaceInterpolation}
+          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode === 'inplace'}
           on:mouseenter={(e) => mouseoverHandler(e, 'inplace', 70, 30)}
           on:mouseleave={mouseleaveHandler}
           on:click={interpolateInplaceClicked}
@@ -770,9 +791,27 @@
 
         <div class='separator'></div>
 
-        <div class='interpolate-step'
-          class:selected={controlInfo.subItemMode==='interpolation' && !controlInfo.inplaceInterpolation}
+        <div class='item sub-item-child show-tooltip'
+          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode === 'equal'}
           on:mouseenter={(e) => mouseoverHandler(e, 'equal steps', 95, 30)}
+          on:mouseleave={mouseleaveHandler}
+          on:click={interpolateEqualClicked}
+        >
+          <div class='svg-icon icon-interpolation'></div>
+        </div>
+
+        <div class='item sub-item-child show-tooltip'
+          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode === 'regression'}
+          on:mouseenter={(e) => mouseoverHandler(e, 'regression', 95, 30)}
+          on:mouseleave={mouseleaveHandler}
+          on:click={interpolateRegressionClicked}
+        >
+          <div class='svg-icon icon-regression'></div>
+        </div>
+
+        <div class='interpolate-step'
+          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode !== 'inplace'}
+          on:mouseenter={(e) => mouseoverHandler(e, 'set steps', 90, 30)}
           on:mouseleave={mouseleaveHandler}
         >
           <!-- Minus button -->
@@ -783,7 +822,7 @@
           <!-- Interpolation step input -->
           <div class='item-step-text'
             on:click={interpolateTextClicked}
-            class:selected={controlInfo.subItemMode==='interpolation' && !controlInfo.inplaceInterpolation}
+            class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode !== 'inplace'}
             >
           {controlInfo.step}</div>
 

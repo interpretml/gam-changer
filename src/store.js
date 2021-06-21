@@ -6,7 +6,7 @@ export const multiSelectMenuStore = writable({
   subItemMode: null,
   setValue: null,
   step: 3,
-  inplaceInterpolation: true
+  interpolationMode: 'inplace',
 });
 
 export const tooltipConfigStore = writable({});

@@ -2,6 +2,8 @@
   import * as d3 from 'd3';
   // import { initIsotonicRegression } from 'isotonic';
   import { initIsotonicRegression } from '../isotonic-regression';
+  import { SimpleLinearRegression } from '../simple-linear-regression';
+
   import { round } from '../utils';
   import { config } from '../config';
 
@@ -524,7 +526,6 @@
       state.additiveDataLastLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastEdit));
     }
     state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
-    console.log(state.additiveDataLastEdit, state.additiveDataLastLastEdit);
   };
 
   /**
@@ -553,10 +554,12 @@
       .interrupt();
     
     // Redraw the last edit if possible
-    state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
-    drawLastEdit(svg);
-    // Prepare for next redrawing after recovering the last last edit graph
-    state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+    if (state.additiveDataLastLastEdit !== undefined){
+      state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
+      drawLastEdit(svg);
+      // Prepare for next redrawing after recovering the last last edit graph
+      state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+    }
   };
 
   /**
@@ -615,8 +618,8 @@
     let xs = [];
     let ys = [];
 
-    state.selectedInfo.nodeData.forEach(d => {
-      xs.push(d.id);
+    state.selectedInfo.nodeData.forEach((d, i) => {
+      xs.push(i);
       ys.push(state.pointData[d.id].y);
     });
 
@@ -680,7 +683,7 @@
   const multiMenuInterpolateUpdated = () => {
     console.log('interpolation updated');
 
-    if (multiMenuControlInfo.inplaceInterpolation) {
+    if (multiMenuControlInfo.interpolationMode === 'inplace') {
       // Special case: we want to do inplace interpolation from the original data
       // Recover data
       state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
@@ -688,8 +691,12 @@
 
       state.selectedInfo.nodeDataBuffer = JSON.parse(JSON.stringify(state.selectedInfo.nodeData));
       inplaceInterpolate(svg);
-    } else {
+    } else if (multiMenuControlInfo.interpolationMode === 'equal') {
       stepInterpolate(svg, multiMenuControlInfo.step);
+    } else if (multiMenuControlInfo.interpolationMode === 'regression') {
+      console.log('regression plz!');
+    } else {
+      console.error('Unknown regression mode ', multiMenuControlInfo.interpolationMode);
     }
   };
 
@@ -826,10 +833,12 @@
     state.additiveDataBuffer = null;
 
     // Recover the last edit graph
-    state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
-    drawLastEdit(svg);
-    // Prepare for next redrawing after recovering the last last edit graph
-    state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+    if (state.additiveDataLastLastEdit !== undefined){
+      state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
+      drawLastEdit(svg);
+      // Prepare for next redrawing after recovering the last last edit graph
+      state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+    }
 
     // Recover the original graph
     redrawOriginal(svg, true, () => {
