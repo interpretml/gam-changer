@@ -93,13 +93,13 @@
 
     <!-- <ContextMenu /> -->
 
-    <!-- <div class='feature-window'>
+    <div class='feature-window'>
       <CatGlobalExplain
         featureData = {data === null ? null : data.features[12]}
         scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 400
+        svgHeight = 500
       />
-    </div> -->
+    </div>
 
     <div class='feature-window'>
       <ContGlobalExplain

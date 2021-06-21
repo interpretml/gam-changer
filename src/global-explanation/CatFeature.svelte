@@ -3,11 +3,15 @@
   import { round } from '../utils';
   import { config } from '../config';
 
+  import ToggleSwitch from '../components/ToggleSwitch.svelte';
+  import ContextMenu from '../components/ContextMenu.svelte';
+
   export let featureData = null;
   export let scoreRange = null;
   export let svgHeight = 400;
 
   let svg = null;
+  let component = null;
 
   // Visualization constants
   const svgPadding = config.svgPadding;
@@ -23,10 +27,12 @@
   // Show some hidden elements for development
   const showRuler = false;
 
-  // Colors
+  // Some styles
   const colors = config.colors;
-
   const defaultFont = config.defaultFont;
+
+  // Select mode
+  let selectMode = false;
 
   /**
    * Create a path to indicate the confidence interval for the additive score of
@@ -100,10 +106,6 @@
     let content = svgSelect.append('g')
       .attr('class', 'content')
       .attr('transform', `translate(${svgPadding.left}, ${svgPadding.top})`);
-
-    // let xScale = d3.scaleLinear()
-    //   .domain([xMin, xMax])
-    //   .range([0, lineChartWidth]);
 
     console.log(featureData.binLabel);
 
@@ -270,52 +272,34 @@
 
   };
 
+  // ---- Interaction Functions ----
+
+  /**
+   * Event handler for the select button in the header
+   */
+  const selectModeSwitched = () => {
+    selectMode = !selectMode;
+
+    let lineChartContent = d3.select(svg)
+      .select('g.line-chart-content-group')
+      .classed('select-mode', selectMode);
+    
+    lineChartContent.select('g.brush rect.overlay')
+      .attr('cursor', null);
+  };
+
   $: featureData && drawFeature(featureData);
 
 </script>
 
 <style type='text/scss'>
   @import '../define';
-
-  .explain-panel {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .header {
-    display: flex;
-    height: $explanation-header-height;
-    padding: 5px 10px;
-    border-bottom: 1px solid $gray-border;
-
-    .header__name {
-      margin-right: 10px;
-    }
-
-    .header__importance {
-      color: $gray-light;
-    }
-  }
-
-  :global(.explain-panel .y-axis-text) {
-    font-size: 16px;
-    text-anchor: middle;
-    dominant-baseline: text-bottom;
-  }
-
-  :global(.explain-panel .additive-line-segment) {
-    stroke-linejoin: round;
-    stroke-linecap: round;
-  }
-
-  :global(.explain-panel .hidden) {
-    display: none;
-  }
+  @import './common.scss';
 
 </style>
 
-<div class='explain-panel'>
-  {#if featureData !== null}
+<div class='explain-panel' bind:this={component}>
+  <!-- {#if featureData !== null}
 
     <div class='header'>
       <div class='header__name'>
@@ -327,7 +311,28 @@
       </div>
     </div>
 
-  {/if}
+  {/if} -->
+
+  <div class='header'>
+
+    <div class='header__info'>
+      <div class='header__name'>
+        {featureData === null ? ' ' : featureData.name}
+      </div>
+      
+      <div class='header__importance'>
+        {featureData === null ? ' ': round(featureData.importance, 2)}
+      </div>
+    </div>
+
+    <div class='header__control-panel'>
+      <!-- The toggle button -->
+      <div class='toggle-switch-wrapper'>
+        <ToggleSwitch on:selectModeSwitched={selectModeSwitched}/>
+      </div>
+    </div>
+
+  </div>
 
 
   <div class='svg-container'>
