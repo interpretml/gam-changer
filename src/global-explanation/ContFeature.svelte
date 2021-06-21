@@ -2,7 +2,6 @@
   import * as d3 from 'd3';
   // import { initIsotonicRegression } from 'isotonic';
   import { initIsotonicRegression } from '../isotonic-regression';
-  import { SimpleLinearRegression } from '../simple-linear-regression';
 
   import { round } from '../utils';
   import { config } from '../config';
@@ -12,7 +11,7 @@
   import { brushDuring, brushEndSelect } from './continuous/cont-brush';
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './continuous/cont-zoom';
   import { dragged, redrawOriginal, redrawMonotone, inplaceInterpolate,
-    stepInterpolate, merge, drawLastEdit } from './continuous/cont-edit';
+    stepInterpolate, merge, drawLastEdit, regressionInterpolate } from './continuous/cont-edit';
   import { state } from './continuous/cont-state';
   import { moveMenubar } from './continuous/cont-bbox';
 
@@ -664,11 +663,11 @@
     if (state.selectedInfo.nodeData.length == 1) {
       return;
     } else if (state.selectedInfo.nodeData.length == 2) {
-      multiMenuControlInfo.inplaceInterpolation = false;
+      multiMenuControlInfo.interpolationMode = 'equal';
       multiSelectMenuStore.set(multiMenuControlInfo);
       stepInterpolate(svg, multiMenuControlInfo.step);
     } else {
-      multiMenuControlInfo.inplaceInterpolation = true;
+      multiMenuControlInfo.interpolationMode = 'inplace';
       multiSelectMenuStore.set(multiMenuControlInfo);
       inplaceInterpolate(svg);
     }
@@ -685,16 +684,26 @@
 
     if (multiMenuControlInfo.interpolationMode === 'inplace') {
       // Special case: we want to do inplace interpolation from the original data
-      // Recover data
+      // Need to recover original data
       state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
       state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
-
       state.selectedInfo.nodeDataBuffer = JSON.parse(JSON.stringify(state.selectedInfo.nodeData));
       inplaceInterpolate(svg);
+
     } else if (multiMenuControlInfo.interpolationMode === 'equal') {
+      // Here we don't reset the pointDataBuffer
+      // If user clicks here direction => step interpolate between start & end
+      // If user has clicked regression => regression with equal bins
       stepInterpolate(svg, multiMenuControlInfo.step);
+
     } else if (multiMenuControlInfo.interpolationMode === 'regression') {
-      console.log('regression plz!');
+      // Need to recover original data
+      state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+      state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
+      state.selectedInfo.nodeDataBuffer = JSON.parse(JSON.stringify(state.selectedInfo.nodeData));
+
+      regressionInterpolate(svg);
+
     } else {
       console.error('Unknown regression mode ', multiMenuControlInfo.interpolationMode);
     }

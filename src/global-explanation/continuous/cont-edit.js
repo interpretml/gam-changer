@@ -2,6 +2,7 @@ import * as d3 from 'd3';
 import { state } from './cont-state';
 import { rScale, rExtent } from './cont-zoom';
 import { updateAdditiveDataBufferFromPointDataBuffer } from './cont-data';
+import { SimpleLinearRegression } from '../../simple-linear-regression';
 
 // TODO: Uniform this variable across all files (use config file)
 const nodeStrokeWidth = 1;
@@ -184,6 +185,51 @@ export const redrawMonotone = (svg, isoYs) => {
   // Step 2 Update the visualization with new data
   drawBufferGraph(svg, true);
 
+};
+
+export const regressionInterpolate = (svg) => {
+  // Regression interpolation
+  // Create x and y arrays
+  let xs = [];
+  let ys = [];
+  let ws = [];
+
+  // We use the points in between as interpolation steps
+  let leftPoint = { x: Infinity, y: null, id: null };
+  let rightPoint = { x: -Infinity, y: null, id: null };
+
+  state.selectedInfo.nodeDataBuffer.forEach(d => {
+    let curPoint = state.pointDataBuffer[d.id];
+    if (d.x < leftPoint.x) {
+      leftPoint = curPoint;
+    }
+    if (d.x > rightPoint.x) {
+      rightPoint = curPoint;
+    }
+    xs.push(curPoint.x);
+    ys.push(curPoint.y);
+    ws.push(1);
+  });
+
+  // Fit a linear regression and transform xs
+  let model = new SimpleLinearRegression();
+  model.fit(xs, ys, ws);
+  let newYs = model.predict(xs);
+
+  // Step 1: Update the point data
+  state.selectedInfo.nodeDataBuffer.forEach((d, i) => {
+    state.pointDataBuffer[d.id].y = newYs[i];
+  });
+
+  // Step 2: Recreate the path data using the updated point data  
+  updateAdditiveDataBufferFromPointDataBuffer();
+
+  // Step 3: update the bbox info
+  state.selectedInfo.updateNodeData(state.pointDataBuffer);
+  state.selectedInfo.computeBBox();
+
+  // Step 4: Update the graph using new data
+  drawBufferGraph(svg, true, 800);
 };
 
 export const inplaceInterpolate = (svg) => {

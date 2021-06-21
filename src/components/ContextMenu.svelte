@@ -268,7 +268,7 @@
     e.stopPropagation();
     if (controlInfo.step - 1 !== 0) {
       controlInfo.step --;
-      if (controlInfo.interpolationMode === 'inplace') controlInfo.interpolationMode = 'equal';
+      controlInfo.interpolationMode = 'equal';
       multiSelectMenuStore.set(controlInfo);
       dispatch('interpolateUpdated');
     }
@@ -278,7 +278,7 @@
     e.stopPropagation();
     if (controlInfo.step + 1 !== 21) {
       controlInfo.step ++;
-      if (controlInfo.interpolationMode === 'inplace') controlInfo.interpolationMode = 'equal';
+      controlInfo.interpolationMode = 'equal';
       multiSelectMenuStore.set(controlInfo);
       dispatch('interpolateUpdated');
     }
@@ -307,7 +307,7 @@
 
   const interpolateTextClicked = (e) => {
     e.stopPropagation();
-    if (controlInfo.interpolationMode === 'inplace') controlInfo.interpolationMode = 'equal';
+    controlInfo.interpolationMode = 'equal';
     multiSelectMenuStore.set(controlInfo);
     dispatch('interpolateUpdated');
   };
@@ -432,6 +432,8 @@
   $border-radius: 13px;
   $dot-background: $blue-dark;
   $hover-color: $blue-dark;
+  $check-color: change-color($red-400, $lightness: 90%);
+  $check-hover-color: $red-400;
 
   @mixin item-input-arrow {
     position: absolute;
@@ -527,7 +529,7 @@
       width: 30px;
 
       .svg-icon {
-        color: hsl(0, 0%, 85%);
+        color: change-color($blue-600, $lightness: 85%);
 
         :global(svg) {
           width: 1em;
@@ -535,11 +537,19 @@
         }
       }
 
+      .svg-icon.icon-check {
+        color: $check-color
+      }
+
       &:hover {
         color: $blue-600;
 
         .svg-icon {
           color: currentcolor;
+        }
+
+        .svg-icon.icon-check {
+          color: $check-hover-color;
         }
       }
     }
@@ -566,7 +576,8 @@
       height: 30px;
 
       .svg-icon {
-        color: hsl(0, 0%, 85%);
+        // color: hsl(0, 0%, 85%);
+        color: change-color($blue-600, $lightness: 85%);
 
         :global(svg) {
           width: 1em;
@@ -579,6 +590,10 @@
 
         .svg-icon {
           color: currentcolor;
+        }
+
+        .icon-check.svg-icon {
+          color: $check-hover-color;
         }
       }
     }
@@ -615,7 +630,7 @@
     border: 2px solid $gray-200;
     border-radius: 4px;
     height: 24px;
-    margin-left: 5px;
+    margin: 0 5px;
 
     &.selected {
       border: 2px solid change-color($blue-600, $lightness: 80%);
@@ -630,12 +645,20 @@
     }
   }
 
+  .sub-item-child {
+
+    .icon-check.svg-icon {
+      color: $check-color
+    }
+
+  }
+
   .item-step-text {
     border-right: 2px solid $gray-200;
     border-left: 2px solid $gray-200;
     height: 24px;
     width: 30px;
-    color: hsl(0, 0%, 85%);
+    color: change-color($blue-600, $lightness: 85%);
     text-align: center;
 
     &:hover {
@@ -709,12 +732,18 @@
 
     <div class='collapse-item'>
       <!-- Check button -->
-      <div class='item' on:click={moveCheckClicked}>
+      <div class='item' on:click={moveCheckClicked}
+        on:mouseenter={(e) => mouseoverHandler(e, 'commit', 65, 30)}
+        on:mouseleave={mouseleaveHandler}
+      >
         <div class='svg-icon icon-check'></div>
       </div>
 
       <!-- Cancel button -->
-      <div class='item' on:click={moveCancelClicked}>
+      <div class='item' on:click={moveCancelClicked}
+        on:mouseenter={(e) => mouseoverHandler(e, 'cancel', 65, 30)}
+        on:mouseleave={mouseleaveHandler}
+      >
         <div class='svg-icon icon-refresh'></div>
       </div>
 
@@ -731,12 +760,18 @@
       
       <div class='sub-item sub-item-increasing hidden'>
         <!-- Check button -->
-        <div class='item sub-item-child' on:click={subItemCheckClicked}>
+        <div class='item sub-item-child show-tooltip' on:click={subItemCheckClicked}
+          on:mouseenter={(e) => mouseoverHandler(e, 'commit', 65, 30)}
+          on:mouseleave={mouseleaveHandler}
+        >
           <div class='svg-icon icon-check'></div>
         </div>
 
         <!-- Cancel button -->
-        <div class='item sub-item-child' on:click={subItemCancelClicked}>
+        <div class='item sub-item-child show-tooltip' on:click={subItemCancelClicked}
+          on:mouseenter={(e) => mouseoverHandler(e, 'cancel', 65, 30)}
+          on:mouseleave={mouseleaveHandler}
+        >
           <div class='svg-icon icon-refresh'></div>
         </div>
 
@@ -754,12 +789,18 @@
 
       <div class='sub-item sub-item-decreasing hidden'>
         <!-- Check button -->
-        <div class='item sub-item-child' on:click={subItemCheckClicked}>
+        <div class='item sub-item-child show-tooltip' on:click={subItemCheckClicked}
+          on:mouseenter={(e) => mouseoverHandler(e, 'commit', 65, 30)}
+          on:mouseleave={mouseleaveHandler}
+        >
           <div class='svg-icon icon-check'></div>
         </div>
 
         <!-- Cancel button -->
-        <div class='item sub-item-child' on:click={subItemCancelClicked}>
+        <div class='item sub-item-child show-tooltip' on:click={subItemCancelClicked}
+          on:mouseenter={(e) => mouseoverHandler(e, 'cancel', 65, 30)}
+          on:mouseleave={mouseleaveHandler}
+        >
           <div class='svg-icon icon-refresh'></div>
         </div>
 
@@ -782,36 +823,36 @@
         <!-- Inplace interpolation button -->
         <div class='item sub-item-child show-tooltip'
           class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode === 'inplace'}
-          on:mouseenter={(e) => mouseoverHandler(e, 'inplace', 70, 30)}
+          on:mouseenter={(e) => mouseoverHandler(e, 'inplace interpolation', 95, 52)}
           on:mouseleave={mouseleaveHandler}
           on:click={interpolateInplaceClicked}
         >
           <div class='svg-icon icon-inplace'></div>
         </div>
 
-        <div class='separator'></div>
-
-        <div class='item sub-item-child show-tooltip'
-          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode === 'equal'}
-          on:mouseenter={(e) => mouseoverHandler(e, 'equal steps', 95, 30)}
-          on:mouseleave={mouseleaveHandler}
-          on:click={interpolateEqualClicked}
-        >
-          <div class='svg-icon icon-interpolation'></div>
-        </div>
-
         <div class='item sub-item-child show-tooltip'
           class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode === 'regression'}
-          on:mouseenter={(e) => mouseoverHandler(e, 'regression', 95, 30)}
+          on:mouseenter={(e) => mouseoverHandler(e, 'inplace regression', 95, 52)}
           on:mouseleave={mouseleaveHandler}
           on:click={interpolateRegressionClicked}
         >
           <div class='svg-icon icon-regression'></div>
         </div>
 
+        <div class='separator'></div>
+
+        <div class='item sub-item-child show-tooltip'
+          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode === 'equal'}
+          on:mouseenter={(e) => mouseoverHandler(e, 'equalize bin size', 95, 52)}
+          on:mouseleave={mouseleaveHandler}
+          on:click={interpolateEqualClicked}
+        >
+          <div class='svg-icon icon-interpolation'></div>
+        </div>
+
         <div class='interpolate-step'
-          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode !== 'inplace'}
-          on:mouseenter={(e) => mouseoverHandler(e, 'set steps', 90, 30)}
+          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode === 'equal'}
+          on:mouseenter={(e) => mouseoverHandler(e, 'number of bins', 90, 52)}
           on:mouseleave={mouseleaveHandler}
         >
           <!-- Minus button -->
@@ -822,7 +863,7 @@
           <!-- Interpolation step input -->
           <div class='item-step-text'
             on:click={interpolateTextClicked}
-            class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode !== 'inplace'}
+            class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode === 'equal'}
             >
           {controlInfo.step}</div>
 
@@ -835,12 +876,18 @@
         <div class='separator'></div>
 
         <!-- Check button -->
-        <div class='item sub-item-child' on:click={subItemCheckClicked}>
+        <div class='item sub-item-child show-tooltip' on:click={subItemCheckClicked}
+          on:mouseenter={(e) => mouseoverHandler(e, 'commit', 65, 30)}
+          on:mouseleave={mouseleaveHandler}
+        >
           <div class='svg-icon icon-check'></div>
         </div>
 
         <!-- Cancel button -->
-        <div class='item sub-item-child' on:click={subItemCancelClicked}>
+        <div class='item sub-item-child show-tooltip' on:click={subItemCancelClicked}
+          on:mouseenter={(e) => mouseoverHandler(e, 'cancel', 65, 30)}
+          on:mouseleave={mouseleaveHandler}
+        >
           <div class='svg-icon icon-refresh'></div>
         </div>
       </div>
@@ -860,12 +907,18 @@
 
       <div class='sub-item sub-item-merge hidden'>
         <!-- Check button -->
-        <div class='item sub-item-child' on:click={subItemCheckClicked}>
+        <div class='item sub-item-child show-tooltip' on:click={subItemCheckClicked}
+          on:mouseenter={(e) => mouseoverHandler(e, 'commit', 65, 30)}
+          on:mouseleave={mouseleaveHandler}
+        >
           <div class='svg-icon icon-check'></div>
         </div>
 
         <!-- Cancel button -->
-        <div class='item sub-item-child' on:click={subItemCancelClicked}>
+        <div class='item sub-item-child show-tooltip' on:click={subItemCancelClicked}
+          on:mouseenter={(e) => mouseoverHandler(e, 'cancel', 65, 30)}
+          on:mouseleave={mouseleaveHandler}
+        >
           <div class='svg-icon icon-refresh'></div>
         </div>
 
@@ -894,12 +947,18 @@
 
       <div class='sub-item sub-item-change hidden'>
         <!-- Check button -->
-        <div class='item sub-item-child' on:click={subItemCheckClicked}>
+        <div class='item sub-item-child show-tooltip' on:click={subItemCheckClicked}
+          on:mouseenter={(e) => mouseoverHandler(e, 'commit', 65, 30)}
+          on:mouseleave={mouseleaveHandler}
+        >
           <div class='svg-icon icon-check'></div>
         </div>
 
         <!-- Cancel button -->
-        <div class='item sub-item-child' on:click={subItemCancelClicked}>
+        <div class='item sub-item-child show-tooltip' on:click={subItemCancelClicked}
+          on:mouseenter={(e) => mouseoverHandler(e, 'cancel', 65, 30)}
+          on:mouseleave={mouseleaveHandler}
+        >
           <div class='svg-icon icon-refresh'></div>
         </div>
 
@@ -919,12 +978,18 @@
 
       <div class='sub-item sub-item-delete hidden'>
         <!-- Check button -->
-        <div class='item sub-item-child' on:click={subItemCheckClicked}>
+        <div class='item sub-item-child show-tooltip' on:click={subItemCheckClicked}
+          on:mouseenter={(e) => mouseoverHandler(e, 'commit', 65, 30)}
+          on:mouseleave={mouseleaveHandler}
+        >
           <div class='svg-icon icon-check'></div>
         </div>
 
         <!-- Cancel button -->
-        <div class='item sub-item-child' on:click={subItemCancelClicked}>
+        <div class='item sub-item-child show-tooltip' on:click={subItemCancelClicked}
+          on:mouseenter={(e) => mouseoverHandler(e, 'cancel', 65, 30)}
+          on:mouseleave={mouseleaveHandler}
+        >
           <div class='svg-icon icon-refresh'></div>
         </div>
 
