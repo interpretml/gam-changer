@@ -109,6 +109,7 @@ export const createPointData = (featureData) => {
     pointData[i] = {
       x: featureData.binEdge[i],
       y: featureData.additive[i],
+      count: featureData.count[i],
       id: i,
       leftPointID: i == 0 ? null : i - 1,
       rightPointID: i == featureData.additive.length - 1 ? null : i + 1,

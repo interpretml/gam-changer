@@ -578,15 +578,17 @@
     // Fit an isotonic regression model
     let xs = [];
     let ys = [];
+    let ws = [];
 
     state.selectedInfo.nodeData.forEach((d, i) => {
       xs.push(i);
       ys.push(state.pointData[d.id].y);
+      ws.push(state.pointData[d.id].count);
     });
 
     // WASM only uses 1-3ms for the whole graph!
     increasingISO.reset();
-    increasingISO.fit(xs,ys);
+    increasingISO.fit(xs, ys, ws);
     let isoYs = increasingISO.predict(xs);
 
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));

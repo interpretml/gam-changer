@@ -432,8 +432,10 @@
   $border-radius: 13px;
   $dot-background: $blue-dark;
   $hover-color: $blue-dark;
-  $check-color: change-color($red-400, $lightness: 90%);
-  $check-hover-color: $red-400;
+  // $check-color: change-color($red-400, $lightness: 90%);
+  // $check-hover-color: $red-400;
+  $check-color:  change-color($blue-600, $lightness: 85%);
+  $check-hover-color: $blue-600;
 
   @mixin item-input-arrow {
     position: absolute;

@@ -3,7 +3,7 @@ import { SelectedInfo } from './cont-class';
 import { moveMenubar } from './cont-bbox';
 import { rScale } from './cont-zoom';
 import { state } from './cont-state';
-import { redrawOriginal } from './cont-edit';
+import { redrawOriginal, drawLastEdit } from './cont-edit';
 
 import { multiSelectMenuStore } from '../../store';
 
@@ -121,6 +121,14 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth, menuWidth
       // Do not save the user's change (same as clicking the cancel button)
       // Redraw the graph with original data
       redrawOriginal(svg);
+
+      // Redraw the last edit if possible
+      if (state.additiveDataLastLastEdit !== undefined) {
+        state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
+        drawLastEdit(svg);
+        // Prepare for next redrawing after recovering the last last edit graph
+        state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+      }
 
       // Remove the selection bbox
       svgSelect.selectAll('g.line-chart-content-group g.select-bbox-group').remove();

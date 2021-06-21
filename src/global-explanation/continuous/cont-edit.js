@@ -208,7 +208,7 @@ export const regressionInterpolate = (svg) => {
     }
     xs.push(curPoint.x);
     ys.push(curPoint.y);
-    ws.push(1);
+    ws.push(curPoint.count);
   });
 
   // Fit a linear regression and transform xs
