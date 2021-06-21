@@ -432,9 +432,7 @@
   $border-radius: 13px;
   $dot-background: $blue-dark;
   $hover-color: $blue-dark;
-  // $check-color: change-color($red-400, $lightness: 90%);
-  // $check-hover-color: $red-400;
-  $check-color:  change-color($blue-600, $lightness: 85%);
+  $check-color:  change-color($blue-600, $lightness: 90%);
   $check-hover-color: $blue-600;
 
   @mixin item-input-arrow {
@@ -531,7 +529,7 @@
       width: 30px;
 
       .svg-icon {
-        color: change-color($blue-600, $lightness: 85%);
+        color: change-color($blue-600, $lightness: 90%);
 
         :global(svg) {
           width: 1em;
@@ -578,8 +576,7 @@
       height: 30px;
 
       .svg-icon {
-        // color: hsl(0, 0%, 85%);
-        color: change-color($blue-600, $lightness: 85%);
+        color: change-color($blue-600, $lightness: 90%);
 
         :global(svg) {
           width: 1em;
@@ -660,7 +657,7 @@
     border-left: 2px solid $gray-200;
     height: 24px;
     width: 30px;
-    color: change-color($blue-600, $lightness: 85%);
+    color: change-color($blue-600, $lightness: 90%);
     text-align: center;
 
     &:hover {

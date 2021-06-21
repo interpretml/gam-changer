@@ -109,13 +109,17 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth, menuWidth
         state.additiveDataBuffer = null;
       }
 
-      // End increasing mode
+      // End sub-menu mode
       if (multiMenuControlInfo.subItemMode !== null) {
         // Hide the confirmation panel
         myContextMenu.hideConfirmation(multiMenuControlInfo.subItemMode);
 
         multiMenuControlInfo.subItemMode = null;
         multiSelectMenuStore.set(multiMenuControlInfo);
+
+        // Discard changes
+        state.pointDataBuffer = null;
+        state.additiveDataBuffer = null;
       }
 
       // Do not save the user's change (same as clicking the cancel button)

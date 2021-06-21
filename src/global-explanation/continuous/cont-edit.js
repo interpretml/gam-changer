@@ -279,6 +279,7 @@ export const stepInterpolate = (svg, steps) => {
   // Step 1: Find the left and right point in the selected region
   let leftPoint = { x: Infinity, y: null, id: null };
   let rightPoint = { x: -Infinity, y: null, id: null };
+  let totalCount = 0;
 
   state.selectedInfo.nodeDataBuffer.forEach(d => {
     if (d.x < leftPoint.x) {
@@ -296,6 +297,7 @@ export const stepInterpolate = (svg, steps) => {
   let curPoint = state.pointDataBuffer[leftPoint.rightPointID];
 
   while(curPoint.id !== rightPoint.id) {
+    totalCount += curPoint.count;
     const nextID = curPoint.rightPointID;
     delete state.pointDataBuffer[curPoint.id];
     curPoint = state.pointDataBuffer[nextID];
@@ -311,6 +313,7 @@ export const stepInterpolate = (svg, steps) => {
     const curPoint = {
       x: curX,
       y: curY,
+      count: totalCount / steps,
       id: `(${leftPoint.id}):(${rightPoint.id})-${s}`,
       leftPointID: s == 1 ? leftPoint.id : `(${leftPoint.id}):(${rightPoint.id})-${s - 1}`,
       rightPointID: s == steps ? rightPoint.id : `(${leftPoint.id}):(${rightPoint.id})-${s + 1}`,
@@ -540,11 +543,10 @@ export const drawLastEdit = (svg) => {
   paths.data(state.additiveDataLastEdit, d => `${d.id}-${d.pos}`)
     .join(
       enter => enter.append('path')
-        .attr('class', 'additive-line-segment selected')
+        .attr('class', 'additive-line-segment')
         .attr('id', d => d.id)
         .attr('d',  d => `M ${state.oriXScale(d.x1)}, ${state.oriYScale(d.y1)}
-                L ${state.oriXScale(d.x2)} ${state.oriYScale(d.y2)}`)
-        .style('stroke', 'hsl(35.1, 100%, 90%)'),
+                L ${state.oriXScale(d.x2)} ${state.oriYScale(d.y2)}`),
       update => update.call(
         update => update.transition(trans)
           .attr('d', d => `M ${state.oriXScale(d.x1)}, ${state.oriYScale(d.y1)}

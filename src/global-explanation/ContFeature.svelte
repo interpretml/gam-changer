@@ -212,7 +212,7 @@
       .style('opacity', 0);
 
     // Create a group to draw grids
-    lineChartContent.append('g')
+    let gridGroup = lineChartContent.append('g')
       .attr('class', 'line-chart-grid-group');
 
     let confidenceGroup = lineChartContent.append('g')
@@ -236,17 +236,18 @@
 
     lineChartContent.append('g')
       .attr('class', 'line-chart-line-group last-edit')
-      .style('stroke', colors.line)
+      .style('stroke', 'hsl(35, 100%, 85%)')
       .style('stroke-width', linePathWidth)
       .style('fill', 'none')
       .lower();
 
-    let lineGroupClone = lineGroup.clone(true)
+    lineGroup.clone(true)
       .classed('real', false)
+      .style('stroke', 'hsl(0, 0%, 82%)')
       .lower();
-    
-    lineGroupClone.selectAll('path')
-      .style('stroke', 'hsl(224, 50%, 82%)');
+
+    confidenceGroup.lower();
+    gridGroup.lower();
     
     // Draw nodes for editing
     let nodeGroup = lineChartContent.append('g')
