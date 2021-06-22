@@ -875,13 +875,18 @@
   @import './common.scss';
 
   :global(.explain-panel circle.node) {
-    fill: hsl(213, 100%, 53%);
+    fill: $blue-icon;
     stroke: white;
   }
 
   :global(.explain-panel circle.node.selected) {
     fill: $orange-400;
     stroke: white;
+  }
+
+  :global(.explain-panel .additive-line-segment) {
+    stroke-linejoin: round;
+    stroke-linecap: round;
   }
 
   :global(.explain-panel path.additive-line-segment.selected) {

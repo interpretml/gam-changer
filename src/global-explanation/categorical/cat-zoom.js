@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 // import { moveMenubar } from './cont-bbox';
 import { state } from './cat-state';
 
-export const rExtent = [2, 16];
+export const rExtent = [3, 16];
 export const zoomScaleExtent = [1, 4];
 
 export const zoomStart = (multiMenu) => {
@@ -39,7 +39,7 @@ export const zoomed = (event, xScale, yScale, svg,
     .domain(xScale.domain())
     .padding(0.7)
     .range([transform.applyX(0), transform.applyX(chartWidth)]);
-    // Do not use round here, it would make the transition shaking (interpolation)...
+    // Do not use round here, it would make the transition shaking (interpolation)
     // .round(true);
 
   let zYScale = transform.rescaleY(yScale);
@@ -144,7 +144,7 @@ const drawGrid = (g, xScale, yScale, lineChartWidth, lineChartHeight) => {
     .join(
       enter => enter.append('line')
         .attr('class', 'grid-line-y')
-        .classed('grid-line-y-0', d => d === 0)
+        .classed('grid-line-y-0-solid', d => d === 0)
         .attr('x2', lineChartWidth),
       update => update,
       exit => exit.remove()

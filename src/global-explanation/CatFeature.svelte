@@ -193,11 +193,27 @@
     scatterPlotContent.append('g')
       .attr('class', 'scatter-plot-grid-group');
 
+    let barGroup = scatterPlotContent.append('g')
+      .attr('class', 'scatter-plot-bar-group');
+
     let confidenceGroup = scatterPlotContent.append('g')
       .attr('class', 'scatter-plot-confidence-group');
 
     let scatterGroup = scatterPlotContent.append('g')
       .attr('class', 'scatter-plot-dot-group');
+
+    const barWidth = Math.min(30, xScale(additiveData[1].label) - xScale(additiveData[0].label));
+
+    // We draw bars from the 0 baseline to the dot position
+    barGroup.selectAll('rect')
+      .data(additiveData)
+      .join('rect')
+      .attr('class', 'additive-bar')
+      .attr('x', d => xScale(d.label) - barWidth / 2)
+      .attr('y', d => d.additive > 0 ? yScale(d.additive) : yScale(0))
+      .attr('width', barWidth)
+      .attr('height', d => Math.abs(yScale(d.additive) - yScale(0)))
+      .style('fill', colors.line);
 
     // We draw the shape function with many line segments (path)
     scatterGroup.selectAll('circle')
@@ -206,9 +222,10 @@
       .attr('class', 'additive-dot')
       .attr('cx', d => xScale(d.label))
       .attr('cy', d => yScale(d.additive))
-      .attr('r', 3)
-      .style('stroke', 'none')
-      .style('fill', colors.dot);
+      .attr('r', rExtent[0])
+      .style('stroke-width', 1)
+      .style('stroke', 'white')
+      .style('fill', 'hsl(213, 100%, 53%)');
 
     // Draw the underlying confidence interval
     confidenceGroup.selectAll('path')

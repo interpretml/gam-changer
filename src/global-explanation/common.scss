@@ -72,11 +72,6 @@
   dominant-baseline: text-bottom;
 }
 
-:global(.explain-panel .additive-line-segment) {
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-
 :global(.explain-panel .hidden) {
   display: none;
 }
@@ -92,4 +87,10 @@
   stroke: black;
   stroke-opacity: 0.1;
   stroke-dasharray: 15 10;
+}
+
+:global(.explain-panel .grid-line-y-0-solid) {
+  stroke-width: 3;
+  stroke: black;
+  stroke-opacity: 0.1;
 }
