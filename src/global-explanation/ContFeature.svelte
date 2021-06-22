@@ -394,7 +394,6 @@
       .on('start', () => zoomStart(multiMenu))
       .on('end', () => zoomEnd(multiMenu))
       .filter(e => {
-        // if (e.shiftKey) return false;
         if (selectMode) {
           return (e.type === 'wheel' || e.button === 2);
         } else {
@@ -966,7 +965,7 @@
       <div class='header__control-panel'>
         <!-- The toggle button -->
         <div class='toggle-switch-wrapper'>
-          <ToggleSwitch on:selectModeSwitched={selectModeSwitched}/>
+          <ToggleSwitch name='cont' on:selectModeSwitched={selectModeSwitched}/>
         </div>
       </div>
 

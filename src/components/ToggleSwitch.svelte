@@ -6,6 +6,8 @@
 
   import { tooltipConfigStore } from '../store';
 
+  export let name = '';
+
   let selectMode = false;
   let component = null;
   let tooltipConfig = {};
@@ -173,9 +175,9 @@
 
 <div class='toggle-wrapper' bind:this={component}>
 
-  <input class='toggle' id='my-toggle' type='checkbox' on:change={selectModeSwitched}/>
+  <input class='toggle' id={`{${name}}-toggle`} type='checkbox' on:change={selectModeSwitched}/>
 
-  <label for='my-toggle' class='toggle-button'>
+  <label for={`{${name}}-toggle`} class='toggle-button'>
 
     <div class='left-label' class:select-mode = {selectMode}
       on:mouseenter={(e) => mouseoverHandler(e, 'navigate graph', 120, 30)}

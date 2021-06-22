@@ -3,6 +3,8 @@
   import { round } from '../utils';
   import { config } from '../config';
 
+  import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './categorical/cat-zoom';
+
   import ToggleSwitch from '../components/ToggleSwitch.svelte';
   import ContextMenu from '../components/ContextMenu.svelte';
 
@@ -138,12 +140,32 @@
 
     // Create histogram chart group
     let histChart = content.append('g')
-      .attr('class', 'hist-chart-group')
-      .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`);
+      .attr('class', 'hist-chart-group');
+
+    // For the histogram clippath, need to carefully play around with the
+    // transformation, the path should be in a static group; the group having
+    // clip-path attr should be static. Therefore we apply the transformation to
+    // histChart's child later.
+    histChart.append('clipPath')
+      .attr('id', 'hist-chart-clip')
+      .append('rect')
+      .attr('x', yAxisWidth)
+      .attr('y', chartHeight)
+      .attr('width', chartWidth)
+      .attr('height', densityHeight);
+    
+    histChart.attr('clip-path', 'url(#hist-chart-clip)');
     
     // Draw the dot plot
     let scatterPlot = content.append('g')
       .attr('class', 'scatter-plot-group');
+
+    // Add a clip path to bound the lines (for zooming)
+    scatterPlot.append('clipPath')
+      .attr('id', 'line-chart-clip')
+      .append('rect')
+      .attr('width', chartWidth)
+      .attr('height', chartHeight - 1);
 
     // Create axis group early so it shows up at the bottom
     let axisGroup = scatterPlot.append('g')
@@ -151,7 +173,18 @@
     
     let scatterPlotContent = scatterPlot.append('g')
       .attr('class', 'scatter-plot-content-group')
+      .attr('clip-path', 'url(#line-chart-clip)')
       .attr('transform', `translate(${yAxisWidth}, 0)`);
+
+    // Append a rect so we can listen to events
+    scatterPlotContent.append('rect')
+      .attr('width', chartWidth)
+      .attr('height', chartHeight)
+      .style('opacity', 0);
+
+    // Create a group to draw grids
+    scatterPlotContent.append('g')
+      .attr('class', 'scatter-plot-grid-group');
 
     let confidenceGroup = scatterPlotContent.append('g')
       .attr('class', 'scatter-plot-confidence-group');
@@ -195,14 +228,6 @@
     
     yAxisGroup.call(d3.axisLeft(yScale));
     yAxisGroup.attr('font-family', defaultFont);
-  
-    // Add a line to highlight y = 0
-    yAxisGroup.append('path')
-      .attr('class', 'line-0')
-      .attr('d', `M ${0} ${yScale(0)} L ${chartWidth} ${yScale(0)}`)
-      .style('stroke', colors.line0)
-      .style('stroke-width', 3)
-      .style('stroke-dasharray', '15 10');
 
     yAxisGroup.append('g')
       .attr('class', 'y-axis-text')
@@ -232,7 +257,12 @@
 
     let histWidth = Math.min(30, xScale(histData[0].x2) - xScale(histData[0].x1));
 
-    histChart.selectAll('rect')
+    // Draw the density histogram 
+    let histChartContent = histChart.append('g')
+      .attr('class', 'hist-chart-content-group')
+      .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`);
+
+    histChartContent.selectAll('rect')
       .data(histData)
       .join('rect')
       .attr('class', 'hist-rect')
@@ -270,6 +300,36 @@
       .text('density')
       .style('fill', colors.histAxis);
 
+    // Add panning and zooming
+    let zoom = d3.zoom()
+      .scaleExtent(zoomScaleExtent)
+      .translateExtent([[0, -Infinity], [width, Infinity]])
+      .on('zoom', e => zoomed(e, xScale, yScale, svg, 2,
+        1, yAxisWidth, chartWidth, chartHeight,
+        null, null, null, component))
+      .on('start', () => zoomStart(null))
+      .on('end', () => zoomEnd(null))
+      .filter(e => {
+        if (selectMode) {
+          return (e.type === 'wheel' || e.button === 2);
+        } else {
+          return (e.button === 0 || e.type === 'wheel');
+        }
+      });
+
+    scatterPlotContent.call(zoom)
+      .call(zoom.transform, d3.zoomIdentity);
+
+    scatterPlotContent.on('dblclick.zoom', null);
+    
+    // Listen to double click to reset zoom
+    scatterPlotContent.on('dblclick', () => {
+      scatterPlotContent.transition('reset')
+        .duration(750)
+        .ease(d3.easeCubicInOut)
+        .call(zoom.transform, d3.zoomIdentity);
+    });
+
   };
 
   // ---- Interaction Functions ----
@@ -296,22 +356,25 @@
   @import '../define';
   @import './common.scss';
 
+  :global(.explain-panel .scatter-plot-content-group) {
+    cursor: grab;
+  }
+
+  :global(.explain-panel .scatter-plot-content-group:active) {
+    cursor: grabbing;
+  }
+
+  :global(.explain-panel .scatter-plot-content-group.select-mode) {
+    cursor: crosshair;
+  }
+
+  :global(.explain-panel .scatter-plot-content-group.select-mode:active) {
+    cursor: crosshair;
+  }
+
 </style>
 
 <div class='explain-panel' bind:this={component}>
-  <!-- {#if featureData !== null}
-
-    <div class='header'>
-      <div class='header__name'>
-        {featureData === null ? ' ' : featureData.name}
-      </div>
-      
-      <div class='header__importance'>
-        {featureData === null ? ' ': round(featureData.importance, 2)}
-      </div>
-    </div>
-
-  {/if} -->
 
   <div class='header'>
 
@@ -328,7 +391,7 @@
     <div class='header__control-panel'>
       <!-- The toggle button -->
       <div class='toggle-switch-wrapper'>
-        <ToggleSwitch on:selectModeSwitched={selectModeSwitched}/>
+        <ToggleSwitch name='cat' on:selectModeSwitched={selectModeSwitched}/>
       </div>
     </div>
 
