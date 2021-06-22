@@ -147,25 +147,32 @@
     // clip-path attr should be static. Therefore we apply the transformation to
     // histChart's child later.
     histChart.append('clipPath')
-      .attr('id', 'hist-chart-clip')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-hist-chart-clip`)
       .append('rect')
       .attr('x', yAxisWidth)
       .attr('y', chartHeight)
       .attr('width', chartWidth)
       .attr('height', densityHeight);
     
-    histChart.attr('clip-path', 'url(#hist-chart-clip)');
+    histChart.attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-hist-chart-clip)`);
     
     // Draw the dot plot
     let scatterPlot = content.append('g')
       .attr('class', 'scatter-plot-group');
 
-    // Add a clip path to bound the lines (for zooming)
     scatterPlot.append('clipPath')
-      .attr('id', 'line-chart-clip')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-chart-clip`)
       .append('rect')
       .attr('width', chartWidth)
       .attr('height', chartHeight - 1);
+
+    scatterPlot.append('clipPath')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-x-axis-clip`)
+      .append('rect')
+      .attr('x', yAxisWidth)
+      .attr('y', chartHeight)
+      .attr('width', chartWidth)
+      .attr('height', densityHeight);
 
     // Create axis group early so it shows up at the bottom
     let axisGroup = scatterPlot.append('g')
@@ -173,7 +180,7 @@
     
     let scatterPlotContent = scatterPlot.append('g')
       .attr('class', 'scatter-plot-content-group')
-      .attr('clip-path', 'url(#line-chart-clip)')
+      .attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-chart-clip)`)
       .attr('transform', `translate(${yAxisWidth}, 0)`);
 
     // Append a rect so we can listen to events
@@ -214,7 +221,11 @@
       .style('fill', 'none');
 
     // Draw the chart X axis
+    // Hack: create a wrapper so we can apply clip before transformation
     let xAxisGroup = axisGroup.append('g')
+      .attr('class', 'x-axis-wrapper')
+      .attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-x-axis-clip)`)
+      .append('g')
       .attr('class', 'x-axis')
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`)
       .call(d3.axisBottom(xScale));

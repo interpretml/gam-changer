@@ -182,7 +182,7 @@
 
     // Add a clip path to bound the lines (for zooming)
     lineChart.append('clipPath')
-      .attr('id', 'line-chart-clip')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-line-chart-clip`)
       .append('rect')
       .attr('width', lineChartWidth)
       .attr('height', lineChartHeight - 1);
@@ -192,18 +192,18 @@
     // clip-path attr should be static. Therefore we apply the transformation to
     // histChart's child later.
     histChart.append('clipPath')
-      .attr('id', 'hist-chart-clip')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-hist-chart-clip`)
       .append('rect')
       .attr('x', yAxisWidth)
       .attr('y', lineChartHeight)
       .attr('width', lineChartWidth)
       .attr('height', densityHeight);
 
-    histChart.attr('clip-path', 'url(#hist-chart-clip)');
+    histChart.attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-hist-chart-clip)`);
     
     let lineChartContent = lineChart.append('g')
       .attr('class', 'line-chart-content-group')
-      .attr('clip-path', 'url(#line-chart-clip)')
+      .attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-line-chart-clip)`)
       .attr('transform', `translate(${yAxisWidth}, 0)`);
 
     lineChartContent.append('rect')
