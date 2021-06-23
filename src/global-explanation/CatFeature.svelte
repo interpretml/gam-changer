@@ -4,6 +4,7 @@
   import { config } from '../config';
 
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './categorical/cat-zoom';
+  import { brushDuring, brushEndSelect } from './categorical/cat-brush';
 
   import ToggleSwitch from '../components/ToggleSwitch.svelte';
   import ContextMenu from '../components/ContextMenu.svelte';
@@ -14,6 +15,7 @@
 
   let svg = null;
   let component = null;
+  let brush = null;
 
   // Visualization constants
   const svgPadding = config.svgPadding;
@@ -46,13 +48,13 @@
   const createDotConfidencePath = (d, width, xScale, yScale) => {
 
     let topMid = {
-      x: xScale(d.label),
-      y: yScale(d.additive + d.error)
+      x: xScale(d.x),
+      y: yScale(d.y + d.error)
     };
 
     let btmMid = {
-      x: xScale(d.label),
-      y: yScale(d.additive - d.error)
+      x: xScale(d.x),
+      y: yScale(d.y - d.error)
     };
     
     // Draw the top line
@@ -130,8 +132,8 @@
 
     for (let i = 0; i < featureData.binLabel.length; i++) {
       additiveData.push({
-        label: featureData.binLabel[i],
-        additive: featureData.additive[i],
+        x: featureData.binLabel[i],
+        y: featureData.additive[i],
         error: featureData.error[i]
       });
     }
@@ -202,7 +204,7 @@
     let scatterGroup = scatterPlotContent.append('g')
       .attr('class', 'scatter-plot-dot-group');
 
-    const barWidth = Math.min(30, xScale(additiveData[1].label) - xScale(additiveData[0].label));
+    const barWidth = Math.min(30, xScale(additiveData[1].x) - xScale(additiveData[0].x));
 
     // We draw bars from the 0 baseline to the dot position
     barGroup.style('fill', colors.bar)
@@ -210,22 +212,20 @@
       .data(additiveData)
       .join('rect')
       .attr('class', 'additive-bar')
-      .attr('x', d => xScale(d.label) - barWidth / 2)
-      .attr('y', d => d.additive > 0 ? yScale(d.additive) : yScale(0))
+      .attr('x', d => xScale(d.x) - barWidth / 2)
+      .attr('y', d => d.y > 0 ? yScale(d.y) : yScale(0))
       .attr('width', barWidth)
-      .attr('height', d => Math.abs(yScale(d.additive) - yScale(0)));
+      .attr('height', d => Math.abs(yScale(d.y) - yScale(0)));
 
     // We draw the shape function with many line segments (path)
     scatterGroup.selectAll('circle')
       .data(additiveData)
       .join('circle')
       .attr('class', 'additive-dot')
-      .attr('cx', d => xScale(d.label))
-      .attr('cy', d => yScale(d.additive))
+      .attr('cx', d => xScale(d.x))
+      .attr('cy', d => yScale(d.y))
       .attr('r', rExtent[0])
-      .style('stroke-width', 1)
-      .style('stroke', 'white')
-      .style('fill', 'hsl(213, 100%, 53%)');
+      .style('stroke-width', 1);
 
     // Draw the underlying confidence interval
     confidenceGroup.style('stroke', colors.dotConfidence)
@@ -234,8 +234,7 @@
       .data(additiveData)
       .join('path')
       .attr('class', 'dot-confidence')
-      .attr('d', d => createDotConfidencePath(d, 5, xScale, yScale))
-      .style('fill', 'none');
+      .attr('d', d => createDotConfidencePath(d, 5, xScale, yScale));
 
     // Draw the chart X axis
     // Hack: create a wrapper so we can apply clip before transformation
@@ -328,6 +327,34 @@
       .text('density')
       .style('fill', colors.histAxis);
 
+    // Add brush
+    let multiMenu = null;
+    let menuWidth = null;
+    let menuHeight = null;
+    let myContextMenu = null;
+    brush = d3.brush()
+      .on('end', e => brushEndSelect(
+        e, svg, multiMenu, menuWidth, menuHeight, brush,
+        component, myContextMenu
+      ))
+      .on('start brush', e => brushDuring(e, svg, multiMenu))
+      .extent([[0, 0], [chartWidth, chartHeight]])
+      .filter((e) => {
+        if (selectMode) {
+          return e.button === 0;
+        } else {
+          return e.button === 2;
+        }
+      });
+
+    let brushGroup = scatterPlotContent.append('g')
+      .attr('class', 'brush')
+      .call(brush);
+    
+    // Change the style of the select box
+    brushGroup.select('rect.overlay')
+      .attr('cursor', null);
+
     // Add panning and zooming
     let zoom = d3.zoom()
       .scaleExtent(zoomScaleExtent)
@@ -369,7 +396,7 @@
     selectMode = !selectMode;
 
     let lineChartContent = d3.select(svg)
-      .select('g.line-chart-content-group')
+      .select('g.scatter-plot-content-group')
       .classed('select-mode', selectMode);
     
     lineChartContent.select('g.brush rect.overlay')
@@ -383,6 +410,24 @@
 <style type='text/scss'>
   @import '../define';
   @import './common.scss';
+
+  :global(.explain-panel path.dot-confidence.selected) {
+    stroke: $orange-100;
+  }
+
+  :global(.explain-panel rect.additive-bar.selected) {
+    fill: $orange-300;
+  }
+
+  :global(.explain-panel circle.additive-dot) {
+    fill: $blue-icon;
+    stroke: white;
+  }
+
+  :global(.explain-panel circle.additive-dot.selected) {
+    fill: $orange-400;
+    stroke: white;
+  }
 
   :global(.explain-panel .scatter-plot-content-group) {
     cursor: grab;
