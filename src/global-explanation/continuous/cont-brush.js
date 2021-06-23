@@ -71,8 +71,8 @@ export const brushDuring = (event, svg, multiMenu) => {
   }
 };
 
-export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth, menuWidth,
-  menuHeight, brush, component, resetContextMenu
+export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
+  brush, component, resetContextMenu
 ) => {
   // Get the selection boundary
   let selection = event.selection;
@@ -160,7 +160,7 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth, menuWidth
     if (state.selectedInfo.hasSelected) {
       // Show the context menu near the selected region
       d3.select(multiMenu)
-        .call(moveMenubar, menuWidth, menuHeight, svg, component)
+        .call(moveMenubar, svg, component)
         .classed('hidden', false);
     }
 

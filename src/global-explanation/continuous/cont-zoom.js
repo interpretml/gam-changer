@@ -27,7 +27,7 @@ export const zoomEnd = (multiMenu) => {
  */
 export const zoomed = (event, xScale, yScale, svg,
   linePathWidth, nodeStrokeWidth, yAxisWidth, lineChartWidth, lineChartHeight,
-  multiMenu, menuWidth, menuHeight, component
+  multiMenu, component
 ) => {
 
   let svgSelect = d3.select(svg);
@@ -109,7 +109,7 @@ export const zoomed = (event, xScale, yScale, svg,
 
     // Also transform the menu bar
     d3.select(multiMenu)
-      .call(moveMenubar, menuWidth, menuHeight, svg, component);
+      .call(moveMenubar, svg, component);
   }
 
   // Draw/update the grid

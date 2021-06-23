@@ -71,8 +71,6 @@
   state.selectedInfo = new SelectedInfo();
 
   // Editing mode
-  const menuWidth = 375;
-  const menuHeight = 50;
 
   // Context menu info
   let multiMenuControlInfo = {
@@ -366,8 +364,7 @@
     // Add brush
     brush = d3.brush()
       .on('end', e => brushEndSelect(
-        e, svg, multiMenu, bboxStrokeWidth, menuWidth, menuHeight, brush,
-        component, resetContextMenu
+        e, svg, multiMenu, bboxStrokeWidth, brush, component, resetContextMenu
       ))
       .on('start brush', e => brushDuring(e, svg, multiMenu))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]])
@@ -392,7 +389,7 @@
       .scaleExtent(zoomScaleExtent)
       .on('zoom', e => zoomed(e, xScale, yScale, svg, linePathWidth,
         nodeStrokeWidth, yAxisWidth, lineChartWidth, lineChartHeight,
-        multiMenu, menuWidth, menuHeight, component))
+        multiMenu, component))
       .on('start', () => zoomStart(multiMenu))
       .on('end', () => zoomEnd(multiMenu))
       .filter(e => {
@@ -420,6 +417,12 @@
 
   // ---- Interaction Functions ----
 
+  /**
+   * Quit the sub-menu mode (move, sub-item in the context menu) when user clicks
+   * the empty space during editing
+   * This function is implemented as a callback for brushSelected() because it
+   * needs access to variable `multiMenuControlInfo`
+   */
   const resetContextMenu = () => {
     if (multiMenuControlInfo.moveMode) {
       multiMenuControlInfo.moveMode = false;
@@ -441,7 +444,6 @@
       state.additiveDataBuffer = null;
     }
   };
-
 
   /**
    * Event handler for the select button in the header
@@ -543,7 +545,7 @@
 
     // Move the menu bar
     d3.select(multiMenu)
-      .call(moveMenubar, menuWidth, menuHeight, svg, component);
+      .call(moveMenubar, svg, component);
 
     // Save this change to lastEdit, update lastEdit graph
     if (state.additiveDataLastEdit !== undefined) {
@@ -564,7 +566,7 @@
     redrawOriginal(svg, true, () => {
       // Move the menu bar after animation
       d3.select(multiMenu)
-        .call(moveMenubar, menuWidth, menuHeight, svg, component);
+        .call(moveMenubar, svg, component);
     });
 
     // Remove the drag
@@ -835,7 +837,7 @@
 
     // Move the menu bar
     d3.select(multiMenu)
-      .call(moveMenubar, menuWidth, menuHeight, svg, component);
+      .call(moveMenubar, svg, component);
     
     // Exit the sub-item mode
     multiMenuControlInfo.subItemMode = null;
@@ -877,7 +879,7 @@
     redrawOriginal(svg, true, () => {
       // Move the menu bar after the animation
       d3.select(multiMenu)
-        .call(moveMenubar, menuWidth, menuHeight, svg, component);
+        .call(moveMenubar, svg, component);
     });
 
     // Hide the confirmation panel

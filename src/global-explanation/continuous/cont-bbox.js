@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 /**
  * Use the selection bbox to compute where to put the context menu bar
 */
-export const moveMenubar = (menubar, menuWidth, menuHeight, svg, component) => {
+export const moveMenubar = (menubar, svg, component) => {
   const bbox = d3.select(svg)
     .select('g.select-bbox-group rect.select-bbox');
 
@@ -11,6 +11,10 @@ export const moveMenubar = (menubar, menuWidth, menuHeight, svg, component) => {
 
   const bboxPosition = bbox.node().getBoundingClientRect();
   const panelBboxPosition = component.getBoundingClientRect();
+
+  const menuBarBbox = menubar.node().getBoundingClientRect();
+  const menuWidth = menuBarBbox.width;
+  const menuHeight = menuBarBbox.height;
 
   let left = bboxPosition.x - panelBboxPosition.x + bboxPosition.width / 2 - menuWidth / 2;
   let top = bboxPosition.y - panelBboxPosition.y - menuHeight - 40;

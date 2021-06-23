@@ -278,7 +278,8 @@
   }
 
   :global(.explain-panel .hidden) {
-    display: none;
+    visibility: hidden;
+    pointer-events: none;
   }
 
   :global(.explain-panel .legend-title) {

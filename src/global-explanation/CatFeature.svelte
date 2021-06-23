@@ -18,6 +18,8 @@
   let svg = null;
   let component = null;
   let brush = null;
+  let multiMenu = null;
+  let myContextMenu = null;
 
   // Visualization constants
   const svgPadding = config.svgPadding;
@@ -26,6 +28,14 @@
   // Viewbox width and height
   let width = 600;
   const height = 400;
+
+  // Context menu info
+  let multiMenuControlInfo = {
+    moveMode: false,
+    toSwitchMoveMode: false,
+    subItemMode: null,
+    setValue: null
+  };
 
   // Real width (depends on the svgHeight prop)
   let svgWidth = svgHeight * (width / height);
@@ -332,10 +342,9 @@
       .style('fill', colors.histAxis);
 
     // Add brush
-    let multiMenu = null;
-    let menuWidth = null;
-    let menuHeight = null;
-    let myContextMenu = null;
+    let menuWidth = 375;
+    let menuHeight = 50;
+
     brush = d3.brush()
       .on('end', e => brushEndSelect(
         e, svg, multiMenu, menuWidth, menuHeight, brush,
@@ -392,6 +401,65 @@
   };
 
   // ---- Interaction Functions ----
+  /**
+   * Quit the sub-menu mode (move, sub-item in the context menu) when user clicks
+   * the empty space during editing
+   * This function is implemented as a callback for brushSelected() because it
+   * needs access to variable `multiMenuControlInfo`
+   */
+  const resetContextMenu = () => {
+    if (multiMenuControlInfo.moveMode) {
+      multiMenuControlInfo.moveMode = false;
+      multiMenuControlInfo.toSwitchMoveMode = true;
+
+      // DO not update the data
+      state.pointDataBuffer = null;
+      state.additiveDataBuffer = null;
+    }
+
+    // End sub-menu mode
+    if (multiMenuControlInfo.subItemMode !== null) {
+      // Hide the confirmation panel
+      myContextMenu.hideConfirmation(multiMenuControlInfo.subItemMode);
+      multiMenuControlInfo.subItemMode = null;
+
+      // Discard changes
+      state.pointDataBuffer = null;
+      state.additiveDataBuffer = null;
+    }
+  };
+
+  const multiMenuInputChanged = () => {
+
+  };
+
+  const multiMenuMoveClicked = () => {
+
+  };
+
+  const multiMenuMergeClicked = () => {
+
+  };
+
+  const multiMenuDeleteClicked = () => {
+
+  };
+
+  const multiMenuMoveCheckClicked = () => {
+
+  };
+
+  const multiMenuMoveCancelClicked = () => {
+
+  };
+
+  const multiMenuSubItemCheckClicked = () => {
+
+  };
+
+  const multiMenuSubItemCancelClicked = () => {
+
+  };
 
   /**
    * Event handler for the select button in the header
@@ -452,6 +520,22 @@
 </style>
 
 <div class='explain-panel' bind:this={component}>
+
+  <div class='context-menu-container hidden' bind:this={multiMenu}>
+    <ContextMenu 
+      bind:controlInfo={multiMenuControlInfo}
+      bind:this={myContextMenu}
+      type='cat'
+      on:inputChanged={multiMenuInputChanged}
+      on:moveButtonClicked={multiMenuMoveClicked}
+      on:mergeClicked={multiMenuMergeClicked}
+      on:deleteClicked={multiMenuDeleteClicked}
+      on:moveCheckClicked={multiMenuMoveCheckClicked}
+      on:moveCancelClicked={multiMenuMoveCancelClicked}
+      on:subItemCheckClicked={multiMenuSubItemCheckClicked}
+      on:subItemCancelClicked={multiMenuSubItemCancelClicked}
+    /> 
+  </div>
 
   <div class='header'>
 

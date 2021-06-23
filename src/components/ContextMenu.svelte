@@ -23,6 +23,12 @@
   import regressionIconSVG from '../img/regression-icon.svg';
 
   export let controlInfo = undefined;
+  /**
+   * Different versions of the context menu bar
+   * 'cont': show move, increasing, decreasing, interpolation, merge, delete
+   * 'cat': show move, merge, delete
+   */
+  export let type = 'cont';
 
   $: controlInfo, (() => {
     if (controlInfo.toSwitchMoveMode) {
@@ -35,6 +41,10 @@
   let component = null;
   let tooltipConfig = {};
   let mouseoverTimeout = null;
+
+  // Initialized when mounted
+  let width = null;
+  let height = null;
 
   tooltipConfigStore.subscribe(value => {tooltipConfig = value;});
 
@@ -186,7 +196,7 @@
         .transition()
         .duration(300)
         .ease(d3.easeCubicInOut)
-        .style('width', '375px');
+        .style('width', `${width}px`);
     }
   };
 
@@ -387,6 +397,10 @@
 
   onMount(() => {
     bindInlineSVG();
+    // Get the width of this bar
+    let bbox = component.getBoundingClientRect();
+    width = bbox.width;
+    height = bbox.height;
   });
 
 </script>
@@ -714,6 +728,8 @@
 
     </div>
 
+    {#if type === 'cont'}
+
     <!-- Increasing -->
     <div class='item'
       class:selected={controlInfo.subItemMode==='increasing'}
@@ -860,6 +876,8 @@
     </div>
 
     <div class='separator'></div>
+
+    {/if}
 
     <!-- Merge -->
     <div class='item'

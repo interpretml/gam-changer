@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import { SelectedInfo } from './cat-class';
-// import { moveMenubar } from './cont-bbox';
+import { moveMenubar } from '../continuous/cont-bbox';
 import { rExtent } from './cat-zoom';
 import { state } from './cat-state';
 // import { redrawOriginal, drawLastEdit } from './cont-edit';
@@ -8,9 +8,6 @@ import { state } from './cat-state';
 // Need a timer to avoid the brush event call after brush.move()
 let idleTimeout = null;
 const idleDelay = 300;
-
-// Brush zooming
-const zoomTransitionTime = 700;
 
 /**
  * Reset the idleTimeout timer
@@ -153,7 +150,6 @@ export const brushEndSelect = (event, svg, multiMenu, menuWidth,
         }
       });
 
-    console.log(state);
     // Compute the bounding box
     state.selectedInfo.computeBBox();
 
@@ -183,12 +179,12 @@ export const brushEndSelect = (event, svg, multiMenu, menuWidth,
 
     state.selectedInfo.hasSelected = svgSelect.selectAll('g.scatter-plot-dot-group circle.additive-dot.selected').size() > 0;
 
-    // if (state.selectedInfo.hasSelected) {
-    //   // Show the context menu near the selected region
-    //   d3.select(multiMenu)
-    //     .call(moveMenubar, menuWidth, menuHeight, svg, component)
-    //     .classed('hidden', false);
-    // }
+    if (state.selectedInfo.hasSelected) {
+      // Show the context menu near the selected region
+      d3.select(multiMenu)
+        .call(moveMenubar, svg, component)
+        .classed('hidden', false);
+    }
 
     // Remove the brush box
     svgSelect.select('g.scatter-plot-content-group g.brush')
