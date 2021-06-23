@@ -205,15 +205,15 @@
     const barWidth = Math.min(30, xScale(additiveData[1].label) - xScale(additiveData[0].label));
 
     // We draw bars from the 0 baseline to the dot position
-    barGroup.selectAll('rect')
+    barGroup.style('fill', colors.bar)
+      .selectAll('rect')
       .data(additiveData)
       .join('rect')
       .attr('class', 'additive-bar')
       .attr('x', d => xScale(d.label) - barWidth / 2)
       .attr('y', d => d.additive > 0 ? yScale(d.additive) : yScale(0))
       .attr('width', barWidth)
-      .attr('height', d => Math.abs(yScale(d.additive) - yScale(0)))
-      .style('fill', colors.line);
+      .attr('height', d => Math.abs(yScale(d.additive) - yScale(0)));
 
     // We draw the shape function with many line segments (path)
     scatterGroup.selectAll('circle')
@@ -228,13 +228,13 @@
       .style('fill', 'hsl(213, 100%, 53%)');
 
     // Draw the underlying confidence interval
-    confidenceGroup.selectAll('path')
+    confidenceGroup.style('stroke', colors.dotConfidence)
+      .style('stroke-width', 2)
+      .selectAll('path')
       .data(additiveData)
       .join('path')
       .attr('class', 'dot-confidence')
       .attr('d', d => createDotConfidencePath(d, 5, xScale, yScale))
-      .style('stroke', colors.dotConfidence)
-      .style('stroke-width', 2)
       .style('fill', 'none');
 
     // Draw the chart X axis

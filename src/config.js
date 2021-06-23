@@ -11,8 +11,9 @@ export const config = {
   colors: {
     line: 'hsl(222, 80%, 30%)',
     lineConfidence: 'hsl(222, 60%, 50%)',
+    bar: 'hsl(222, 80%, 63%)',
     dot: 'hsla(222, 80%, 30%, 100%)',
-    dotConfidence: 'hsl(222, 55%, 70%)',
+    dotConfidence: 'hsl(222, 100%, 79%)',
     hist: 'hsl(222, 10%, 93%)',
     histAxis: 'hsl(222, 10%, 70%)',
     line0: 'hsla(222, 0%, 0%, 5%)'

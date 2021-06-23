@@ -48,29 +48,31 @@ export const zoomed = (event, xScale, yScale, svg,
   state.curYScale = zYScale;
   state.curTransform = transform;
 
+  // Redraw the scales
   svgSelect.select('g.x-axis')
     .call(d3.axisBottom(zXScale));
 
   svgSelect.select('g.y-axis')
     .call(d3.axisLeft(zYScale));
 
-  // Transform the lines
-  let lineGroup = svgSelect.selectAll('g.line-chart-line-group')
+  // Transform the bars
+  svgSelect.selectAll('g.scatter-plot-bar-group')
+    .attr('transform', transform);
+
+  // Transform the circles
+  svgSelect.selectAll('g.scatter-plot-dot-group')
+    .attr('transform', transform);
+
+  // Transform the confidence lines
+  let confidenceGroup = svgSelect.selectAll('g.scatter-plot-confidence-group')
     .attr('transform', transform);
 
   // Rescale the stroke width a little bit
-  lineGroup.style('stroke-width', linePathWidth / transform.k);
+  confidenceGroup.style('stroke-width', 2 / transform.k);
 
   // Transform the confidence rectangles
   svgSelect.select('g.line-chart-confidence-group')
     .attr('transform', transform);
-
-
-  // svgSelect.select('g.line-chart-node-group')
-  //   .attr('transform', transform)
-  //   .selectAll('circle.node')
-  //   .attr('r', rScale(transform.k))
-  //   .style('stroke-width', nodeStrokeWidth / transform.k);
 
   // Transform the density rectangles
   // Here we want to translate and scale the x axis, and keep y axis consistent
@@ -99,7 +101,7 @@ export const zoomed = (event, xScale, yScale, svg,
   //   //   .call(moveMenubar, menuWidth, menuHeight, svg, component);
   // }
 
-  // Draw/update the grid
+  // Draw or update the grid
   svgSelect.select('g.scatter-plot-grid-group')
     .call(drawGrid, zXScale, zYScale, chartWidth, chartHeight);
 
