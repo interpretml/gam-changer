@@ -5,17 +5,9 @@ import { rExtent } from './cat-zoom';
 import { state } from './cat-state';
 // import { redrawOriginal, drawLastEdit } from './cont-edit';
 
-import { multiSelectMenuStore } from '../../store';
-
 // Need a timer to avoid the brush event call after brush.move()
 let idleTimeout = null;
 const idleDelay = 300;
-
-// Store binding
-let multiMenuControlInfo = null;
-multiSelectMenuStore.subscribe(value => {
-  multiMenuControlInfo = value;
-});
 
 // Brush zooming
 const zoomTransitionTime = 700;

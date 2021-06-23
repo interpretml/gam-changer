@@ -5,17 +5,9 @@ import { rScale } from './cont-zoom';
 import { state } from './cont-state';
 import { redrawOriginal, drawLastEdit } from './cont-edit';
 
-import { multiSelectMenuStore } from '../../store';
-
 // Need a timer to avoid the brush event call after brush.move()
 let idleTimeout = null;
 const idleDelay = 300;
-
-// Store binding
-let multiMenuControlInfo = null;
-multiSelectMenuStore.subscribe(value => {
-  multiMenuControlInfo = value;
-});
 
 // Brush zooming
 const zoomTransitionTime = 700;
@@ -80,7 +72,7 @@ export const brushDuring = (event, svg, multiMenu) => {
 };
 
 export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth, menuWidth,
-  menuHeight, brush, component, myContextMenu
+  menuHeight, brush, component, resetContextMenu
 ) => {
   // Get the selection boundary
   let selection = event.selection;
@@ -99,28 +91,7 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth, menuWidth
         .classed('hidden', true);
 
       // End move mode
-      if (multiMenuControlInfo.moveMode) {
-        multiMenuControlInfo.moveMode = false;
-        multiMenuControlInfo.toSwitchMoveMode = true;
-        multiSelectMenuStore.set(multiMenuControlInfo);
-
-        // DO not update the data
-        state.pointDataBuffer = null;
-        state.additiveDataBuffer = null;
-      }
-
-      // End sub-menu mode
-      if (multiMenuControlInfo.subItemMode !== null) {
-        // Hide the confirmation panel
-        myContextMenu.hideConfirmation(multiMenuControlInfo.subItemMode);
-
-        multiMenuControlInfo.subItemMode = null;
-        multiSelectMenuStore.set(multiMenuControlInfo);
-
-        // Discard changes
-        state.pointDataBuffer = null;
-        state.additiveDataBuffer = null;
-      }
+      resetContextMenu();
 
       // Do not save the user's change (same as clicking the cancel button)
       // Redraw the graph with original data

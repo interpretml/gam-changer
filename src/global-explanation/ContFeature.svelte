@@ -21,8 +21,6 @@
   import ToggleSwitch from '../components/ToggleSwitch.svelte';
   import ContextMenu from '../components/ContextMenu.svelte';
 
-  import { multiSelectMenuStore } from '../store';
-
   export let featureData = null;
   export let scoreRange = null;
   export let svgHeight = 400;
@@ -76,15 +74,19 @@
   const menuWidth = 375;
   const menuHeight = 50;
 
+  // Context menu info
+  let multiMenuControlInfo = {
+    moveMode: false,
+    toSwitchMoveMode: false,
+    subItemMode: null,
+    setValue: null,
+    step: 3,
+    interpolationMode: 'inplace',
+  };
+
   // Isotonic regression
   let increasingISO = null;
   let decreasingISO = null;
-
-  // Store binding
-  let multiMenuControlInfo = null;
-  multiSelectMenuStore.subscribe(value => {
-    multiMenuControlInfo = value;
-  });
 
   /**
    * Draw the plot in the SVG component
@@ -365,7 +367,7 @@
     brush = d3.brush()
       .on('end', e => brushEndSelect(
         e, svg, multiMenu, bboxStrokeWidth, menuWidth, menuHeight, brush,
-        component, myContextMenu
+        component, resetContextMenu
       ))
       .on('start brush', e => brushDuring(e, svg, multiMenu))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]])
@@ -417,6 +419,29 @@
   };
 
   // ---- Interaction Functions ----
+
+  const resetContextMenu = () => {
+    if (multiMenuControlInfo.moveMode) {
+      multiMenuControlInfo.moveMode = false;
+      multiMenuControlInfo.toSwitchMoveMode = true;
+
+      // DO not update the data
+      state.pointDataBuffer = null;
+      state.additiveDataBuffer = null;
+    }
+
+    // End sub-menu mode
+    if (multiMenuControlInfo.subItemMode !== null) {
+      // Hide the confirmation panel
+      myContextMenu.hideConfirmation(multiMenuControlInfo.subItemMode);
+      multiMenuControlInfo.subItemMode = null;
+
+      // Discard changes
+      state.pointDataBuffer = null;
+      state.additiveDataBuffer = null;
+    }
+  };
+
 
   /**
    * Event handler for the select button in the header
@@ -666,11 +691,9 @@
       return;
     } else if (state.selectedInfo.nodeData.length == 2) {
       multiMenuControlInfo.interpolationMode = 'equal';
-      multiSelectMenuStore.set(multiMenuControlInfo);
       stepInterpolate(svg, multiMenuControlInfo.step);
     } else {
       multiMenuControlInfo.interpolationMode = 'inplace';
-      multiSelectMenuStore.set(multiMenuControlInfo);
       inplaceInterpolate(svg);
     }
 
@@ -816,7 +839,6 @@
     
     // Exit the sub-item mode
     multiMenuControlInfo.subItemMode = null;
-    multiSelectMenuStore.set(multiMenuControlInfo);
   };
 
   /**
@@ -863,7 +885,6 @@
 
     // Exit the sub-item mode
     multiMenuControlInfo.subItemMode = null;
-    multiSelectMenuStore.set(multiMenuControlInfo);
   };
 
   $: featureData && drawFeature(featureData);
@@ -939,7 +960,9 @@
 <div class='explain-panel' bind:this={component}>
 
     <div class='context-menu-container hidden' bind:this={multiMenu}>
-      <ContextMenu bind:this={myContextMenu} 
+      <ContextMenu 
+        bind:controlInfo={multiMenuControlInfo}
+        bind:this={myContextMenu} 
         on:inputChanged={multiMenuInputChanged}
         on:moveButtonClicked={multiMenuMoveClicked}
         on:increasingClicked={multiMenuIncreasingClicked}

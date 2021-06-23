@@ -3,7 +3,7 @@
   import { onMount, createEventDispatcher } from 'svelte';
 
   // Stores
-  import { multiSelectMenuStore, tooltipConfigStore } from '../store';
+  import { tooltipConfigStore } from '../store';
 
   // SVGs
   import mergeIconSVG from '../img/merge-icon.svg';
@@ -22,29 +22,21 @@
   import interpolationIconSVG from '../img/interpolation-icon.svg';
   import regressionIconSVG from '../img/regression-icon.svg';
 
-  // Component variables
-  let component = null;
-  let controlInfo = {
-    moveMode: false,
-    toSwitchMoveMode: false,
-    subItemMode: null,
-    setValue: 0,
-    step: 3,
-    interpolationMode: 'inplace',
-  };
-  let tooltipConfig = {};
-  let mouseoverTimeout = null;
+  export let controlInfo = undefined;
 
-  // Store binding
-  multiSelectMenuStore.subscribe(value => {
-    controlInfo = value;
-
+  $: controlInfo, (() => {
     if (controlInfo.toSwitchMoveMode) {
       switchMoveMode();
       controlInfo.toSwitchMoveMode = false;
-      multiSelectMenuStore.set(controlInfo);
     }
-  });
+  })();
+
+  // Component variables
+  let component = null;
+  let tooltipConfig = {};
+  let mouseoverTimeout = null;
+
+  tooltipConfigStore.subscribe(value => {tooltipConfig = value;});
 
   const dispatch = createEventDispatcher();
 
@@ -127,11 +119,9 @@
 
       // Exit the sub-item mode
       controlInfo.subItemMode = null;
-      multiSelectMenuStore.set(controlInfo);
     }
 
     controlInfo.subItemMode = newMode;
-    multiSelectMenuStore.set(controlInfo);
 
     hideToolTipDuringSubMenu();
   };
@@ -145,9 +135,6 @@
     if (isNaN(value)) value = 0;
     controlInfo.setValue = value;
 
-    // Update the store
-    multiSelectMenuStore.set(controlInfo);
-
     dispatch('inputChanged');
   };
 
@@ -160,9 +147,6 @@
       controlInfo.setValue++;
     }
 
-    // Update the store
-    multiSelectMenuStore.set(controlInfo);
-
     dispatch('inputChanged');
   };
 
@@ -174,9 +158,6 @@
     } else {
       controlInfo.setValue--;
     }
-    
-    // Update the store
-    multiSelectMenuStore.set(controlInfo);
 
     dispatch('inputChanged');
   };
@@ -216,9 +197,6 @@
 
     switchMoveMode();
 
-    // Update the store
-    multiSelectMenuStore.set(controlInfo);
-
     dispatch('moveButtonClicked');
   };
 
@@ -227,18 +205,12 @@
     controlInfo.moveMode = !controlInfo.moveMode;
     switchMoveMode();
 
-    // Update the store
-    multiSelectMenuStore.set(controlInfo);
-
     dispatch('moveCheckClicked');
   };
 
   const moveCancelClicked = () => {
     controlInfo.moveMode = !controlInfo.moveMode;
     switchMoveMode();
-
-    // Update the store
-    multiSelectMenuStore.set(controlInfo);
 
     dispatch('moveCancelClicked');
   };
@@ -269,7 +241,6 @@
     if (controlInfo.step - 1 !== 0) {
       controlInfo.step --;
       controlInfo.interpolationMode = 'equal';
-      multiSelectMenuStore.set(controlInfo);
       dispatch('interpolateUpdated');
     }
   };
@@ -279,7 +250,6 @@
     if (controlInfo.step + 1 !== 21) {
       controlInfo.step ++;
       controlInfo.interpolationMode = 'equal';
-      multiSelectMenuStore.set(controlInfo);
       dispatch('interpolateUpdated');
     }
   };
@@ -287,28 +257,24 @@
   const interpolateInplaceClicked = (e) => {
     e.stopPropagation();
     controlInfo.interpolationMode = 'inplace';
-    multiSelectMenuStore.set(controlInfo);
     dispatch('interpolateUpdated');
   };
 
   const interpolateEqualClicked = (e) => {
     e.stopPropagation();
     controlInfo.interpolationMode = 'equal';
-    multiSelectMenuStore.set(controlInfo);
     dispatch('interpolateUpdated');
   };
 
   const interpolateRegressionClicked = (e) => {
     e.stopPropagation();
     controlInfo.interpolationMode = 'regression';
-    multiSelectMenuStore.set(controlInfo);
     dispatch('interpolateUpdated');
   };
 
   const interpolateTextClicked = (e) => {
     e.stopPropagation();
     controlInfo.interpolationMode = 'equal';
-    multiSelectMenuStore.set(controlInfo);
     dispatch('interpolateUpdated');
   };
 
