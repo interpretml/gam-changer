@@ -3,6 +3,8 @@
   import { round } from '../utils';
   import { config } from '../config';
 
+  import { state } from './categorical/cat-state';
+  import { SelectedInfo } from './categorical/cat-class';
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './categorical/cat-zoom';
   import { brushDuring, brushEndSelect } from './categorical/cat-brush';
 
@@ -37,6 +39,7 @@
 
   // Select mode
   let selectMode = false;
+  state.selectedInfo = new SelectedInfo();
 
   /**
    * Create a path to indicate the confidence interval for the additive score of
@@ -134,6 +137,7 @@
       additiveData.push({
         x: featureData.binLabel[i],
         y: featureData.additive[i],
+        id: i,
         error: featureData.error[i]
       });
     }

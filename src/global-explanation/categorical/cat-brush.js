@@ -150,10 +150,10 @@ export const brushEndSelect = (event, svg, multiMenu, menuWidth,
     let yRange = [state.curYScale.invert(selection[1][1]), state.curYScale.invert(selection[0][1])];
 
     // Highlight the selected dots
-    svgSelect.select('g.line-chart-node-group')
-      .selectAll('circle.node')
+    svgSelect.select('g.scatter-plot-dot-group')
+      .selectAll('circle.additive-dot')
       .classed('selected', d => {
-        if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
+        if (state.curXScale(d.x) >= xRange[0] && state.curXScale(d.x) <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
           state.selectedInfo.nodeData.push({ x: d.x, y: d.y, id: d.id });
           return true;
         } else {
@@ -161,34 +161,35 @@ export const brushEndSelect = (event, svg, multiMenu, menuWidth,
         }
       });
 
+    console.log(state);
     // Compute the bounding box
-    // state.selectedInfo.computeBBox();
+    state.selectedInfo.computeBBox();
 
-    // let curPadding = (rExtent[0] + state.bboxPadding) * state.curTransform.k;
+    let curPadding = (rExtent[0] + state.bboxPadding) * state.curTransform.k;
 
-    // let bbox = svgSelect.select('g.line-chart-content-group')
-    //   .append('g')
-    //   .attr('class', 'select-bbox-group')
-    //   .selectAll('rect.select-bbox')
-    //   .data(state.selectedInfo.boundingBox)
-    //   .join('rect')
-    //   .attr('class', 'select-bbox original-bbox')
-    //   .attr('x', d => state.curXScale(d.x1) - curPadding)
-    //   .attr('y', d => state.curYScale(d.y1) - curPadding)
-    //   .attr('width', d => state.curXScale(d.x2) - state.curXScale(d.x1) + 2 * curPadding)
-    //   .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding)
-    //   .style('stroke-width', 1)
-    //   .style('stroke', 'hsl(230, 100%, 10%)')
-    //   .style('stroke-dasharray', '5 3');
+    let bbox = svgSelect.select('g.scatter-plot-content-group')
+      .append('g')
+      .attr('class', 'select-bbox-group')
+      .selectAll('rect.select-bbox')
+      .data(state.selectedInfo.boundingBox)
+      .join('rect')
+      .attr('class', 'select-bbox original-bbox')
+      .attr('x', d => state.curXScale(d.x1) - curPadding)
+      .attr('y', d => state.curYScale(d.y1) - curPadding)
+      .attr('width', d => state.curXScale(d.x2) - state.curXScale(d.x1) + 2 * curPadding)
+      .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding)
+      .style('stroke-width', 1)
+      .style('stroke', 'hsl(230, 100%, 10%)')
+      .style('stroke-dasharray', '5 3');
 
-    // bbox.clone(true)
-    //   .classed('original-bbox', false)
-    //   .style('stroke', 'white')
-    //   .style('stroke-dasharray', null)
-    //   .style('stroke-width', 1 * 3)
-    //   .lower();
+    bbox.clone(true)
+      .classed('original-bbox', false)
+      .style('stroke', 'white')
+      .style('stroke-dasharray', null)
+      .style('stroke-width', 1 * 3)
+      .lower();
 
-    // state.selectedInfo.hasSelected = svgSelect.selectAll('g.line-chart-node-group circle.node.selected').size() > 0;
+    state.selectedInfo.hasSelected = svgSelect.selectAll('g.scatter-plot-dot-group circle.additive-dot.selected').size() > 0;
 
     // if (state.selectedInfo.hasSelected) {
     //   // Show the context menu near the selected region
@@ -197,10 +198,10 @@ export const brushEndSelect = (event, svg, multiMenu, menuWidth,
     //     .classed('hidden', false);
     // }
 
-    // // Remove the brush box
-    // svgSelect.select('g.line-chart-content-group g.brush')
-    //   .call(brush.move, null)
-    //   .select('rect.overlay')
-    //   .attr('cursor', null);
+    // Remove the brush box
+    svgSelect.select('g.scatter-plot-content-group g.brush')
+      .call(brush.move, null)
+      .select('rect.overlay')
+      .attr('cursor', null);
   }
 };

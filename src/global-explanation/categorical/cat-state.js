@@ -13,5 +13,5 @@ export let state = {
   additiveDataBuffer: null,
   oriXScale: null,
   oriYScale: null,
-  bboxPadding: 1,
+  bboxPadding: 5,
 };

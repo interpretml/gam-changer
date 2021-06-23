@@ -10,10 +10,26 @@ export class SelectedInfo {
 
   computeBBox() {
     if (this.nodeData.length > 0) {
+      let minIDIndex = -1;
+      let maxIDIndex = -1;
+      let minID = Infinity;
+      let maxID = -Infinity;
+      this.nodeData.forEach((d, i) => {
+        if (d.id > maxID) {
+          maxID = d.id;
+          maxIDIndex = i;
+        }
+
+        if (d.id < minID) {
+          minID = d.id;
+          minIDIndex = i;
+        }
+      });
+
       this.boundingBox = [{
-        x1: d3.min(this.nodeData.map(d => d.x)),
+        x1: this.nodeData[minIDIndex].x,
         y1: d3.max(this.nodeData.map(d => d.y)),
-        x2: d3.max(this.nodeData.map(d => d.x)),
+        x2: this.nodeData[maxIDIndex].x,
         y2: d3.min(this.nodeData.map(d => d.y))
       }];
     } else {
