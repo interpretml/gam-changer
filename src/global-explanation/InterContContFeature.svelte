@@ -154,7 +154,9 @@
       .attr('class', 'bar-chart-grid-group');
 
     let barGroup = barChartContent.append('g')
-      .attr('class', 'bar-chart-bar-group');
+      .attr('class', 'bar-chart-bar-group')
+      .style('stroke', 'hsla(0, 0%, 60%, 0.1)')
+      .style('stroke-width', 1);
 
     let axisGroup = barChart.append('g')
       .attr('class', 'axis-group');

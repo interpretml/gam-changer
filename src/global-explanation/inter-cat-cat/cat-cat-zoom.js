@@ -57,8 +57,10 @@ export const zoomed = (event, xScale, yScale, svg,
     .call(d3.axisLeft(zYScale));
 
   // Transform the dots
-  svgSelect.selectAll('g.scatter-plot-scatter-group')
+  let scatterGroup = svgSelect.selectAll('g.scatter-plot-scatter-group')
     .attr('transform', transform);
+
+  scatterGroup.style('stroke-width', 1 / transform.k);
 
   // Transform the density rectangles
   // Here we want to translate and scale the x axis, and keep y axis consistent

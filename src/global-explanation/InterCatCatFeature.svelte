@@ -239,7 +239,8 @@
       .attr('class', 'axis-group');
 
     // Draw the scatter plot
-    scatterGroup.style('stroke', 'gray')
+    scatterGroup.style('stroke', 'hsla(0, 0%, 0%, 0.5)')
+      .style('stroke-width', 1)
       .selectAll('circle.dot')
       .data(additiveData)
       .join('circle')
