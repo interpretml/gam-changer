@@ -4,11 +4,21 @@
   import { config } from '../config';
   import { drawHorizontalColorLegend } from './draw';
 
+  import { state } from './inter-cat-cat/cat-cat-state';
+  import { SelectedInfo } from './inter-cat-cat/cat-cat-class';
+  import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './inter-cat-cat/cat-cat-zoom';
+  import { brushDuring, brushEndSelect } from './inter-cat-cat/cat-cat-brush';
+
+  import ToggleSwitch from '../components/ToggleSwitch.svelte';
+  import ContextMenu from '../components/ContextMenu.svelte';
+
   export let featureData = null;
   export let scoreRange = null;
   export let svgHeight = 400;
 
   let svg = null;
+  let component = null;
+  let multiMenu = null;
 
   // Visualization constants
   const svgPadding = config.svgPadding;
@@ -26,6 +36,10 @@
 
   // Colors
   const colors = config.colors;
+
+  // Select mode
+  let selectMode = false;
+  state.selectedInfo = new SelectedInfo();
 
   /**
    * Create additiveData which is used to draw dots on the plot.
@@ -132,20 +146,31 @@
     let xScale = d3.scalePoint()
       .domain(data.longBinLabel)
       .padding(config.scalePointPadding)
-      .range([0, chartWidth])
-      .round(true);
+      .range([0, chartWidth]);
 
     // Shorter categorical variable on the y-axis
     let yScale = d3.scalePoint()
       .domain(data.shortBinLabel)
       .padding(config.scalePointPadding)
-      .range([chartHeight, 0])
-      .round(true);
+      .range([chartHeight, 0]);
 
     // Create histogram chart group
     let histChart = content.append('g')
-      .attr('class', 'hist-chart-group')
-      .attr('transform', `translate(${yAxisWidth}, ${chartHeight + legendHeight})`);
+      .attr('class', 'hist-chart-group');
+
+    // For the histogram clippath, need to carefully play around with the
+    // transformation, the path should be in a static group; the group having
+    // clip-path attr should be static. Therefore we apply the transformation to
+    // histChart's child later.
+    histChart.append('clipPath')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-hist-chart-clip`)
+      .append('rect')
+      .attr('x', yAxisWidth)
+      .attr('y', chartHeight)
+      .attr('width', chartWidth)
+      .attr('height', densityHeight);
+    
+    histChart.attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-hist-chart-clip)`);
 
     let additiveData = createAdditiveData(featureData, data);
     console.log(additiveData);
@@ -166,22 +191,56 @@
       .range([legendConfig.startColor, 'white', legendConfig.endColor]);
 
     // Draw the scatter chart
-    let scatterChart = content.append('g')
+    let scatterPlot = content.append('g')
       .attr('transform', `translate(${0}, ${legendHeight})`)
-      .attr('class', 'scatter-chart-group');
+      .attr('class', 'scatter-plot-group');
+
+    scatterPlot.append('clipPath')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-chart-clip`)
+      .append('rect')
+      .attr('width', chartWidth)
+      .attr('height', chartHeight - 1);
+
+    scatterPlot.append('clipPath')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-x-axis-clip`)
+      .append('rect')
+      .attr('x', yAxisWidth)
+      .attr('y', chartHeight)
+      .attr('width', chartWidth)
+      .attr('height', densityHeight);
+
+    scatterPlot.append('clipPath')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-y-axis-clip`)
+      .append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', yAxisWidth)
+      .attr('height', chartHeight);
     
-    let scatterChartContent = scatterChart.append('g')
-      .attr('class', 'scatter-chart-content-group')
+    let scatterPlotContent = scatterPlot.append('g')
+      .attr('class', 'scatter-plot-content-group')
+      .attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-chart-clip)`)
       .attr('transform', `translate(${yAxisWidth}, 0)`);
 
-    let scatterGroup = scatterChartContent.append('g')
-      .attr('class', 'scatter-chart-scatter-group');
+    // Append a rect so we can listen to events
+    scatterPlotContent.append('rect')
+      .attr('width', chartWidth)
+      .attr('height', chartHeight)
+      .style('opacity', 0);
 
-    let axisGroup = scatterChart.append('g')
+    // Create a group to draw grids
+    scatterPlotContent.append('g')
+      .attr('class', 'scatter-plot-grid-group');
+
+    let scatterGroup = scatterPlotContent.append('g')
+      .attr('class', 'scatter-plot-scatter-group');
+
+    let axisGroup = scatterPlot.append('g')
       .attr('class', 'axis-group');
 
     // Draw the scatter plot
-    scatterGroup.selectAll('circle.dot')
+    scatterGroup.style('stroke', 'gray')
+      .selectAll('circle.dot')
       .data(additiveData)
       .join('circle')
       .attr('class', 'dot')
@@ -193,6 +252,9 @@
 
     // Draw the line chart X axis
     let xAxisGroup = axisGroup.append('g')
+      .attr('class', 'x-axis-wrapper')
+      .attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-x-axis-clip)`)
+      .append('g')
       .attr('class', 'x-axis')
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`)
       .call(d3.axisBottom(xScale));
@@ -208,6 +270,9 @@
     
     // Draw the line chart Y axis
     let yAxisGroup = axisGroup.append('g')
+      .attr('class', 'x-axis-wrapper')
+      .attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-y-axis-clip)`)
+      .append('g')
       .attr('class', 'y-axis')
       .attr('transform', `translate(${yAxisWidth}, 0)`);
     
@@ -251,7 +316,12 @@
 
     let histWidth = Math.min(30, xScale(histData[0].x2) - xScale(histData[0].x1));
 
-    histChart.selectAll('rect')
+    // Draw the density histogram 
+    let histChartContent = histChart.append('g')
+      .attr('class', 'hist-chart-content-group')
+      .attr('transform', `translate(${yAxisWidth}, ${chartHeight + legendHeight})`);
+
+    histChartContent.selectAll('rect')
       .data(histData)
       .join('rect')
       .attr('class', 'hist-rect')
@@ -262,7 +332,7 @@
       .style('fill', colors.hist);
     
     // Draw a Y axis for the histogram chart
-    let yAxisHistGroup = scatterChart.append('g')
+    let yAxisHistGroup = scatterPlot.append('g')
       .attr('class', 'y-axis')
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`);
     
@@ -289,6 +359,50 @@
       .text('density')
       .style('fill', colors.histAxis);
 
+
+    // Add panning and zooming
+    let zoom = d3.zoom()
+      .scaleExtent(zoomScaleExtent)
+      .translateExtent([[0, 0], [width, height]])
+      .on('zoom', e => zoomed(e, xScale, yScale, svg, 2,
+        1, yAxisWidth, chartWidth, chartHeight, legendHeight, multiMenu, component))
+      .on('start', () => zoomStart(multiMenu))
+      .on('end', () => zoomEnd(multiMenu))
+      .filter(e => {
+        if (selectMode) {
+          return (e.type === 'wheel' || e.button === 2);
+        } else {
+          return (e.button === 0 || e.type === 'wheel');
+        }
+      });
+
+    scatterPlotContent.call(zoom)
+      .call(zoom.transform, d3.zoomIdentity);
+
+    scatterPlotContent.on('dblclick.zoom', null);
+    
+    // Listen to double click to reset zoom
+    scatterPlotContent.on('dblclick', () => {
+      scatterPlotContent.transition('reset')
+        .duration(750)
+        .ease(d3.easeCubicInOut)
+        .call(zoom.transform, d3.zoomIdentity);
+    });
+
+  };
+
+  /**
+   * Event handler for the select button in the header
+   */
+  const selectModeSwitched = () => {
+    selectMode = !selectMode;
+
+    let lineChartContent = d3.select(svg)
+      .select('g.scatter-plot-content-group')
+      .classed('select-mode', selectMode);
+    
+    lineChartContent.select('g.brush rect.overlay')
+      .attr('cursor', null);
   };
 
   $: featureData && drawFeature(featureData);
@@ -297,65 +411,48 @@
 
 <style type='text/scss'>
   @import '../define';
+  @import './common.scss';
 
-  .explain-panel {
-    display: flex;
-    flex-direction: column;
+
+  :global(.explain-panel .scatter-plot-content-group) {
+    cursor: grab;
   }
 
-  .header {
-    display: flex;
-    height: $explanation-header-height;
-    padding: 5px 10px;
-    border-bottom: 1px solid $gray-border;
-
-    .header__name {
-      margin-right: 10px;
-    }
-
-    .header__importance {
-      color: $gray-light;
-    }
+  :global(.explain-panel .scatter-plot-content-group:active) {
+    cursor: grabbing;
   }
 
-  :global(.explain-panel .y-axis-text) {
-    font-size: 16px;
-    text-anchor: middle;
-    dominant-baseline: text-bottom;
+  :global(.explain-panel .scatter-plot-content-group.select-mode) {
+    cursor: crosshair;
   }
 
-  :global(.explain-panel .x-axis-text) {
-    font-size: 16px;
-    text-anchor: middle;
-    dominant-baseline: hanging;
-  }
-
-  :global(.explain-panel .additive-line-segment) {
-    stroke-linejoin: round;
-    stroke-linecap: round;
-  }
-
-  :global(.explain-panel .hidden) {
-    visibility: hidden;
-    pointer-events: none;
-  }
-
-  :global(.explain-panel .legend-title) {
-    font-size: 0.9em;
-    dominant-baseline: hanging;
-  }
-
-  :global(.explain-panel .legend-value) {
-    font-size: 13px;
-    dominant-baseline: middle;
+  :global(.explain-panel .scatter-plot-content-group.select-mode:active) {
+    cursor: crosshair;
   }
 
 </style>
 
-<div class='explain-panel'>
-  {#if featureData !== null}
+<div class='explain-panel' bind:this={component}>
 
-    <div class='header'>
+  <!-- <div class='context-menu-container hidden' bind:this={multiMenu}>
+    <ContextMenu 
+      bind:controlInfo={multiMenuControlInfo}
+      bind:this={myContextMenu}
+      type='cat'
+      on:inputChanged={multiMenuInputChanged}
+      on:moveButtonClicked={multiMenuMoveClicked}
+      on:mergeClicked={multiMenuMergeClicked}
+      on:deleteClicked={multiMenuDeleteClicked}
+      on:moveCheckClicked={multiMenuMoveCheckClicked}
+      on:moveCancelClicked={multiMenuMoveCancelClicked}
+      on:subItemCheckClicked={multiMenuSubItemCheckClicked}
+      on:subItemCancelClicked={multiMenuSubItemCancelClicked}
+    /> 
+  </div> -->
+
+  <div class='header'>
+
+    <div class='header__info'>
       <div class='header__name'>
         {featureData === null ? ' ' : featureData.name}
       </div>
@@ -365,7 +462,14 @@
       </div>
     </div>
 
-  {/if}
+    <div class='header__control-panel'>
+      <!-- The toggle button -->
+      <div class='toggle-switch-wrapper'>
+        <ToggleSwitch name='cat-cat' on:selectModeSwitched={selectModeSwitched}/>
+      </div>
+    </div>
+
+  </div>
 
 
   <div class='svg-container'>

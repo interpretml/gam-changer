@@ -128,21 +128,21 @@
     </div> -->
 
 
-    <div class='feature-window'>
+    <!-- <div class='feature-window'>
       <InterContContGlobalExplain
         featureData = {data === null ? null : data.features[86]}
         scoreRange = {data === null ? null : data.scoreRange}
         svgHeight = 500
       />
-    </div>
+    </div> -->
 
-    <!-- <div class='feature-window'>
+    <div class='feature-window'>
       <InterCatCatGlobalExplain
         featureData = {data === null ? null : data.features[81]}
         scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 400
+        svgHeight = 500
       />
-    </div> -->
+    </div>
 
   </div>
   
