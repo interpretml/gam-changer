@@ -1,8 +1,8 @@
 import * as d3 from 'd3';
-import { SelectedInfo } from './cat-class';
+import { SelectedInfo } from './cont-cat-class';
 import { moveMenubar } from '../continuous/cont-bbox';
-import { rExtent } from './cat-zoom';
-import { state } from './cat-state';
+import { rExtent } from './cont-cat-zoom';
+import { state } from './cont-cat-state';
 // import { redrawOriginal, drawLastEdit } from './cont-edit';
 
 // Need a timer to avoid the brush event call after brush.move()

@@ -342,7 +342,6 @@
       .style('fill', colors.histAxis);
 
     // Add brush
-
     brush = d3.brush()
       .on('end', e => brushEndSelect(
         e, svg, multiMenu, brush, component, resetContextMenu
@@ -371,8 +370,8 @@
       .translateExtent([[0, -Infinity], [width, Infinity]])
       .on('zoom', e => zoomed(e, xScale, yScale, svg, 2,
         1, yAxisWidth, chartWidth, chartHeight, multiMenu, component))
-      .on('start', () => zoomStart(null))
-      .on('end', () => zoomEnd(null))
+      .on('start', () => zoomStart(multiMenu))
+      .on('end', () => zoomEnd(multiMenu))
       .filter(e => {
         if (selectMode) {
           return (e.type === 'wheel' || e.button === 2);

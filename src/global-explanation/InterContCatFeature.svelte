@@ -4,12 +4,28 @@
   import { config } from '../config';
   import { drawHorizontalColorLegend } from './draw';
 
+  import { state } from './inter-cont-cat/cont-cat-state';
+  import { SelectedInfo } from './inter-cont-cat/cont-cat-class';
+  import { zoomStart, zoomEnd, zoomedLine, zoomScaleExtent, rExtent } from './inter-cont-cat/cont-cat-zoom';
+  import { brushDuring, brushEndSelect } from './inter-cont-cat/cont-cat-brush';
+
+  import ToggleSwitch from '../components/ToggleSwitch.svelte';
+  import ContextMenu from '../components/ContextMenu.svelte';
+
   export let featureData = null;
   export let scoreRange = null;
   export let svgHeight = 400;
   export let chartType = 'bar';
 
   let svg = null;
+  let component = null;
+  let multiMenu = null;
+  let myContextMenu = null;
+  let multiMenuControlInfo = null;
+
+  // Interactions
+  let selectMode = false;
+  state.selectedInfo = new SelectedInfo();
 
   // Visualization constants
   const svgPadding = config.svgPadding;
@@ -253,19 +269,57 @@
 
     // Create histogram chart group
     let histChart = content.append('g')
-      .attr('class', 'hist-chart-group')
-      .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`);
+      .attr('class', 'hist-chart-group');
+
+    // For the histogram clippath, need to carefully play around with the
+    // transformation, the path should be in a static group; the group having
+    // clip-path attr should be static. Therefore we apply the transformation to
+    // histChart's child later.
+    histChart.append('clipPath')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-hist-chart-clip`)
+      .append('rect')
+      .attr('x', yAxisWidth)
+      .attr('y', chartHeight)
+      .attr('width', chartWidth)
+      .attr('height', densityHeight);
+    
+    histChart.attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-hist-chart-clip)`);
     
     // Draw the line chart
     let lineChart = content.append('g')
       .attr('class', 'line-chart-group');
+
+    lineChart.append('clipPath')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-chart-clip`)
+      .append('rect')
+      .attr('width', chartWidth)
+      .attr('height', chartHeight - 1);
+
+    lineChart.append('clipPath')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-x-axis-clip`)
+      .append('rect')
+      .attr('x', yAxisWidth)
+      .attr('y', chartHeight)
+      .attr('width', chartWidth)
+      .attr('height', densityHeight);
 
     let axisGroup = lineChart.append('g')
       .attr('class', 'axis-group');
     
     let lineChartContent = lineChart.append('g')
       .attr('class', 'line-chart-content-group')
+      .attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-chart-clip)`)
       .attr('transform', `translate(${yAxisWidth}, 0)`);
+
+    // Append a rect so we can listen to events
+    lineChartContent.append('rect')
+      .attr('width', chartWidth)
+      .attr('height', chartHeight)
+      .style('opacity', 0);
+
+    // Create a group to draw grids
+    lineChartContent.append('g')
+      .attr('class', 'line-chart-grid-group');
 
     let confidenceGroup = lineChartContent.append('g')
       .attr('class', 'line-chart-confidence-group');
@@ -282,7 +336,10 @@
       // Create line color
       let lineColor = d3.schemeTableau10[c];
 
-      lineGroup.append('g')
+      lineGroup.style('stroke-width', 2)
+        .style('fill', 'none')
+        .append('g')
+        .style('stroke', lineColor)
         .attr('class', `line-group-${c}`)
         .selectAll('path')
         .data(additiveData[c])
@@ -291,10 +348,7 @@
         .attr('d', d => {
           return `M ${xScale(d.sx)}, ${yScale(d.sAdditive)} L ${xScale(d.tx)}
             ${yScale(d.sAdditive)} L ${xScale(d.tx)}, ${yScale(d.tAdditive)}`;
-        })
-        .style('stroke', lineColor)
-        .style('stroke-width', 2)
-        .style('fill', 'none');
+        });
 
       // Draw the underlying confidence interval
       confidenceGroup.append('g')
@@ -328,14 +382,6 @@
     
     yAxisGroup.call(d3.axisLeft(yScale));
     yAxisGroup.attr('font-family', defaultFont);
-  
-    // Add a line to highlight y = 0
-    yAxisGroup.append('path')
-      .attr('class', 'line-0')
-      .attr('d', `M ${0} ${yScale(0)} L ${chartWidth} ${yScale(0)}`)
-      .style('stroke', colors.line0)
-      .style('stroke-width', 3)
-      .style('stroke-dasharray', '15 10');
 
     yAxisGroup.append('g')
       .attr('transform', `translate(${-yAxisWidth - 5}, ${chartHeight / 2}) rotate(-90)`)
@@ -365,7 +411,12 @@
 
     let histWidth = Math.min(50, xScale(histData[0].x2) - xScale(histData[0].x1));
 
-    histChart.selectAll('rect')
+    // Draw the density histogram 
+    let histChartContent = histChart.append('g')
+      .attr('class', 'hist-chart-content-group')
+      .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`);
+
+    histChartContent.selectAll('rect')
       .data(histData)
       .join('rect')
       .attr('class', 'hist-rect')
@@ -402,6 +453,34 @@
       .append('text')
       .text('density')
       .style('fill', colors.histAxis);
+
+    // Add panning and zooming
+    let zoom = d3.zoom()
+      .scaleExtent(zoomScaleExtent)
+      .on('zoom', e => zoomedLine(e, xScale, yScale, svg, 2,
+        1, yAxisWidth, chartWidth, chartHeight, null, component))
+      .on('start', () => zoomStart(multiMenu))
+      .on('end', () => zoomEnd(multiMenu))
+      .filter(e => {
+        if (selectMode) {
+          return (e.type === 'wheel' || e.button === 2);
+        } else {
+          return (e.button === 0 || e.type === 'wheel');
+        }
+      });
+
+    lineChartContent.call(zoom)
+      .call(zoom.transform, d3.zoomIdentity);
+
+    lineChartContent.on('dblclick.zoom', null);
+    
+    // Listen to double click to reset zoom
+    lineChartContent.on('dblclick', () => {
+      lineChartContent.transition('reset')
+        .duration(750)
+        .ease(d3.easeCubicInOut)
+        .call(zoom.transform, d3.zoomIdentity);
+    });
 
     // Draw a legend for the categorical data
     let legendGroup = content.append('g')
@@ -662,32 +741,28 @@
     console.error('The provided chart type is not supported.');
   }
 
+  /**
+   * Event handler for the select button in the header
+   */
+  const selectModeSwitched = () => {
+    selectMode = !selectMode;
+
+    let lineChartContent = d3.select(svg)
+      .select('g.scatter-plot-content-group')
+      .classed('select-mode', selectMode);
+    
+    lineChartContent.select('g.brush rect.overlay')
+      .attr('cursor', null);
+  };
+
   $: featureData && drawFeature(featureData);
 
 </script>
 
 <style type='text/scss'>
   @import '../define';
+  @import './common.scss';
 
-  .explain-panel {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .header {
-    display: flex;
-    height: $explanation-header-height;
-    padding: 5px 10px;
-    border-bottom: 1px solid $gray-border;
-
-    .header__name {
-      margin-right: 10px;
-    }
-
-    .header__importance {
-      color: $gray-light;
-    }
-  }
 
   :global(.explain-panel .y-axis-text) {
     font-size: 16px;
@@ -723,10 +798,27 @@
 
 </style>
 
-<div class='explain-panel'>
-  {#if featureData !== null}
+<div class='explain-panel' bind:this={component}>
 
-    <div class='header'>
+  <!-- <div class='context-menu-container hidden' bind:this={multiMenu}>
+    <ContextMenu 
+      bind:controlInfo={multiMenuControlInfo}
+      bind:this={myContextMenu}
+      type='cat'
+      on:inputChanged={multiMenuInputChanged}
+      on:moveButtonClicked={multiMenuMoveClicked}
+      on:mergeClicked={multiMenuMergeClicked}
+      on:deleteClicked={multiMenuDeleteClicked}
+      on:moveCheckClicked={multiMenuMoveCheckClicked}
+      on:moveCancelClicked={multiMenuMoveCancelClicked}
+      on:subItemCheckClicked={multiMenuSubItemCheckClicked}
+      on:subItemCancelClicked={multiMenuSubItemCancelClicked}
+    /> 
+  </div> -->
+
+  <div class='header'>
+
+    <div class='header__info'>
       <div class='header__name'>
         {featureData === null ? ' ' : featureData.name}
       </div>
@@ -736,7 +828,14 @@
       </div>
     </div>
 
-  {/if}
+    <div class='header__control-panel'>
+      <!-- The toggle button -->
+      <div class='toggle-switch-wrapper'>
+        <ToggleSwitch name='cont-cat' on:selectModeSwitched={selectModeSwitched}/>
+      </div>
+    </div>
+
+  </div>
 
 
   <div class='svg-container'>
