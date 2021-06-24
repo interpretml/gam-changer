@@ -342,13 +342,10 @@
       .style('fill', colors.histAxis);
 
     // Add brush
-    let menuWidth = 375;
-    let menuHeight = 50;
 
     brush = d3.brush()
       .on('end', e => brushEndSelect(
-        e, svg, multiMenu, menuWidth, menuHeight, brush,
-        component, myContextMenu
+        e, svg, multiMenu, brush, component, resetContextMenu
       ))
       .on('start brush', e => brushDuring(e, svg, multiMenu))
       .extent([[0, 0], [chartWidth, chartHeight]])
@@ -373,8 +370,7 @@
       .scaleExtent(zoomScaleExtent)
       .translateExtent([[0, -Infinity], [width, Infinity]])
       .on('zoom', e => zoomed(e, xScale, yScale, svg, 2,
-        1, yAxisWidth, chartWidth, chartHeight,
-        null, null, null, component))
+        1, yAxisWidth, chartWidth, chartHeight, multiMenu, component))
       .on('start', () => zoomStart(null))
       .on('end', () => zoomEnd(null))
       .filter(e => {

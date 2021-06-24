@@ -71,8 +71,8 @@ export const brushDuring = (event, svg, multiMenu) => {
   }
 };
 
-export const brushEndSelect = (event, svg, multiMenu, menuWidth,
-  menuHeight, brush, component, myContextMenu
+export const brushEndSelect = (event, svg, multiMenu, brush, component,
+  resetContextMenu
 ) => {
   // Get the selection boundary
   let selection = event.selection;
@@ -87,47 +87,25 @@ export const brushEndSelect = (event, svg, multiMenu, menuWidth,
       svgSelect.select('g.line-chart-content-group g.brush rect.overlay')
         .attr('cursor', null);
 
-      // d3.select(multiMenu)
-      //   .classed('hidden', true);
+      d3.select(multiMenu)
+        .classed('hidden', true);
 
-      // // End move mode
-      // if (multiMenuControlInfo.moveMode) {
-      //   multiMenuControlInfo.moveMode = false;
-      //   multiMenuControlInfo.toSwitchMoveMode = true;
-      //   multiSelectMenuStore.set(multiMenuControlInfo);
+      resetContextMenu();
 
-      //   // DO not update the data
-      //   state.pointDataBuffer = null;
-      //   state.additiveDataBuffer = null;
-      // }
+      // Do not save the user's change (same as clicking the cancel button)
+      // Redraw the graph with original data
+      // redrawOriginal(svg);
 
-      // // End sub-menu mode
-      // if (multiMenuControlInfo.subItemMode !== null) {
-      //   // Hide the confirmation panel
-      //   myContextMenu.hideConfirmation(multiMenuControlInfo.subItemMode);
+      // Redraw the last edit if possible
+      if (state.additiveDataLastLastEdit !== undefined) {
+        state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
+        // drawLastEdit(svg);
+        // Prepare for next redrawing after recovering the last last edit graph
+        state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+      }
 
-      //   multiMenuControlInfo.subItemMode = null;
-      //   multiSelectMenuStore.set(multiMenuControlInfo);
-
-      //   // Discard changes
-      //   state.pointDataBuffer = null;
-      //   state.additiveDataBuffer = null;
-      // }
-
-      // // Do not save the user's change (same as clicking the cancel button)
-      // // Redraw the graph with original data
-      // // redrawOriginal(svg);
-
-      // // Redraw the last edit if possible
-      // if (state.additiveDataLastLastEdit !== undefined) {
-      //   state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
-      //   // drawLastEdit(svg);
-      //   // Prepare for next redrawing after recovering the last last edit graph
-      //   state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
-      // }
-
-      // // Remove the selection bbox
-      // svgSelect.selectAll('g.line-chart-content-group g.select-bbox-group').remove();
+      // Remove the selection bbox
+      svgSelect.selectAll('g.scatter-plot-content-group g.select-bbox-group').remove();
 
       return idleTimeout = setTimeout(idled, idleDelay);
     }

@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-// import { moveMenubar } from './cont-bbox';
+import { moveMenubar } from '../continuous/cont-bbox';
 import { state } from './cat-state';
 
 export const rExtent = [3, 16];
@@ -27,7 +27,7 @@ export const zoomEnd = (multiMenu) => {
  */
 export const zoomed = (event, xScale, yScale, svg,
   linePathWidth, nodeStrokeWidth, yAxisWidth, chartWidth, chartHeight,
-  multiMenu, menuWidth, menuHeight, component
+  multiMenu, component
 ) => {
 
   let svgSelect = d3.select(svg);
@@ -81,25 +81,25 @@ export const zoomed = (event, xScale, yScale, svg,
         ${chartHeight})scale(${transform.k}, 1)`);
 
   // Transform the selection bbox if applicable
-  // if (state.selectedInfo.hasSelected) {
-  //   // Here we don't use transform, because we want to keep the gap between
-  //   // the nodes and bounding box border constant across all scales
+  if (state.selectedInfo.hasSelected) {
+    // Here we don't use transform, because we want to keep the gap between
+    // the nodes and bounding box border constant across all scales
 
-  //   // We want to compute the world coordinate here
-  //   // Need to transfer back the scale factor from the node radius
-  //   let curPadding = (rScale(state.curTransform.k) + state.bboxPadding) * state.curTransform.k;
+    // We want to compute the world coordinate here
+    // Need to transfer back the scale factor from the node radius
+    let curPadding = (rExtent[0] + state.bboxPadding) * state.curTransform.k;
 
-  //   svgSelect.select('g.line-chart-content-group')
-  //     .selectAll('rect.select-bbox')
-  //     .attr('x', d => state.curXScale(d.x1) - curPadding)
-  //     .attr('y', d => state.curYScale(d.y1) - curPadding)
-  //     .attr('width', d => state.curXScale(d.x2) - state.curXScale(d.x1) + 2 * curPadding)
-  //     .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding);
+    svgSelect.select('g.scatter-plot-content-group')
+      .selectAll('rect.select-bbox')
+      .attr('x', d => state.curXScale(d.x1) - curPadding)
+      .attr('y', d => state.curYScale(d.y1) - curPadding)
+      .attr('width', d => state.curXScale(d.x2) - state.curXScale(d.x1) + 2 * curPadding)
+      .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding);
 
-  //   // Also transform the menu bar
-  //   // d3.select(multiMenu)
-  //   //   .call(moveMenubar, menuWidth, menuHeight, svg, component);
-  // }
+    // Also transform the menu bar
+    d3.select(multiMenu)
+      .call(moveMenubar, svg, component);
+  }
 
   // Draw or update the grid
   svgSelect.select('g.scatter-plot-grid-group')
