@@ -4,11 +4,21 @@
   import { config } from '../config';
   import { drawHorizontalColorLegend } from './draw';
 
+  import { state } from './inter-cont-cont/cont-cont-state';
+  import { SelectedInfo } from './inter-cont-cont/cont-cont-class';
+  import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './inter-cont-cont/cont-cont-zoom';
+  import { brushDuring, brushEndSelect } from './inter-cont-cont/cont-cont-brush';
+
+  import ToggleSwitch from '../components/ToggleSwitch.svelte';
+  import ContextMenu from '../components/ContextMenu.svelte';
+
   export let featureData = null;
   export let scoreRange = null;
   export let svgHeight = 400;
 
   let svg = null;
+  let component = null;
+  let multiMenu = null;
 
   // Visualization constants
   const svgPadding = config.svgPadding;
@@ -20,6 +30,10 @@
 
   // Real width (depends on the svgHeight prop)
   let svgWidth = svgHeight * (width / height);
+
+  // Select mode
+  let selectMode = false;
+  state.selectedInfo = new SelectedInfo();
 
   // Show some hidden elements for development
   const showRuler = false;
@@ -81,8 +95,21 @@
 
     // Create histogram chart group
     let histChart = content.append('g')
-      .attr('class', 'hist-chart-group')
-      .attr('transform', `translate(${yAxisWidth}, ${chartHeight + legendHeight})`);
+      .attr('class', 'hist-chart-group');
+
+    // For the histogram clippath, need to carefully play around with the
+    // transformation, the path should be in a static group; the group having
+    // clip-path attr should be static. Therefore we apply the transformation to
+    // histChart's child later.
+    histChart.append('clipPath')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-hist-chart-clip`)
+      .append('rect')
+      .attr('x', yAxisWidth)
+      .attr('y', chartHeight)
+      .attr('width', chartWidth)
+      .attr('height', densityHeight);
+    
+    histChart.attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-hist-chart-clip)`);
 
     let additiveData = transpose2dArray(featureData.additive);
 
@@ -104,10 +131,27 @@
     let barChart = content.append('g')
       .attr('transform', `translate(${0}, ${legendHeight})`)
       .attr('class', 'bar-chart-group');
+
+    barChart.append('clipPath')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-chart-clip`)
+      .append('rect')
+      .attr('width', chartWidth)
+      .attr('height', chartHeight - 1);
     
     let barChartContent = barChart.append('g')
       .attr('class', 'bar-chart-content-group')
+      .attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-chart-clip)`)
       .attr('transform', `translate(${yAxisWidth}, 0)`);
+
+    // Append a rect so we can listen to events
+    barChartContent.append('rect')
+      .attr('width', chartWidth)
+      .attr('height', chartHeight)
+      .style('opacity', 0);
+
+    // Create a group to draw grids
+    barChartContent.append('g')
+      .attr('class', 'bar-chart-grid-group');
 
     let barGroup = barChartContent.append('g')
       .attr('class', 'bar-chart-bar-group');
@@ -190,7 +234,12 @@
       .domain(d3.extent(histFrequency))
       .range([0, densityHeight]);
 
-    histChart.selectAll('rect')
+    // Draw the density histogram 
+    let histChartContent = histChart.append('g')
+      .attr('class', 'hist-chart-content-group')
+      .attr('transform', `translate(${yAxisWidth}, ${chartHeight + legendHeight})`);
+
+    histChartContent.selectAll('rect')
       .data(histData)
       .join('rect')
       .attr('class', 'hist-rect')
@@ -228,10 +277,50 @@
       .text('density')
       .style('fill', colors.histAxis);
 
+    // Add panning and zooming
+    let zoom = d3.zoom()
+      .scaleExtent(zoomScaleExtent)
+      .on('zoom', e => zoomed(e, xScale, yScale, svg, 2,
+        1, yAxisWidth, chartWidth, chartHeight, legendHeight, multiMenu, component))
+      .on('start', () => zoomStart(multiMenu))
+      .on('end', () => zoomEnd(multiMenu))
+      .filter(e => {
+        if (selectMode) {
+          return (e.type === 'wheel' || e.button === 2);
+        } else {
+          return (e.button === 0 || e.type === 'wheel');
+        }
+      });
+
+    barChartContent.call(zoom)
+      .call(zoom.transform, d3.zoomIdentity);
+
+    barChartContent.on('dblclick.zoom', null);
+    
+    // Listen to double click to reset zoom
+    barChartContent.on('dblclick', () => {
+      barChartContent.transition('reset')
+        .duration(750)
+        .ease(d3.easeCubicInOut)
+        .call(zoom.transform, d3.zoomIdentity);
+    });
   };
 
-  // const drawFeature = drawFeatureLine;
   const drawFeature = drawFeatureBar;
+
+  /**
+   * Event handler for the select button in the header
+   */
+  const selectModeSwitched = () => {
+    selectMode = !selectMode;
+
+    let lineChartContent = d3.select(svg)
+      .select('g.scatter-plot-content-group')
+      .classed('select-mode', selectMode);
+    
+    lineChartContent.select('g.brush rect.overlay')
+      .attr('cursor', null);
+  };
 
   $: featureData && drawFeature(featureData);
 
@@ -239,48 +328,7 @@
 
 <style type='text/scss'>
   @import '../define';
-
-  .explain-panel {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .header {
-    display: flex;
-    height: $explanation-header-height;
-    padding: 5px 10px;
-    border-bottom: 1px solid $gray-border;
-
-    .header__name {
-      margin-right: 10px;
-    }
-
-    .header__importance {
-      color: $gray-light;
-    }
-  }
-
-  :global(.explain-panel .y-axis-text) {
-    font-size: 16px;
-    text-anchor: middle;
-    dominant-baseline: text-bottom;
-  }
-
-  :global(.explain-panel .x-axis-text) {
-    font-size: 16px;
-    text-anchor: middle;
-    dominant-baseline: hanging;
-  }
-
-  :global(.explain-panel .additive-line-segment) {
-    stroke-linejoin: round;
-    stroke-linecap: round;
-  }
-
-  :global(.explain-panel .hidden) {
-    visibility: hidden;
-    pointer-events: none;
-  }
+  @import './common.scss';
 
   :global(.explain-panel .legend-title) {
     font-size: 0.9em;
@@ -294,10 +342,27 @@
 
 </style>
 
-<div class='explain-panel'>
-  {#if featureData !== null}
+<div class='explain-panel' bind:this={component}>
 
-    <div class='header'>
+  <!-- <div class='context-menu-container hidden' bind:this={multiMenu}>
+    <ContextMenu 
+      bind:controlInfo={multiMenuControlInfo}
+      bind:this={myContextMenu}
+      type='cat'
+      on:inputChanged={multiMenuInputChanged}
+      on:moveButtonClicked={multiMenuMoveClicked}
+      on:mergeClicked={multiMenuMergeClicked}
+      on:deleteClicked={multiMenuDeleteClicked}
+      on:moveCheckClicked={multiMenuMoveCheckClicked}
+      on:moveCancelClicked={multiMenuMoveCancelClicked}
+      on:subItemCheckClicked={multiMenuSubItemCheckClicked}
+      on:subItemCancelClicked={multiMenuSubItemCancelClicked}
+    /> 
+  </div> -->
+
+  <div class='header'>
+
+    <div class='header__info'>
       <div class='header__name'>
         {featureData === null ? ' ' : featureData.name}
       </div>
@@ -307,7 +372,14 @@
       </div>
     </div>
 
-  {/if}
+    <div class='header__control-panel'>
+      <!-- The toggle button -->
+      <div class='toggle-switch-wrapper'>
+        <ToggleSwitch name='cont-cont' on:selectModeSwitched={selectModeSwitched}/>
+      </div>
+    </div>
+
+  </div>
 
 
   <div class='svg-container'>
