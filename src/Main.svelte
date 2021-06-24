@@ -109,23 +109,23 @@
       />
     </div> -->
 
-    <div class='feature-window'>
+    <!-- <div class='feature-window'>
       <InterContCatGlobalExplain
         featureData = {data === null ? null : data.features[90]}
         scoreRange = {data === null ? null : data.scoreRange}
         svgHeight = 500
         chartType = 'line'
       />
-    </div>
+    </div> -->
 
-    <!-- <div class='feature-window'>
+    <div class='feature-window'>
       <InterContCatGlobalExplain
         featureData = {data === null ? null : data.features[89]}
         scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 400
+        svgHeight = 500
         chartType = 'bar'
       />
-    </div> -->
+    </div>
 
 
      <!-- 

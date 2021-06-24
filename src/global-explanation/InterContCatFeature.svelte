@@ -6,11 +6,11 @@
 
   import { state } from './inter-cont-cat/cont-cat-state';
   import { SelectedInfo } from './inter-cont-cat/cont-cat-class';
-  import { zoomStart, zoomEnd, zoomedLine, zoomScaleExtent, rExtent } from './inter-cont-cat/cont-cat-zoom';
+  import { zoomStart, zoomEnd, zoomedLine, zoomedBar, zoomScaleExtent, rExtent } from './inter-cont-cat/cont-cat-zoom';
   import { brushDuring, brushEndSelect } from './inter-cont-cat/cont-cat-brush';
 
   import ToggleSwitch from '../components/ToggleSwitch.svelte';
-  import ContextMenu from '../components/ContextMenu.svelte';
+  // import ContextMenu from '../components/ContextMenu.svelte';
 
   export let featureData = null;
   export let scoreRange = null;
@@ -583,8 +583,21 @@
 
     // Create histogram chart group
     let histChart = content.append('g')
-      .attr('class', 'hist-chart-group')
-      .attr('transform', `translate(${yAxisWidth}, ${chartHeight + legendHeight})`);
+      .attr('class', 'hist-chart-group');
+
+    // For the histogram clippath, need to carefully play around with the
+    // transformation, the path should be in a static group; the group having
+    // clip-path attr should be static. Therefore we apply the transformation to
+    // histChart's child later.
+    histChart.append('clipPath')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-hist-chart-clip`)
+      .append('rect')
+      .attr('x', yAxisWidth)
+      .attr('y', chartHeight)
+      .attr('width', chartWidth)
+      .attr('height', densityHeight);
+    
+    histChart.attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-hist-chart-clip)`);
 
     let additiveData = createAdditiveData(featureData, data);
     console.log(additiveData);
@@ -608,10 +621,35 @@
     let barChart = content.append('g')
       .attr('transform', `translate(${0}, ${legendHeight})`)
       .attr('class', 'bar-chart-group');
+
+    barChart.append('clipPath')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-chart-clip`)
+      .append('rect')
+      .attr('width', chartWidth)
+      .attr('height', chartHeight - 1);
+
+    barChart.append('clipPath')
+      .attr('id', `${featureData.name.replace(/\s/g, '')}-y-axis-clip`)
+      .append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', yAxisWidth)
+      .attr('height', chartHeight);
     
     let barChartContent = barChart.append('g')
       .attr('class', 'bar-chart-content-group')
+      .attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-chart-clip)`)
       .attr('transform', `translate(${yAxisWidth}, 0)`);
+
+    // Append a rect so we can listen to events
+    barChartContent.append('rect')
+      .attr('width', chartWidth)
+      .attr('height', chartHeight)
+      .style('opacity', 0);
+
+    // Create a group to draw grids
+    barChartContent.append('g')
+      .attr('class', 'bar-plot-grid-group');
 
     let barGroup = barChartContent.append('g')
       .attr('class', 'bar-chart-bar-group');
@@ -652,6 +690,9 @@
     
     // Draw the line chart Y axis
     let yAxisGroup = axisGroup.append('g')
+      .attr('class', 'x-axis-wrapper')
+      .attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-y-axis-clip)`)
+      .append('g')
       .attr('class', 'y-axis')
       .attr('transform', `translate(${yAxisWidth}, 0)`);
     
@@ -664,6 +705,35 @@
       .append('text')
       .text(data.catName)
       .style('fill', 'black');
+
+    // Add panning and zooming
+    let zoom = d3.zoom()
+      .translateExtent([[-Infinity, 0], [Infinity, height]])
+      .scaleExtent(zoomScaleExtent)
+      .on('zoom', e => zoomedBar(e, xScale, yScale, svg, 2,
+        1, yAxisWidth, chartWidth, chartHeight, legendHeight, null, component))
+      .on('start', () => zoomStart(multiMenu))
+      .on('end', () => zoomEnd(multiMenu))
+      .filter(e => {
+        if (selectMode) {
+          return (e.type === 'wheel' || e.button === 2);
+        } else {
+          return (e.button === 0 || e.type === 'wheel');
+        }
+      });
+
+    barChartContent.call(zoom)
+      .call(zoom.transform, d3.zoomIdentity);
+
+    barChartContent.on('dblclick.zoom', null);
+    
+    // Listen to double click to reset zoom
+    barChartContent.on('dblclick', () => {
+      barChartContent.transition('reset')
+        .duration(750)
+        .ease(d3.easeCubicInOut)
+        .call(zoom.transform, d3.zoomIdentity);
+    });
     
     // Draw a color legend
     let legendGroup = content.append('g')
@@ -691,7 +761,12 @@
       .domain(d3.extent(histFrequency))
       .range([0, densityHeight]);
 
-    histChart.selectAll('rect')
+    // Draw the density histogram 
+    let histChartContent = histChart.append('g')
+      .attr('class', 'hist-chart-content-group')
+      .attr('transform', `translate(${yAxisWidth}, ${chartHeight + legendHeight})`);
+
+    histChartContent.selectAll('rect')
       .data(histData)
       .join('rect')
       .attr('class', 'hist-rect')
@@ -794,6 +869,10 @@
   :global(.explain-panel .legend-value) {
     font-size: 13px;
     dominant-baseline: middle;
+  }
+
+  :global(.explain-panel .bar-chart-content-group) {
+    cursor: grab;
   }
 
 </style>
