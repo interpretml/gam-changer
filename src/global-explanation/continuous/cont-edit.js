@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import { round } from '../../utils';
 import { state } from './cont-state';
 import { rScale, rExtent } from './cont-zoom';
 import { updateAdditiveDataBufferFromPointDataBuffer } from './cont-data';
@@ -7,7 +8,7 @@ import { SimpleLinearRegression } from '../../simple-linear-regression';
 // TODO: Uniform this variable across all files (use config file)
 const nodeStrokeWidth = 1;
 
-export const dragged = (e, svg) => {
+export const dragged = (e, svg, component) => {
 
   const dataYChange = state.curYScale.invert(e.y) - state.curYScale.invert(e.y - e.dy);
 
@@ -49,6 +50,25 @@ export const dragged = (e, svg) => {
   // Update the visualization with new data
   // Step 2: redraw the nodes that are changed
   drawBufferGraph(svg, false);
+
+  let changedBinIndexes = [];
+  let changedScores = [];
+  state.selectedInfo.nodeData.forEach(d => {
+    changedBinIndexes.push(d.id);
+    changedScores.push(d.y);
+  });
+
+  state.ebm.updateModel(changedBinIndexes, changedScores);
+
+  let metrics = state.ebm.returnMetrics();
+
+  d3.select(component)
+    .select('div.temp-rmse')
+    .text(`RMSE: ${round(metrics[0], 2)}`);
+
+  d3.select(component)
+    .select('div.temp-mae')
+    .text(`RMSE: ${round(metrics[1], 2)}`);
 };
 
 export const redrawOriginal = (svg, bounce=true, animationEndFunc=undefined) => {

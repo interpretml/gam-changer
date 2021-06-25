@@ -1,6 +1,6 @@
 <script>
   import * as d3 from 'd3';
-  // import { initIsotonicRegression } from 'isotonic';
+  import { initEBM } from '../ebm';
   import { initIsotonicRegression } from '../isotonic-regression';
 
   import { round } from '../utils';
@@ -86,6 +86,8 @@
   let increasingISO = null;
   let decreasingISO = null;
 
+  // let ebm = null;
+
   /**
    * Draw the plot in the SVG component
    * @param featureData
@@ -98,7 +100,7 @@
     bindInlineSVG();
 
     // Initialize the isotonic regression model
-    initIsoModel();
+    initIsoModel(featureData);
 
     // Set svg viewBox (3:2 WH ratio)
     svgSelect.attr('viewBox', '0 0 600 400')
@@ -493,6 +495,16 @@
   const initIsoModel = async () => {
     increasingISO = await initIsotonicRegression(true);
     decreasingISO = await initIsotonicRegression(false);
+
+    // Initialize EBM model
+    let result = await fetch('/data/iow-house-ebm.json');
+    let allFeatureData = await result.json();
+
+    result = await fetch('/data/iow-house-sample.json');
+    let sampleData = await result.json();
+
+    console.log(allFeatureData);
+    state.ebm = await initEBM(allFeatureData, sampleData, 'LotFrontage', false);
   };
 
   const multiMenuMoveClicked = async () => {
@@ -512,7 +524,7 @@
       .select('g.line-chart-content-group g.select-bbox-group')
       .style('cursor', 'row-resize')
       .call(d3.drag()
-        .on('drag', (e) => dragged(e, svg))
+        .on('drag', (e) => dragged(e, svg, component))
       );
     
     bboxGroup.select('rect.original-bbox')
@@ -990,6 +1002,10 @@
         <div class='header__importance'>
           {featureData === null ? ' ': round(featureData.importance, 2)}
         </div>
+
+        <div class='temp-rmse' style='margin-left: 20px; width: 130px'></div>
+        <div class='temp-mae' style='margin-left: 10px'></div>
+
       </div>
 
       <div class='header__control-panel'>
