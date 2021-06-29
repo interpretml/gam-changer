@@ -4,7 +4,14 @@
   import Feature from './Feature.svelte';
   import History from './History.svelte';
 
+  export let sidebarStore;
+
   let selectedTab = 'effect';
+  let sidebarInfo = {};
+
+  sidebarStore.subscribe(value => {
+    sidebarInfo = value;
+  });
 
 </script>
 
@@ -88,7 +95,7 @@
   <div class='content'>
 
     {#if selectedTab === 'effect'}
-      <ClassificationMetrics />
+      <ClassificationMetrics sidebarStore={sidebarStore}/>
     {/if}
 
     {#if selectedTab === 'feature'}

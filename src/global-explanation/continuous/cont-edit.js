@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import { get } from 'svelte/store';
 import { round } from '../../utils';
 import { state } from './cont-state';
 import { rScale, rExtent } from './cont-zoom';
@@ -8,7 +9,7 @@ import { SimpleLinearRegression } from '../../simple-linear-regression';
 // TODO: Uniform this variable across all files (use config file)
 const nodeStrokeWidth = 1;
 
-export const dragged = (e, svg, component, ebm) => {
+export const dragged = (e, svg, component, ebm, sidebarStore) => {
 
   const dataYChange = state.curYScale.invert(e.y) - state.curYScale.invert(e.y - e.dy);
 
@@ -62,13 +63,21 @@ export const dragged = (e, svg, component, ebm) => {
 
   let metrics = ebm.getMetrics();
 
-  d3.select(component)
-    .select('div.temp-rmse')
-    .text(`RMSE: ${round(metrics.accuracy, 2)}`);
+  let sidebarInfo = get(sidebarStore);
 
-  d3.select(component)
-    .select('div.temp-mae')
-    .text(`MAE: ${round(metrics.accuracy, 2)}`);
+  if (ebm.isClassification) {
+    sidebarInfo.accuracy = metrics.accuracy;
+    sidebarInfo.rocAuc = metrics.rocAuc;
+    sidebarInfo.averagePrecision = metrics.averagePrecision;
+    sidebarInfo.confusionMatrix = metrics.confusionMatrix;
+    sidebarInfo.prCurve = metrics.prCurve;
+    sidebarInfo.rocCurve = metrics.rocCurve;
+  } else {
+    sidebarInfo.rmse = metrics.rmse;
+    sidebarInfo.mae = metrics.mae;
+  }
+
+  sidebarStore.set(sidebarInfo);
 };
 
 export const redrawOriginal = (svg, bounce=true, animationEndFunc=undefined) => {

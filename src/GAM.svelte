@@ -5,6 +5,7 @@
   import InterContContGlobalExplain from './global-explanation/InterContContFeature.svelte';
   import InterCatCatGlobalExplain from './global-explanation/InterCatCatFeature.svelte';
   import Sidebar from './sidebar/Sidebar.svelte';
+  import { writable } from 'svelte/store';
 
   import * as d3 from 'd3';
   import { initEBM } from './ebm';
@@ -12,6 +13,22 @@
 
   let data = null;
   let ebm = null;
+
+  let sidebarInfo = {};
+  let sidebarStore = writable({
+    rmse: 0,
+    mae: 0,
+    accuracy: 0,
+    rocAuc: 0,
+    averagePrecision: 0,
+    confusionMatrix: [],
+    prCurve: [],
+    rocCurve: []
+  });
+
+  sidebarStore.subscribe(value => {
+    sidebarInfo = value;
+  });
 
   /**
    * Pre-process the data loaded from a json file or passed from other sources
@@ -26,6 +43,7 @@
 
   const initData = async () => {
     console.log('loading data');
+    let isClassification = true;
     let loadedData = await d3.json('/data/iow-house-ebm-binary.json');
     // let loadedData = await d3.json('/data/iow-house-ebm.json');
     // let loadedData = await d3.json('/data/medical-ebm.json');
@@ -38,7 +56,24 @@
     // Initialize an EBM object
     let sampleData = await d3.json('/data/iow-house-sample-binary.json');
 
-    ebm = await initEBM(data, sampleData, 'LotFrontage', true);
+    ebm = await initEBM(data, sampleData, 'LotFrontage', isClassification);
+
+    // Get the initial metrics
+    let metrics = ebm.getMetrics();
+
+    if (ebm.isClassification) {
+      sidebarInfo.accuracy = metrics.accuracy;
+      sidebarInfo.rocAuc = metrics.rocAuc;
+      sidebarInfo.averagePrecision = metrics.averagePrecision;
+      sidebarInfo.confusionMatrix = metrics.confusionMatrix;
+      sidebarInfo.prCurve = metrics.prCurve;
+      sidebarInfo.rocCurve = metrics.rocCurve;
+    } else {
+      sidebarInfo.rmse = metrics.rmse;
+      sidebarInfo.mae = metrics.mae;
+    }
+
+    sidebarStore.set(sidebarInfo);
   };
 
   initData();
@@ -69,12 +104,13 @@
       featureData = {data === null ? null : data.features[2]}
       scoreRange = {data === null ? null : data.scoreRange}
       bind:ebm = {ebm}
+      sidebarStore = {sidebarStore}
       svgHeight = 500
     />
   </div>
 
   <div class='sidebar-wrapper'>
-    <Sidebar />
+    <Sidebar sidebarStore={sidebarStore}/>
   </div>
 
 

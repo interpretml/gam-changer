@@ -25,6 +25,7 @@
   export let scoreRange = null;
   export let svgHeight = 400;
   export let ebm = null;
+  export let sidebarStore = null;
 
   let svg = null;
   let component = null;
@@ -85,6 +86,12 @@
   // Isotonic regression
   let increasingISO = null;
   let decreasingISO = null;
+
+  // Communicate with the sidebar
+  let sidebarInfo = {};
+  sidebarStore.subscribe(value => {
+    sidebarInfo = value;
+  });
 
   /**
    * Draw the plot in the SVG component
@@ -516,7 +523,7 @@
       .select('g.line-chart-content-group g.select-bbox-group')
       .style('cursor', 'row-resize')
       .call(d3.drag()
-        .on('drag', (e) => dragged(e, svg, component, ebm))
+        .on('drag', (e) => dragged(e, svg, component, ebm, sidebarStore))
       );
     
     bboxGroup.select('rect.original-bbox')
@@ -996,9 +1003,6 @@
         <div class='header__importance'>
           {featureData === null ? ' ': round(featureData.importance, 2)}
         </div>
-
-        <div class='temp-rmse' style='margin-left: 20px; width: 130px'></div>
-        <div class='temp-mae' style='margin-left: 10px'></div>
 
       </div>
 

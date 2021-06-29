@@ -1,5 +1,13 @@
 <script>
 
+  export let sidebarStore;
+
+  let sidebarInfo = {};
+
+  sidebarStore.subscribe(value => {
+    sidebarInfo = value;
+  });
+
 </script>
 
 <style type='text/scss'>
@@ -23,7 +31,7 @@
 
   <div class='metrics'>
     <div>
-      Accuracy: 100%
+      {sidebarInfo.accuracy}
     </div>
   </div>
 
