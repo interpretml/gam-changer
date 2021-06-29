@@ -77,6 +77,8 @@ export const dragged = (e, svg, component, ebm, sidebarStore) => {
     sidebarInfo.mae = metrics.mae;
   }
 
+  sidebarInfo.curGroup = 'current';
+
   sidebarStore.set(sidebarInfo);
 };
 

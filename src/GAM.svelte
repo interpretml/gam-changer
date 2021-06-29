@@ -23,7 +23,8 @@
     averagePrecision: 0,
     confusionMatrix: [],
     prCurve: [],
-    rocCurve: []
+    rocCurve: [],
+    curGroup: 'original'
   });
 
   sidebarStore.subscribe(value => {

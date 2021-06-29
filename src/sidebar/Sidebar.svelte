@@ -59,6 +59,13 @@
     }
   }
 
+  .tab {
+    height: 100%;
+    &.hidden {
+      display: none;
+    }
+  }
+
   .content {
     flex-grow: 1;
   }
@@ -94,17 +101,17 @@
 
   <div class='content'>
 
-    {#if selectedTab === 'effect'}
+    <div class='tab' class:hidden={selectedTab !== 'effect'}>
       <ClassificationMetrics sidebarStore={sidebarStore}/>
-    {/if}
+    </div>
 
-    {#if selectedTab === 'feature'}
+    <div class='tab' class:hidden={selectedTab !== 'feature'}>
       <Feature />
-    {/if}
+    </div>
 
-    {#if selectedTab === 'history'}
+    <div class='tab' class:hidden={selectedTab !== 'history'}>
       <History />
-    {/if}
+    </div>
     
   </div>
 

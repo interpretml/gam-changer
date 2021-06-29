@@ -426,6 +426,36 @@
 
   };
 
+  const updateEBM = (curGroup) => {
+    let changedBinIndexes = [];
+    let changedScores = [];
+
+    state.selectedInfo.nodeData.forEach(d => {
+      changedBinIndexes.push(d.id);
+      changedScores.push(d.y);
+    });
+
+    ebm.updateModel(changedBinIndexes, changedScores);
+
+    let metrics = ebm.getMetrics();
+
+    if (ebm.isClassification) {
+      sidebarInfo.accuracy = metrics.accuracy;
+      sidebarInfo.rocAuc = metrics.rocAuc;
+      sidebarInfo.averagePrecision = metrics.averagePrecision;
+      sidebarInfo.confusionMatrix = metrics.confusionMatrix;
+      sidebarInfo.prCurve = metrics.prCurve;
+      sidebarInfo.rocCurve = metrics.rocCurve;
+    } else {
+      sidebarInfo.rmse = metrics.rmse;
+      sidebarInfo.mae = metrics.mae;
+    }
+
+    sidebarInfo.curGroup = curGroup;
+
+    sidebarStore.set(sidebarInfo);
+  };
+
   // ---- Interaction Functions ----
 
   /**
@@ -637,6 +667,9 @@
 
     redrawMonotone(svg, isoYs);
     myContextMenu.showConfirmation('increasing', 600);
+
+    // Update EBM
+    updateEBM('current');
   };
   
   /**
@@ -675,6 +708,9 @@
 
     redrawMonotone(svg, isoYs);
     myContextMenu.showConfirmation('decreasing', 600);
+
+    // Update EBM
+    updateEBM('current');
   };
 
   /**
@@ -712,6 +748,8 @@
 
     myContextMenu.showConfirmation('interpolation', 600);
 
+    // Update EBM
+    updateEBM('current');
   };
 
   /**
@@ -765,6 +803,9 @@
     merge(svg);
 
     myContextMenu.showConfirmation('merge', 600);
+
+    // Update EBM
+    updateEBM('current');
   };
 
   const multiMenuInputChanged = () => {
@@ -782,6 +823,9 @@
     merge(svg, multiMenuControlInfo.setValue);
 
     myContextMenu.showConfirmation('change', 600);
+
+    // Update EBM
+    updateEBM('current');
   };
 
   const multiMenuDeleteClicked = () => {
@@ -802,6 +846,9 @@
     merge(svg, 0);
 
     myContextMenu.showConfirmation('delete', 600);
+
+    // Update EBM
+    updateEBM('current');
   };
 
   /**
