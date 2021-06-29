@@ -187,7 +187,7 @@
     console.log(data);
 
     // Some constant lengths of different elements
-    const yAxisWidth = 30;
+    const yAxisWidth = config.yAxisWidth;
 
     let legendConfig = {
       maxWidth: 100,
@@ -384,7 +384,7 @@
     yAxisGroup.attr('font-family', defaultFont);
 
     yAxisGroup.append('g')
-      .attr('transform', `translate(${-yAxisWidth - 5}, ${chartHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth - 15}, ${chartHeight / 2}) rotate(-90)`)
       .append('text')
       .attr('class', 'y-axis-text')
       .text('score')
@@ -449,7 +449,7 @@
 
     yAxisHistGroup.append('g')
       .attr('class', 'y-axis-text')
-      .attr('transform', `translate(${-yAxisWidth - 5}, ${densityHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth - 15}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
       .text('density')
       .style('fill', colors.histAxis);
@@ -553,7 +553,7 @@
     console.log(data);
 
     // Some constant lengths of different elements
-    const yAxisWidth = 30;
+    const yAxisWidth = config.yAxisWidth;
     const barHeight = 10;
     const legendConfig = {
       startColor: '#b2182b',
@@ -798,7 +798,7 @@
       .style('stroke', colors.histAxis);
 
     yAxisHistGroup.append('g')
-      .attr('transform', `translate(${-yAxisWidth - 5}, ${densityHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth - 15}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
       .attr('class', 'y-axis-text')
       .text('density')
@@ -837,24 +837,6 @@
 <style type='text/scss'>
   @import '../define';
   @import './common.scss';
-
-
-  :global(.explain-panel .y-axis-text) {
-    font-size: 16px;
-    text-anchor: middle;
-    dominant-baseline: text-bottom;
-  }
-
-  :global(.explain-panel .x-axis-text) {
-    font-size: 16px;
-    text-anchor: middle;
-    dominant-baseline: hanging;
-  }
-
-  :global(.explain-panel .additive-line-segment) {
-    stroke-linejoin: round;
-    stroke-linecap: round;
-  }
 
   :global(.explain-panel .hidden) {
     visibility: hidden;

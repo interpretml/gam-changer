@@ -129,7 +129,7 @@
     console.log(data);
 
     // Some constant lengths of different elements
-    const yAxisWidth = 30;
+    const yAxisWidth = config.yAxisWidth;
     const barHeight = 10;
     const legendConfig = {
       startColor: '#b2182b',
@@ -355,7 +355,7 @@
 
     yAxisHistGroup.append('g')
       .attr('class', 'y-axis-text')
-      .attr('transform', `translate(${-yAxisWidth - 5}, ${densityHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth - 15}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
       .text('density')
       .style('fill', colors.histAxis);

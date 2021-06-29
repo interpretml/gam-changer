@@ -17,5 +17,6 @@ export const config = {
     hist: 'hsl(222, 10%, 93%)',
     histAxis: 'hsl(222, 10%, 70%)',
     line0: 'hsla(222, 0%, 0%, 5%)'
-  }
+  },
+  yAxisWidth: 40
 };

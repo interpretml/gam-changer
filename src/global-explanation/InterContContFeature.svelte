@@ -65,7 +65,7 @@
       .attr('transform', `translate(${svgPadding.left}, ${svgPadding.top})`);
 
     // Some constant lengths of different elements
-    const yAxisWidth = 30;
+    const yAxisWidth = config.yAxisWidth;
     const legendConfig = {
       startColor: '#b2182b',
       endColor: '#2166ac',
@@ -274,7 +274,7 @@
 
     yAxisHistGroup.append('g')
       .attr('class', 'y-axis-text')
-      .attr('transform', `translate(${-yAxisWidth - 5}, ${densityHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth - 15}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
       .text('density')
       .style('fill', colors.histAxis);

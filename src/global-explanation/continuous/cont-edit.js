@@ -68,7 +68,7 @@ export const dragged = (e, svg, component) => {
 
   d3.select(component)
     .select('div.temp-mae')
-    .text(`RMSE: ${round(metrics[1], 2)}`);
+    .text(`MAE: ${round(metrics[1], 2)}`);
 };
 
 export const redrawOriginal = (svg, bounce=true, animationEndFunc=undefined) => {

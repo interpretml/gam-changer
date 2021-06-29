@@ -45,7 +45,7 @@
   const showRuler = false;
 
   // Some constant lengths of different elements
-  const yAxisWidth = 30;
+  const yAxisWidth = config.yAxisWidth;
 
   const lineChartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
   const lineChartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
@@ -296,7 +296,7 @@
 
     yAxisGroup.append('g')
       .attr('class', 'y-axis-text')
-      .attr('transform', `translate(${-yAxisWidth - 5}, ${lineChartHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth - 15}, ${lineChartHeight / 2}) rotate(-90)`)
       .append('text')
       .text('Score')
       .style('fill', 'black');
@@ -357,7 +357,7 @@
       .style('stroke', colors.histAxis);
 
     yAxisHistGroup.append('g')
-      .attr('transform', `translate(${-yAxisWidth - 5}, ${densityHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth - 15}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
       .attr('class', 'y-axis-text')
       .text('Density')
