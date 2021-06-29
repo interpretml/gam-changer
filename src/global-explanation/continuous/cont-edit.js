@@ -8,7 +8,7 @@ import { SimpleLinearRegression } from '../../simple-linear-regression';
 // TODO: Uniform this variable across all files (use config file)
 const nodeStrokeWidth = 1;
 
-export const dragged = (e, svg, component) => {
+export const dragged = (e, svg, component, ebm) => {
 
   const dataYChange = state.curYScale.invert(e.y) - state.curYScale.invert(e.y - e.dy);
 
@@ -58,17 +58,17 @@ export const dragged = (e, svg, component) => {
     changedScores.push(d.y);
   });
 
-  state.ebm.updateModel(changedBinIndexes, changedScores);
+  ebm.updateModel(changedBinIndexes, changedScores);
 
-  let metrics = state.ebm.returnMetrics();
+  let metrics = ebm.getMetrics();
 
   d3.select(component)
     .select('div.temp-rmse')
-    .text(`RMSE: ${round(metrics[0], 2)}`);
+    .text(`RMSE: ${round(metrics.accuracy, 2)}`);
 
   d3.select(component)
     .select('div.temp-mae')
-    .text(`MAE: ${round(metrics[1], 2)}`);
+    .text(`MAE: ${round(metrics.accuracy, 2)}`);
 };
 
 export const redrawOriginal = (svg, bounce=true, animationEndFunc=undefined) => {
