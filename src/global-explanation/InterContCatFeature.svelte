@@ -187,7 +187,8 @@
     console.log(data);
 
     // Some constant lengths of different elements
-    const yAxisWidth = config.yAxisWidth;
+    // Approximate the longest width of score (y-axis)
+    const yAxisWidth = 5 * d3.max(scoreRange.map(d => String(round(d, 1)).length));
 
     let legendConfig = {
       maxWidth: 100,
@@ -553,7 +554,8 @@
     console.log(data);
 
     // Some constant lengths of different elements
-    const yAxisWidth = config.yAxisWidth;
+    // Approximate the longest width of score (y-axis)
+    const yAxisWidth = 5 * d3.max(scoreRange.map(d => String(round(d, 1)).length));
     const barHeight = 10;
     const legendConfig = {
       startColor: '#b2182b',

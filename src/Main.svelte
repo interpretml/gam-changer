@@ -34,7 +34,8 @@
 
   onMount(async () => {
     console.log('loading data');
-    let loadedData = await d3.json('/data/iow-house-ebm.json');
+    let loadedData = await d3.json('/data/iow-house-ebm-binary.json');
+    // let loadedData = await d3.json('/data/iow-house-ebm.json');
     // let loadedData = await d3.json('/data/medical-ebm.json');
     // loadedData = processData(loadedData);
     data = loadedData;

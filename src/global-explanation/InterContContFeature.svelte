@@ -65,7 +65,8 @@
       .attr('transform', `translate(${svgPadding.left}, ${svgPadding.top})`);
 
     // Some constant lengths of different elements
-    const yAxisWidth = config.yAxisWidth;
+    // Approximate the longest width of score (y-axis)
+    const yAxisWidth = 5 * d3.max(scoreRange.map(d => String(round(d, 1)).length));
     const legendConfig = {
       startColor: '#b2182b',
       endColor: '#2166ac',

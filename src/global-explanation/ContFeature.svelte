@@ -45,9 +45,8 @@
   const showRuler = false;
 
   // Some constant lengths of different elements
-  const yAxisWidth = config.yAxisWidth;
-
-  const lineChartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
+  let yAxisWidth;
+  let lineChartWidth;
   const lineChartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
 
   // Some styles
@@ -94,6 +93,10 @@
    */
   const drawFeature = (featureData) => {
     console.log(featureData);
+    // Approximate the longest width of score (y-axis)
+    yAxisWidth = 5 * d3.max(scoreRange.map(d => String(round(d, 1)).length));
+    lineChartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
+
     let svgSelect = d3.select(svg);
 
     // Bind inline SVG elements in the header

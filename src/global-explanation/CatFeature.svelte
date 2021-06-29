@@ -115,8 +115,8 @@
       .style('stroke', 'pink');
 
     // Some constant lengths of different elements
-    const yAxisWidth = config.yAxisWidth;
-
+    // Approximate the longest width of score (y-axis)
+    const yAxisWidth = 5 * d3.max(scoreRange.map(d => String(round(d, 1)).length));
     const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
     const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
 
