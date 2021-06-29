@@ -24,6 +24,7 @@
   export let featureData = null;
   export let scoreRange = null;
   export let svgHeight = 400;
+  export let ebm = null;
 
   let svg = null;
   let component = null;
@@ -84,8 +85,6 @@
   // Isotonic regression
   let increasingISO = null;
   let decreasingISO = null;
-
-  // let ebm = null;
 
   /**
    * Draw the plot in the SVG component
@@ -498,16 +497,6 @@
   const initIsoModel = async () => {
     increasingISO = await initIsotonicRegression(true);
     decreasingISO = await initIsotonicRegression(false);
-
-    // Initialize EBM model
-    let result = await fetch('/data/iow-house-ebm.json');
-    let allFeatureData = await result.json();
-
-    result = await fetch('/data/iow-house-sample.json');
-    let sampleData = await result.json();
-
-    console.log(allFeatureData);
-    state.ebm = await initEBM(allFeatureData, sampleData, 'LotFrontage', false);
   };
 
   const multiMenuMoveClicked = async () => {
@@ -527,7 +516,7 @@
       .select('g.line-chart-content-group g.select-bbox-group')
       .style('cursor', 'row-resize')
       .call(d3.drag()
-        .on('drag', (e) => dragged(e, svg, component))
+        .on('drag', (e) => dragged(e, svg, component, ebm))
       );
     
     bboxGroup.select('rect.original-bbox')
@@ -904,7 +893,9 @@
     multiMenuControlInfo.subItemMode = null;
   };
 
-  $: featureData && drawFeature(featureData);
+  $: featureData && ebm && drawFeature(featureData);
+  $: ebm, (() => {
+  })();
 
 </script>
 

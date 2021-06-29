@@ -60,7 +60,7 @@
 
   <div id="logo">
     <div id="logo-text">
-      EBM
+      GAM Studio
     </div>
     
     <!-- <div id='logo-tagline'>
