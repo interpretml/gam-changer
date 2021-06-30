@@ -11,6 +11,8 @@
   justify-content: space-between;
   padding: 10px 10px;
   border-bottom: 1px solid $gray-border;
+  background: $gray-background;
+  border-top-left-radius: 5px;
 
   .header__info {
     display: flex;

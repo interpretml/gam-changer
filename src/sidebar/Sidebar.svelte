@@ -55,17 +55,23 @@
   }
 
   .tab-button {
-    color: $gray-light;
+    color: $gray-900;
     border-bottom: 2px solid white;
     border: 1px solid transparent;
     cursor: pointer;
     text-align: center;
     position: relative;
 
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+
     &.selected {
       color: currentColor;
+      font-weight: 600;
 
-      &::after {
+      &::before {
         content: '';
         position: absolute;
         width: 100%;
@@ -73,6 +79,16 @@
         left: 0;
         border-bottom: 4px solid $blue-600;
       }
+    }
+
+    &::after {
+      content: attr(data-text);
+      content: attr(data-text) / '';
+      visibility: hidden;
+      height: 0;
+      pointer-events: none;
+      overflow: hidden;
+      font-weight: 600;
     }
   }
 
@@ -96,6 +112,7 @@
 
   <div class='header'>
     <div class='tab-button'
+      data-text='Effect'
       class:selected={selectedTab === 'effect'}
       on:click={() => {selectedTab = 'effect';}}
     >
@@ -103,6 +120,7 @@
     </div>
 
     <div class='tab-button'
+      data-text='Feature'
       class:selected={selectedTab === 'feature'}
       on:click={() => {selectedTab = 'feature';}}
     >
@@ -110,6 +128,7 @@
     </div>
 
     <div class='tab-button'
+      data-text='History'
       class:selected={selectedTab === 'history'}
       on:click={() => {selectedTab = 'history';}}
     >
