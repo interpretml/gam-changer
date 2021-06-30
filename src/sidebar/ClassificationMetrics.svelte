@@ -29,44 +29,76 @@
   ];
 
   let barData = {
-    accuracy: [0.5, 0.5, 0],
-    rocAuc: [0.5, 0.5, 0],
-    averagePrecision: [0.5, 0.5, 0]
+    accuracy: [0.5, 0.5, 0.5],
+    rocAuc: [0.5, 0.5, 0.5],
+    averagePrecision: [0.5, 0.5, 0.5]
   };
 
   const drawBarChart = () => {
 
     const barHeight = 20;
+    const textHeight = 22;
     const labelWidth = 20;
+
+    const lineY = barHeight * 3 + textHeight + 12;
+    const lineWidth = width - 2 * labelWidth;
 
     let svg = d3.select(component)
       .select('.bar-svg');
 
+    const groupData = [
+      {name: 'accuracy', text: 'Accuracy'},
+      {name: 'rocAuc', text: 'ROC AUC'},
+      {name: 'averagePrecision', text: 'Average Precision'},
+      {name: 'confusionMatrix', text: 'Confusion Matrix'}
+    ];
+
+    // Initialize the group structure if it is the first call
     if (svg.select('.bar-group').size() === 0 ) {
       let barGroup = svg.append('g')
         .attr('class', 'bar-group')
         .attr('transform', `translate(0, ${10})`);
 
-      barGroup.append('g')
-        .attr('class', 'accuracy-group')
-        .attr('transform', `translate(${labelWidth}, 0)`)
-        .append('text')
-        .attr('dominant-baseline', 'hanging')
-        .text('Accuracy');
+      // Add three bar chart groups
+      let bars = barGroup.selectAll('g.bar')
+        .data(groupData)
+        .join('g')
+        .attr('class', d => `bar ${d.name}-group`)
+        .attr('transform', (d, i) => `translate(${labelWidth}, ${i * (4 * barHeight + textHeight)})`);
+      
+      bars.append('text')
+        .attr('class', 'metric-title')
+        .text(d => d.text);
 
-      barGroup.append('g')
-        .attr('class', 'rocAuc-group')
-        .attr('transform', `translate(${labelWidth}, ${barHeight * 5})`)
-        .append('text')
-        .attr('dominant-baseline', 'hanging')
-        .text('ROC AUC');
+      bars.append('path')
+        .attr('d', `M ${0}, ${lineY} L ${lineWidth}, ${lineY}`)
+        .style('stroke', 'hsla(0, 0%, 0%, 0.2)');
 
-      barGroup.append('g')
-        .attr('class', 'averagePrecision-group')
-        .attr('transform', `translate(${labelWidth}, ${barHeight * 10})`)
-        .append('text')
-        .attr('dominant-baseline', 'hanging')
-        .text('Average Precision');
+      // Add color legend next to Accuracy
+      let legendGroup = barGroup.select('g.accuracy-group');
+
+      const legendData = [
+        {name: 'origin', class: 'original', width: 42, x: 0},
+        {name: 'last', class: 'last', width: 28, x: 47},
+        {name: 'current', class: 'current', width: 50, x: 80}
+      ];
+
+      let items = legendGroup.selectAll('g.legend-item')
+        .data(legendData)
+        .join('g')
+        .attr('transform', d => `translate(${90 + d.x}, 0)`);
+      
+      items.append('rect')
+        .attr('width', d => d.width)
+        .attr('height', 16)
+        .attr('rx', 3)
+        .attr('class', d => d.class);
+
+      items.append('text')
+        .attr('class', 'legend-title')
+        .attr('y', 2)
+        .attr('x', d => d.width / 2)
+        .text(d => d.name);
     }
 
     let barGroup = svg.select('.bar-group');
@@ -75,27 +107,26 @@
       .domain([0, 1])
       .range([0, width - 2 * labelWidth]);
 
+    const rectOrder = ['original', 'last', 'current'];
+
     Object.keys(barData).forEach(k => {
 
       barGroup.select(`.${k}-group`)
         .selectAll('rect.bar')
         .data(barData[k])
         .join('rect')
-        .attr('class', 'bar')
-        .attr('y', (d, i) => (i + 1) * (barHeight + 0))
+        .attr('class', (d, i) => `bar ${rectOrder[i]}`)
+        .attr('y', (d, i) => (i) * (barHeight + 0) + textHeight)
         .attr('width', d => widthScale(d))
-        .attr('height', barHeight)
-        .style('fill', (d, i) => groupColorsArray[i]);
+        .attr('height', barHeight);
 
       barGroup.select(`.${k}-group`)
         .selectAll('text.bar')
         .data(barData[k])
         .join('text')
-        .style('text-anchor', 'start')
-        .attr('dominant-baseline', 'middle')
-        .attr('class', 'bar')
+        .attr('class', 'bar-label')
         .attr('x', 3)
-        .attr('y', (d, i) => (i + 1) * (barHeight + 0) + barHeight / 2 + 2)
+        .attr('y', (d, i) => (i) * (barHeight + 0) + barHeight / 2 + 2 + textHeight)
         .text(d => round(d, 4));
     });
   };
@@ -108,32 +139,14 @@
 
     // Initialize the size of all svgs
     d3.select(component)
-      .selectAll('.curve-svg')
-      .attr('viewBox', '0 0 200 170')
-      .attr('preserveAspectRatio', 'xMinYMin meet')
-      .attr('width', width)
-      .attr('height', width * 170 / 200);
-
-    // Initialize the size of all svgs
-    d3.select(component)
       .selectAll('.bar-svg')
       .attr('width', width)
-      .attr('height', 300);
+      .attr('height', 400);
 
   });
 
   sidebarStore.subscribe(value => {
     sidebarInfo = value;
-
-    let svgPR = d3.select(component)
-      .select('.pr-curve-svg');
-
-    drawCurve(sidebarInfo.prCurve, true, svgPR, sidebarInfo.curGroup, groupColors);
-
-    let svgROC = d3.select(component)
-      .select('.roc-curve-svg');
-
-    drawCurve(sidebarInfo.rocCurve, false, svgROC, sidebarInfo.curGroup, groupColors);
 
     if (sidebarInfo.curGroup === 'original') {
       barData.accuracy[0] = sidebarInfo.accuracy;
@@ -177,9 +190,50 @@
     text-align: center;
   }
 
+  .bar-svg {
+    margin-top: 15px;
+  }
+
   :global(.metrics-tab text.bar) {
     fill: hsl(230, 100%, 11%);
     font-size: 13px;
+  }
+
+  :global(.metrics-tab rect.original) {
+    // fill: $blue-dark;
+    fill: $gray-300;
+  }
+
+  :global(.metrics-tab rect.last) {
+    // fill: $orange-400;
+    fill: $pastel1-orange;
+  }
+
+  :global(.metrics-tab rect.current) {
+    // fill: $blue-icon;
+    fill: $pastel1-blue;
+  }
+
+  :global(.metrics-tab .metric-title) {
+    dominant-baseline: hanging;
+    font-size: 1.1em;
+    font-weight: 800;
+  }
+
+  :global(.metrics-tab .legend-title) {
+    dominant-baseline: hanging;
+    text-anchor: middle;
+    font-size: 0.8em;
+    font-weight: 200;
+    fill: $indigo-dark;
+  }
+
+  :global(.metrics-tab .bar-label) {
+    dominant-baseline: middle;
+    text-anchor: start;
+    fill: $indigo-dark;
+    font-size: 0.8em;
+    font-weight: 200;
   }
 
 </style>
@@ -190,21 +244,9 @@
 
     <svg class='bar-svg'></svg>
 
-    <!-- <div class='text' style='margin-top: 10px;'>
-      Accuracy: {round(sidebarInfo.accuracy, 4)}
-    </div>
+    <!-- <svg class='pr-curve-svg curve-svg'></svg>
 
-    <div class='text'>
-      ROC AUC: {round(sidebarInfo.accuracy, 4)}
-    </div>
-
-    <div class='text'>
-      Average Precision: {round(sidebarInfo.accuracy, 4)}
-    </div> -->
-
-    <svg class='pr-curve-svg curve-svg'></svg>
-
-    <svg class='roc-curve-svg curve-svg'></svg>
+    <svg class='roc-curve-svg curve-svg'></svg> -->
 
   </div>
 

@@ -60,7 +60,7 @@
 
   <div id="logo">
     <div id="logo-text">
-      GAM Studio
+      Gambit
     </div>
     
     <!-- <div id='logo-tagline'>
