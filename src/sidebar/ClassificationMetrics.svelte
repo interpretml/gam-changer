@@ -78,16 +78,20 @@
       let legendGroup = barGroup.select('g.accuracy-group');
 
       const legendData = [
-        {name: 'origin', class: 'original', width: 42, x: 0},
-        {name: 'last', class: 'last', width: 28, x: 47},
-        {name: 'current', class: 'current', width: 50, x: 80}
+        {name: 'origin', class: 'original', title: 'Metrics of the original graph', width: 42, x: 0},
+        {name: 'last', class: 'last', title: 'Metrics of the last edit', width: 28, x: 47},
+        {name: 'current', class: 'current', title: 'Metrics of the current graph', width: 50, x: 80}
       ];
 
       let items = legendGroup.selectAll('g.legend-item')
         .data(legendData)
         .join('g')
+        .style('cursor', 'default')
         .attr('transform', d => `translate(${90 + d.x}, 0)`);
       
+      items.append('title')
+        .text(d => d.title);
+
       items.append('rect')
         .attr('width', d => d.width)
         .attr('height', 16)
@@ -129,6 +133,15 @@
         .attr('y', (d, i) => (i) * (barHeight + 0) + barHeight / 2 + 2 + textHeight)
         .text(d => round(d, 4));
     });
+
+    // Draw the confusion matrix
+    let matrixGroup = barGroup.select('.confusionMatrix-group')
+      .append('g')
+      .attr('transform', `translate(0, ${textHeight})`);
+
+    matrixGroup.append('rect')
+      .attr('width', 200)
+      .attr('height', 200);
   };
 
   onMount(() => {
@@ -171,6 +184,9 @@
 
   .metrics-tab {
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .metrics {
@@ -191,7 +207,27 @@
   }
 
   .bar-svg {
-    margin-top: 15px;
+    margin-top: 0px;
+  }
+
+  .field {
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+  }
+
+  .button {
+    padding: 1px 11px;
+    height: auto;
+    border-color: $gray-border;
+
+    &:hover {
+      background: $gray-100;
+    }
+
+    &:focus:not(:active) {
+      box-shadow: none;
+    }
   }
 
   :global(.metrics-tab text.bar) {
@@ -217,7 +253,7 @@
   :global(.metrics-tab .metric-title) {
     dominant-baseline: hanging;
     font-size: 1.1em;
-    font-weight: 800;
+    font-weight: 600;
   }
 
   :global(.metrics-tab .legend-title) {
@@ -239,6 +275,35 @@
 </style>
 
 <div class='metrics-tab' bind:this={component}>
+
+    <div class='field has-addons'>
+
+      <div class='control'>
+        <button class='button' title='undo last edit'>
+          <span class='is-small'>
+            Global
+          </span>
+        </button>
+      </div>
+
+      <div class='control'>
+        <button class='button' title='redo last undo'>
+          <span class='is-small'>
+            Selected
+          </span>
+        </button>
+      </div>
+
+      <div class='control'>
+        <button class='button right-button' title='save edits'>
+          <span class='is-small'>
+            Slice
+          </span>
+          <!-- <span style='color: hsla(0, 0%, 0%, 0.2); margin-left: 5px;'>▼</span> -->
+        </button>
+      </div>
+
+    </div>
 
   <div class='metrics'>
 
