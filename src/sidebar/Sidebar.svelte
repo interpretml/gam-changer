@@ -1,4 +1,7 @@
 <script>
+  import { onMount } from 'svelte';
+  import * as d3 from 'd3';
+
   import ClassificationMetrics from './ClassificationMetrics.svelte';
   import RegressionMetrics from './RegressionMetrics.svelte';
   import Feature from './Feature.svelte';
@@ -8,9 +11,17 @@
 
   let selectedTab = 'effect';
   let sidebarInfo = {};
+  let component = null;
 
   sidebarStore.subscribe(value => {
     sidebarInfo = value;
+
+    if (value.height !== undefined) {
+      component.style.height = `${value.height}px`;
+      sidebarInfo.setHeight = sidebarInfo.height;
+      delete sidebarInfo.height;
+      sidebarStore.set(sidebarInfo);
+    }
   });
 
 </script>
@@ -25,16 +36,22 @@
     border-left: 1px solid $gray-border;
     display: flex;
     flex-direction: column;
+    background: white;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
   }
 
   .header {
     height: 53px;
     border-bottom: 1px solid $gray-border;
     padding: 10px 0;
+    border-top-right-radius: 5px;
+    background: $gray-background;
 
     display: flex;
     align-items: flex-end;
     justify-content: space-around;
+    flex-shrink: 0;
   }
 
   .tab-button {
@@ -68,12 +85,14 @@
 
   .content {
     flex-grow: 1;
+    overflow-y: scroll;
+    overflow-x: hidden;
   }
 
 
 </style>
 
-<div class='sidebar'>
+<div class='sidebar' bind:this={component}>
 
   <div class='header'>
     <div class='tab-button'

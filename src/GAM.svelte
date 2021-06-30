@@ -90,7 +90,7 @@
     flex-direction: row;
     border: 1px solid $gray-border;
     border-radius: 5px;
-    // background: hsla(0, 0%, 99%);
+    background: white;
   }
 
   .feature-window {

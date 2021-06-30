@@ -424,6 +424,9 @@
         .call(zoom.transform, d3.zoomIdentity);
     });
 
+    // Now the graph is drawn, update the height to sidebar
+    sidebarInfo.height = component.getBoundingClientRect().height;
+    sidebarStore.set(sidebarInfo);
   };
 
   const updateEBM = (curGroup) => {
@@ -948,8 +951,6 @@
   };
 
   $: featureData && ebm && drawFeature(featureData);
-  $: ebm, (() => {
-  })();
 
 </script>
 
