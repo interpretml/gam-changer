@@ -5,14 +5,20 @@
   import InterContContGlobalExplain from './global-explanation/InterContContFeature.svelte';
   import InterCatCatGlobalExplain from './global-explanation/InterCatCatFeature.svelte';
   import Sidebar from './sidebar/Sidebar.svelte';
+
   import { writable } from 'svelte/store';
 
   import * as d3 from 'd3';
   import { initEBM } from './ebm';
   import { onMount } from 'svelte';
 
+  import redoIconSVG from './img/redo-icon.svg';
+  import undoIconSVG from './img/undo-icon.svg';
+  import exportIconSVG from './img/export-icon.svg';
+
   let data = null;
   let ebm = null;
+  let component = null;
 
   let sidebarInfo = {};
   let sidebarStore = writable({
@@ -40,6 +46,29 @@
   const processData = (data) => {
     data.features.sort((a, b) => b.importance - a.importance);
     return data;
+  };
+
+  const preProcessSVG = (svgString) => {
+    return svgString.replaceAll('black', 'currentcolor')
+      .replaceAll('fill:none', 'fill:currentcolor')
+      .replaceAll('stroke:none', 'fill:currentcolor');
+  };
+
+  /**
+   * Dynamically bind SVG files as inline SVG strings in this component
+   */
+  const bindInlineSVG = () => {
+    d3.select(component)
+      .selectAll('.svg-icon.icon-redo')
+      .html(preProcessSVG(redoIconSVG));
+
+    d3.select(component)
+      .selectAll('.svg-icon.icon-undo')
+      .html(preProcessSVG(undoIconSVG));
+
+    d3.select(component)
+      .selectAll('.svg-icon.icon-export')
+      .html(preProcessSVG(exportIconSVG));
   };
 
   const initData = async () => {
@@ -79,6 +108,10 @@
 
   initData();
 
+  onMount(() => {
+    bindInlineSVG();
+  });
+
 </script>
 
 <style type='text/scss'>
@@ -87,10 +120,76 @@
 
   .main-tool {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     border: 1px solid $gray-border;
     border-radius: 5px;
     background: white;
+  }
+
+  .tool {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .tool-footer {
+    display: flex;
+    border-top: 1px solid $gray-border;
+    height: 2em;
+    align-items: center;
+    // background: $gray-background;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    padding: 5px 0px 5px 10px;
+
+  }
+
+  .message {
+    flex-grow: 1;
+  }
+
+  .button-group {
+    display: flex;
+  }
+
+  .field {
+    border-bottom-right-radius: 5px;
+  }
+
+  .button {
+    padding: 3px 0.8em;
+    height: auto;
+    border-radius: 0;
+    border-top-width: 0px;
+    border-bottom-width: 0px;
+    border-color: $gray-border;
+    border: 0px;
+
+    &:hover {
+      background: $gray-200;
+      border-color: $gray-border;
+    }
+
+    &.right-button {
+      border-right: 0px;
+      border-bottom-right-radius: 5px;
+      padding-right: 1em;
+    }
+
+    &:focus:not(:active) {
+      box-shadow: none;
+    }
+  }
+
+  .svg-icon {
+    height: 100%;
+    color: $indigo-dark;
+    display: inline-flex;
+    align-items: center;
+
+    :global(svg) {
+      width: 0.9em;
+      height: 0.9em;
+    }
   }
 
   .feature-window {
@@ -98,21 +197,60 @@
 
 </style>
 
-<div class='main-tool'>
+<div class='main-tool' bind:this={component}>
 
-  <div class='feature-window'>
-    <ContGlobalExplain
-      featureData = {data === null ? null : data.features[2]}
-      scoreRange = {data === null ? null : data.scoreRange}
-      bind:ebm = {ebm}
-      sidebarStore = {sidebarStore}
-      svgHeight = 500
-    />
+  <div class='tool'>
+    <div class='feature-window'>
+      <ContGlobalExplain
+        featureData = {data === null ? null : data.features[2]}
+        scoreRange = {data === null ? null : data.scoreRange}
+        bind:ebm = {ebm}
+        sidebarStore = {sidebarStore}
+        svgHeight = 500
+      />
+    </div>
+
+    <div class='sidebar-wrapper'>
+      <Sidebar sidebarStore={sidebarStore}/>
+    </div>
   </div>
 
-  <div class='sidebar-wrapper'>
-    <Sidebar sidebarStore={sidebarStore}/>
+  <div class='tool-footer'>
+    <div class='message'></div>
+
+
+      
+    <div class='field has-addons'>
+
+      <div class='control'>
+        <button class='button' title='undo last edit'>
+          <span class='icon is-small'>
+            <div class='svg-icon icon-undo'></div>
+          </span>
+        </button>
+      </div>
+
+      <div class='control'>
+        <button class='button' title='redo last undo'>
+          <span class='icon is-small'>
+            <div class='svg-icon icon-redo'></div>
+          </span>
+        </button>
+      </div>
+
+      <div class='control'>
+        <button class='button right-button' title='save edits'>
+          <span class='icon is-small'>
+            <div class='svg-icon icon-export'></div>
+          </span>
+        </button>
+      </div>
+
+    </div>
+
+
   </div>
+
 
 
     <!-- <div class='feature-window'>

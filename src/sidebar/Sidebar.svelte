@@ -33,7 +33,7 @@
   .sidebar {
     width: 250px;
     height: 100%;
-    border-left: 1px solid $gray-border;
+    border-left: 1px double $gray-border;
     display: flex;
     flex-direction: column;
     background: white;
