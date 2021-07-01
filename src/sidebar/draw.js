@@ -2,6 +2,10 @@ import * as d3 from 'd3';
 import { config } from '../config';
 import { round } from '../utils';
 
+const barHeight = 18;
+const textHeight = 23;
+const sectionGap = 30;
+
 /**
 * Function to draw a curve (PR curve or ROC curve).
 */
@@ -91,5 +95,267 @@ export const drawCurve = (curve, isPR, svg, lineGroup, groupColors) => {
         .attr('d', d => lineValue(d)),
       exit => exit.remove()
     );
+
+};
+
+/**
+ * Draw the bar charts in the classification metric tab. It also allocates space
+ * for the confusion matrix at the bottom of the bar chart.
+ * @param width Sidebar total width
+ * @param svgPadding Object describing the paddings of the sidebar content
+ * @param component Sidebar component
+ * @param barData Data of metrics
+ */
+export const drawClassificationBarChart = (width, svgPadding, component, barData) => {
+
+  const lineY = barHeight * 3 + textHeight + sectionGap / 2 + 2;
+  const lineWidth = width - svgPadding.left - svgPadding.right;
+
+  let svg = d3.select(component)
+    .select('.bar-svg');
+
+  const groupData = [
+    { name: 'accuracy', text: 'Accuracy' },
+    { name: 'rocAuc', text: 'ROC AUC' },
+    { name: 'averagePrecision', text: 'Average Precision' },
+    { name: 'confusionMatrix', text: 'Confusion Matrix' }
+  ];
+
+  // Initialize the group structure if it is the first call
+  if (svg.select('.bar-group').size() === 0) {
+    let barGroup = svg.append('g')
+      .attr('class', 'bar-group')
+      .attr('transform', `translate(0, ${10})`);
+
+    // Add three bar chart groups
+    let bars = barGroup.selectAll('g.bar')
+      .data(groupData)
+      .join('g')
+      .attr('class', d => `bar ${d.name}-group`)
+      .attr('transform', (d, i) => `translate(${svgPadding.left}, ${i * (3 * barHeight + textHeight + sectionGap)})`);
+
+    bars.append('text')
+      .attr('class', 'metric-title')
+      .text(d => d.text);
+
+    bars.append('path')
+      .attr('d', `M ${0}, ${lineY} L ${lineWidth}, ${lineY}`)
+      .style('stroke', 'hsla(0, 0%, 0%, 0.2)')
+      .style('visibility', d => d.name === 'confusionMatrix' ? 'hidden' : 'show');
+
+    // Add color legend next to Accuracy
+    let legendGroup = barGroup.select('g.accuracy-group');
+
+    const legendData = [
+      { name: 'origin', class: 'original', title: 'Metrics of the original graph', width: 42, x: 0 },
+      { name: 'last', class: 'last', title: 'Metrics of the last edit', width: 28, x: 47 },
+      { name: 'current', class: 'current', title: 'Metrics of the current graph', width: 50, x: 80 }
+    ];
+
+    let items = legendGroup.selectAll('g.legend-item')
+      .data(legendData)
+      .join('g')
+      .style('cursor', 'default')
+      .attr('transform', d => `translate(${90 + d.x}, 0)`);
+
+    items.append('title')
+      .text(d => d.title);
+
+    items.append('rect')
+      .attr('width', d => d.width)
+      .attr('height', 16)
+      .attr('rx', 3)
+      .attr('class', d => d.class);
+
+    items.append('text')
+      .attr('class', 'legend-title')
+      .attr('y', 2)
+      .attr('x', d => d.width / 2)
+      .text(d => d.name);
+  }
+
+  let barGroup = svg.select('.bar-group');
+
+  let widthScale = d3.scaleLinear()
+    .domain([0, 1])
+    .range([0, width - svgPadding.left - svgPadding.right]);
+
+  const rectOrder = ['original', 'last', 'current'];
+
+  Object.keys(barData).forEach(k => {
+
+    barGroup.select(`.${k}-group`)
+      .selectAll('rect.bar')
+      .data(barData[k])
+      .join('rect')
+      .attr('class', (d, i) => `bar ${rectOrder[i]}`)
+      .attr('y', (d, i) => (i) * (barHeight + 0) + textHeight)
+      .attr('width', d => widthScale(d))
+      .attr('height', barHeight);
+
+    barGroup.select(`.${k}-group`)
+      .selectAll('text.bar')
+      .data(barData[k])
+      .join('text')
+      .attr('class', 'bar-label')
+      .attr('x', 3)
+      .attr('y', (d, i) => (i) * (barHeight + 0) + barHeight / 2 + textHeight + 1)
+      .text(d => round(d, 4));
+  });
+
+};
+
+/**
+ * Draw the confusion matrix
+ * @param width Sidebar total width
+ * @param svgPadding Object describing the paddings of the sidebar content
+ * @param component Sidebar component
+ */
+export const drawConfusionMatrix = (width, svgPadding, component, confusionMatrixData) => {
+
+  let barGroup = d3.select(component)
+    .select('.bar-svg')
+    .select('.bar-group');
+
+  // Draw the confusion matrix if it has not been created yet
+  if (barGroup.select('.confusion-matrix-content').empty()) {
+    let matrixGroup = barGroup.select('.confusionMatrix-group')
+      .append('g')
+      .attr('class', 'confusion-matrix-content')
+      .attr('transform', `translate(0, ${textHeight})`);
+
+    // Compute the rectangle width
+    const middleGap = 3;
+    const rectHeight = 18;
+    const explanationHeight = 14;
+    const explanationWidth = 40;
+    const sRectWidth = (width - svgPadding.left - svgPadding.right - middleGap - explanationWidth) / 4;
+    const lRectWidth = 2 * sRectWidth;
+
+    const drawRectGroup = (curGroup, data) => {
+      // Draw the rectangles
+      curGroup.selectAll('rect.matrix-element')
+        .data(data)
+        .join('rect')
+        .attr('class', d => `matrix-element ${d.group}`)
+        .attr('x', d => d.x)
+        .attr('y', d => d.y)
+        .attr('width', d => d.width)
+        .attr('height', rectHeight);
+
+      // Draw the text
+      curGroup.selectAll('text.matrix-label')
+        .data(data)
+        .join('text')
+        .attr('class', d => `matrix-label ${d.group}`)
+        .attr('x', d => d.x + d.width / 2)
+        .attr('y', d => d.y + rectHeight / 2 + 1)
+        .text('32');
+    };
+
+    const topData = [
+      { x: 0, y: 0, width: sRectWidth, group: 'original' },
+      { x: sRectWidth, y: 0, width: sRectWidth, group: 'last' },
+      { x: 0, y: rectHeight, width: lRectWidth, group: 'current' }
+    ];
+
+    const botData = [
+      { x: 0, y: rectHeight, width: sRectWidth, group: 'original' },
+      { x: sRectWidth, y: rectHeight, width: sRectWidth, group: 'last' },
+      { x: 0, y: 0, width: lRectWidth, group: 'current' }
+    ];
+
+    // TP group
+    let matSubGroup = matrixGroup.append('g')
+      .attr('class', 'matrix-group-tp')
+      .attr('transform', `translate(${0}, ${0})`);
+
+    matSubGroup.append('text')
+      .attr('class', 'matrix-explanation')
+      .text('Predicted Yes');
+
+    matSubGroup.append('g', 'matrix-element')
+      .attr('transform', `translate(${0}, ${explanationHeight})`)
+      .call(drawRectGroup, topData);
+
+    // FP group
+    matSubGroup = matrixGroup.append('g')
+      .attr('class', 'matrix-group-fp')
+      .attr('transform', `translate(${lRectWidth + middleGap}, ${0})`);
+
+    matSubGroup.append('text')
+      .attr('class', 'matrix-explanation')
+      .text('Predicted No');
+
+    let curText = matSubGroup.append('text')
+      .attr('class', 'matrix-explanation dominant-middle')
+      .attr('y', rectHeight + explanationHeight - 12 / 2);
+
+    curText.append('tspan')
+      .attr('x', lRectWidth + 3)
+      .attr('dy', 0)
+      .text('Actual');
+
+    curText.append('tspan')
+      .attr('x', lRectWidth + 3)
+      .attr('dy', '1em')
+      .text('Yes');
+
+    matSubGroup.append('g', 'matrix-element')
+      .attr('transform', `translate(${0}, ${explanationHeight})`)
+      .call(drawRectGroup, topData);
+
+    // FN group
+    matSubGroup = matrixGroup.append('g')
+      .attr('class', 'matrix-group-fn')
+      .attr('transform', `translate(${0}, ${2 * rectHeight + middleGap + explanationHeight})`);
+
+    matSubGroup.append('g', 'matrix-element')
+      .attr('transform', `translate(${0}, ${0})`)
+      .call(drawRectGroup, botData);
+
+    // TN group
+    matSubGroup = matrixGroup.append('g')
+      .attr('class', 'matrix-group-tn')
+      .attr('transform', `translate(${lRectWidth + middleGap}, ${2 * rectHeight + middleGap + explanationHeight})`);
+
+    curText = matSubGroup.append('text')
+      .attr('class', 'matrix-explanation dominant-middle')
+      .attr('y', rectHeight - 12 / 2);
+
+    curText.append('tspan')
+      .attr('x', lRectWidth + 3)
+      .attr('dy', 0)
+      .text('Actual');
+
+    curText.append('tspan')
+      .attr('x', lRectWidth + 3)
+      .attr('dy', '1em')
+      .text('No');
+
+    matSubGroup.append('g', 'matrix-element')
+      .attr('transform', `translate(${0}, ${0})`)
+      .call(drawRectGroup, botData);
+  }
+
+  // Update the text in the matrix with confusionMatrixData
+  let contentGroup = barGroup.select('.confusion-matrix-content');
+
+  Object.keys(confusionMatrixData).forEach(k => {
+    let groups = ['tp', 'fp', 'tn', 'fn'];
+
+    groups.forEach(g => {
+      let curText = confusionMatrixData[k][g];
+      if (k === 'current' && g === 'tp') {
+        curText = `${curText}%`;
+      }
+      contentGroup.select(`.matrix-group-${g}`)
+        .select(`.matrix-label.${k}`)
+        .text(curText);
+    });
+
+  });
+
+
 
 };

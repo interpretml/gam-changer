@@ -136,15 +136,15 @@
     border-top: 1px solid $gray-border;
     height: 2em;
     align-items: center;
-    // background: $gray-background;
     border-bottom-left-radius: 5px;
     border-bottom-right-radius: 5px;
     padding: 5px 0px 5px 10px;
 
   }
 
-  .message {
+  .message-line {
     flex-grow: 1;
+    font-size: 0.9em;
   }
 
   .button-group {
@@ -216,9 +216,9 @@
   </div>
 
   <div class='tool-footer'>
-    <div class='message'></div>
-
-
+    <div class='message-line'>
+      Very helpful message.
+    </div>
       
     <div class='field has-addons'>
 

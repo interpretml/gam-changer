@@ -32,32 +32,32 @@
   }
 }
 
-.is-very-small {
-  font-size: 1em;
-  padding: 4px 12px;
-  height: auto;
-}
+// .is-very-small {
+//   font-size: 1em;
+//   padding: 4px 12px;
+//   height: auto;
+// }
 
 .toggle-switch-wrapper {
   width: 180px;
 }
 
-.state-button {
-  color: $indigo-dark;
-  transition: border-color 200ms ease-in-out, color 200ms ease-in-out;
-}
+// .state-button {
+//   color: $indigo-dark;
+//   transition: border-color 200ms ease-in-out, color 200ms ease-in-out;
+// }
 
-.state-button.is-activated,
-.state-button.is-activated:hover {
-  color: $blue-icon;
-  // border-color: $blue-icon;
-  border-color: hsl(0, 0%, 71%);
-}
+// .state-button.is-activated,
+// .state-button.is-activated:hover {
+//   color: $blue-icon;
+//   // border-color: $blue-icon;
+//   border-color: hsl(0, 0%, 71%);
+// }
 
-.state-button:hover {
-  color: $blue-icon;
-  // border-color: hsl(0, 0%, 85.9%);;
-}
+// .state-button:hover {
+//   color: $blue-icon;
+//   // border-color: hsl(0, 0%, 85.9%);;
+// }
 
 .context-menu-container {
   position: absolute;

@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { config } from '../config';
   import { round } from '../utils';
-  import { drawCurve } from './draw';
+  import { drawCurve, drawClassificationBarChart, drawConfusionMatrix } from './draw';
 
   export let sidebarStore;
 
@@ -12,136 +12,18 @@
   let width = 0;
   let height = 0;
 
-  const svgPadding = {top: 10, right: 40, bottom: 40, left: 40};
-  const defaultFont = config.defaultFont;
+  const svgPadding = {top: 10, right: 20, bottom: 40, left: 20};
 
-  const groupColors = {
-    original: 'gray',
-    last: '#FFE9CA',
-    current: 'hsl(213, 100%, 53%)',
-    axis: 'hsla(0, 0%, 70%, 1)'
+  let confusionMatrixData = {
+    original: {tn: 0, fn: 0, fp: 0, tp: 0},
+    last: {tn: 0, fn: 0, fp: 0, tp: 0},
+    current: {tn: 0, fn: 0, fp: 0, tp: 0}
   };
-
-  const groupColorsArray = [
-    '#D1D1D1',
-    '#FFDFB3',
-    '#D67D00'
-  ];
 
   let barData = {
     accuracy: [0.5, 0.5, 0.5],
     rocAuc: [0.5, 0.5, 0.5],
     averagePrecision: [0.5, 0.5, 0.5]
-  };
-
-  const drawBarChart = () => {
-
-    const barHeight = 20;
-    const textHeight = 22;
-    const labelWidth = 20;
-
-    const lineY = barHeight * 3 + textHeight + 12;
-    const lineWidth = width - 2 * labelWidth;
-
-    let svg = d3.select(component)
-      .select('.bar-svg');
-
-    const groupData = [
-      {name: 'accuracy', text: 'Accuracy'},
-      {name: 'rocAuc', text: 'ROC AUC'},
-      {name: 'averagePrecision', text: 'Average Precision'},
-      {name: 'confusionMatrix', text: 'Confusion Matrix'}
-    ];
-
-    // Initialize the group structure if it is the first call
-    if (svg.select('.bar-group').size() === 0 ) {
-      let barGroup = svg.append('g')
-        .attr('class', 'bar-group')
-        .attr('transform', `translate(0, ${10})`);
-
-      // Add three bar chart groups
-      let bars = barGroup.selectAll('g.bar')
-        .data(groupData)
-        .join('g')
-        .attr('class', d => `bar ${d.name}-group`)
-        .attr('transform', (d, i) => `translate(${labelWidth}, ${i * (4 * barHeight + textHeight)})`);
-      
-      bars.append('text')
-        .attr('class', 'metric-title')
-        .text(d => d.text);
-
-      bars.append('path')
-        .attr('d', `M ${0}, ${lineY} L ${lineWidth}, ${lineY}`)
-        .style('stroke', 'hsla(0, 0%, 0%, 0.2)');
-
-      // Add color legend next to Accuracy
-      let legendGroup = barGroup.select('g.accuracy-group');
-
-      const legendData = [
-        {name: 'origin', class: 'original', title: 'Metrics of the original graph', width: 42, x: 0},
-        {name: 'last', class: 'last', title: 'Metrics of the last edit', width: 28, x: 47},
-        {name: 'current', class: 'current', title: 'Metrics of the current graph', width: 50, x: 80}
-      ];
-
-      let items = legendGroup.selectAll('g.legend-item')
-        .data(legendData)
-        .join('g')
-        .style('cursor', 'default')
-        .attr('transform', d => `translate(${90 + d.x}, 0)`);
-      
-      items.append('title')
-        .text(d => d.title);
-
-      items.append('rect')
-        .attr('width', d => d.width)
-        .attr('height', 16)
-        .attr('rx', 3)
-        .attr('class', d => d.class);
-
-      items.append('text')
-        .attr('class', 'legend-title')
-        .attr('y', 2)
-        .attr('x', d => d.width / 2)
-        .text(d => d.name);
-    }
-
-    let barGroup = svg.select('.bar-group');
-
-    let widthScale = d3.scaleLinear()
-      .domain([0, 1])
-      .range([0, width - 2 * labelWidth]);
-
-    const rectOrder = ['original', 'last', 'current'];
-
-    Object.keys(barData).forEach(k => {
-
-      barGroup.select(`.${k}-group`)
-        .selectAll('rect.bar')
-        .data(barData[k])
-        .join('rect')
-        .attr('class', (d, i) => `bar ${rectOrder[i]}`)
-        .attr('y', (d, i) => (i) * (barHeight + 0) + textHeight)
-        .attr('width', d => widthScale(d))
-        .attr('height', barHeight);
-
-      barGroup.select(`.${k}-group`)
-        .selectAll('text.bar')
-        .data(barData[k])
-        .join('text')
-        .attr('class', 'bar-label')
-        .attr('x', 3)
-        .attr('y', (d, i) => (i) * (barHeight + 0) + barHeight / 2 + 2 + textHeight)
-        .text(d => round(d, 4));
-    });
-
-    // Draw the confusion matrix
-    let matrixGroup = barGroup.select('.confusionMatrix-group')
-      .append('g')
-      .attr('transform', `translate(0, ${textHeight})`);
-
-    matrixGroup.append('rect')
-      .attr('width', 200)
-      .attr('height', 200);
   };
 
   onMount(() => {
@@ -154,7 +36,7 @@
     d3.select(component)
       .selectAll('.bar-svg')
       .attr('width', width)
-      .attr('height', 400);
+      .attr('height', 500);
 
   });
 
@@ -173,7 +55,9 @@
       barData.averagePrecision[2] = sidebarInfo.averagePrecision;
     }
 
-    drawBarChart();
+    drawClassificationBarChart(width, svgPadding, component, barData);
+
+    drawConfusionMatrix(width, svgPadding, component, confusionMatrixData);
   });
 
 </script>
@@ -210,14 +94,15 @@
     margin-top: 0px;
   }
 
-  .field {
-    margin-top: 10px;
+  .scope-selection {
+    margin-top: 15px;
     margin-bottom: 5px;
-    font-size: 0.9em;
   }
 
   .button {
     padding: 1px 11px;
+    font-size: 0.9em;
+    font-weight: 400;
     height: auto;
     border-color: $gray-border;
 
@@ -236,18 +121,19 @@
   }
 
   :global(.metrics-tab rect.original) {
-    // fill: $blue-dark;
     fill: $gray-300;
   }
 
   :global(.metrics-tab rect.last) {
-    // fill: $orange-400;
     fill: $pastel1-orange;
   }
 
   :global(.metrics-tab rect.current) {
-    // fill: $blue-icon;
     fill: $pastel1-blue;
+  }
+
+  :global(.metrics-tab svg text) {
+    cursor: default;
   }
 
   :global(.metrics-tab .metric-title) {
@@ -260,23 +146,44 @@
     dominant-baseline: hanging;
     text-anchor: middle;
     font-size: 0.8em;
-    font-weight: 200;
+    font-weight: 300;
     fill: $indigo-dark;
   }
 
   :global(.metrics-tab .bar-label) {
     dominant-baseline: middle;
     text-anchor: start;
-    fill: $indigo-dark;
     font-size: 0.8em;
     font-weight: 200;
+    fill: $indigo-dark;
   }
+
+  :global(.metrics-tab .matrix-label) {
+    dominant-baseline: middle;
+    text-anchor: middle;
+    font-size: 0.8em;
+    font-weight: 200;
+    fill: $indigo-dark;
+  }
+
+  :global(.metrics-tab .matrix-explanation) {
+    dominant-baseline: hanging;
+    text-anchor: start;
+    font-size: 0.7em;
+    font-weight: 300;
+    fill: $indigo-dark;
+  }
+
+  :global(.metrics-tab .dominant-middle) {
+    dominant-baseline: middle;
+  }
+  
 
 </style>
 
 <div class='metrics-tab' bind:this={component}>
 
-    <div class='field has-addons'>
+    <div class='scope-selection field has-addons'>
 
       <div class='control'>
         <button class='button' title='undo last edit'>
