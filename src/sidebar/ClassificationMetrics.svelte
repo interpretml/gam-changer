@@ -15,9 +15,9 @@
   const svgPadding = {top: 10, right: 20, bottom: 40, left: 20};
 
   let confusionMatrixData = {
-    original: {tn: 0, fn: 0, fp: 0, tp: 0},
-    last: {tn: 0, fn: 0, fp: 0, tp: 0},
-    current: {tn: 0, fn: 0, fp: 0, tp: 0}
+    original: {tn: 23.2, fn: 22.1, fp: 23.2, tp: 23.8},
+    last: {tn: 23.8, fn: 23.8, fp: 23.8, tp: 23.8},
+    current: {tn: 23.8, fn: 23.8, fp: 23.8, tp: 23.8}
   };
 
   let barData = {
@@ -162,7 +162,7 @@
     dominant-baseline: middle;
     text-anchor: middle;
     font-size: 0.8em;
-    font-weight: 200;
+    font-weight: 300;
     fill: $indigo-dark;
   }
 
@@ -171,7 +171,7 @@
     text-anchor: start;
     font-size: 0.7em;
     font-weight: 300;
-    fill: $indigo-dark;
+    fill: hsl(0, 0%, 45%);
   }
 
   :global(.metrics-tab .dominant-middle) {

@@ -3,8 +3,8 @@ import { config } from '../config';
 import { round } from '../utils';
 
 const barHeight = 18;
-const textHeight = 23;
-const sectionGap = 30;
+const textHeight = 22;
+const sectionGap = 28;
 
 /**
 * Function to draw a curve (PR curve or ROC curve).
@@ -226,7 +226,7 @@ export const drawConfusionMatrix = (width, svgPadding, component, confusionMatri
 
     // Compute the rectangle width
     const middleGap = 3;
-    const rectHeight = 18;
+    const rectHeight = 20;
     const explanationHeight = 14;
     const explanationWidth = 40;
     const sRectWidth = (width - svgPadding.left - svgPadding.right - middleGap - explanationWidth) / 4;
@@ -289,14 +289,16 @@ export const drawConfusionMatrix = (width, svgPadding, component, confusionMatri
 
     let curText = matSubGroup.append('text')
       .attr('class', 'matrix-explanation dominant-middle')
-      .attr('y', rectHeight + explanationHeight - 12 / 2);
+      .attr('y', rectHeight + explanationHeight - explanationHeight / 2 + 2);
 
     curText.append('tspan')
+      .attr('class', 'dominant-middle')
       .attr('x', lRectWidth + 3)
       .attr('dy', 0)
       .text('Actual');
 
     curText.append('tspan')
+      .attr('class', 'dominant-middle')
       .attr('x', lRectWidth + 3)
       .attr('dy', '1em')
       .text('Yes');
@@ -321,14 +323,16 @@ export const drawConfusionMatrix = (width, svgPadding, component, confusionMatri
 
     curText = matSubGroup.append('text')
       .attr('class', 'matrix-explanation dominant-middle')
-      .attr('y', rectHeight - 12 / 2);
+      .attr('y', rectHeight - explanationHeight / 2 + 2);
 
     curText.append('tspan')
+      .attr('class', 'dominant-middle')
       .attr('x', lRectWidth + 3)
       .attr('dy', 0)
       .text('Actual');
 
     curText.append('tspan')
+      .attr('class', 'dominant-middle')
       .attr('x', lRectWidth + 3)
       .attr('dy', '1em')
       .text('No');
