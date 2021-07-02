@@ -85,7 +85,7 @@ export const brushDuring = (event, svg, multiMenu, ebm, footerStore) => {
 };
 
 export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
-  brush, component, resetContextMenu
+  brush, component, resetContextMenu, sidebarStore
 ) => {
   // Get the selection boundary
   let selection = event.selection;
@@ -117,6 +117,12 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
         // Prepare for next redrawing after recovering the last last edit graph
         state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
       }
+
+      // Update metrics
+      sidebarStore.update(value => {
+        value.curGroup = 'recover';
+        return value;
+      });
 
       // Remove the selection bbox
       svgSelect.selectAll('g.line-chart-content-group g.select-bbox-group').remove();

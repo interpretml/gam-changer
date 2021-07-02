@@ -378,7 +378,7 @@
     // Add brush
     brush = d3.brush()
       .on('end', e => brushEndSelect(
-        e, svg, multiMenu, bboxStrokeWidth, brush, component, resetContextMenu
+        e, svg, multiMenu, bboxStrokeWidth, brush, component, resetContextMenu, sidebarStore
       ))
       .on('start brush', e => brushDuring(e, svg, multiMenu, ebm, footerStore))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]])
@@ -438,7 +438,7 @@
     });
   };
 
-  const updateEBM = (curGroup) => {
+  const updateEBM = async (curGroup) => {
     let changedBinIndexes = [];
     let changedScores = [];
 
@@ -447,17 +447,15 @@
       changedScores.push(d.y);
     });
 
-    ebm.updateModel(changedBinIndexes, changedScores);
+    await ebm.updateModel(changedBinIndexes, changedScores);
 
     let metrics = ebm.getMetrics();
 
     if (ebm.isClassification) {
       sidebarInfo.accuracy = metrics.accuracy;
       sidebarInfo.rocAuc = metrics.rocAuc;
-      sidebarInfo.averagePrecision = metrics.averagePrecision;
+      sidebarInfo.balancedAccuracy = metrics.balancedAccuracy;
       sidebarInfo.confusionMatrix = metrics.confusionMatrix;
-      sidebarInfo.prCurve = metrics.prCurve;
-      sidebarInfo.rocCurve = metrics.rocCurve;
     } else {
       sidebarInfo.rmse = metrics.rmse;
       sidebarInfo.mae = metrics.mae;
@@ -595,7 +593,7 @@
             return value;
           });
         })
-        .on('drag', (e) => dragged(e, svg, component, ebm, sidebarStore, footerStore))
+        .on('drag', (e) => dragged(e, svg, component, ebm, sidebarStore, footerStore, updateEBM))
       );
     
     bboxGroup.select('rect.original-bbox')
@@ -605,6 +603,10 @@
     if (state.additiveDataLastEdit !== undefined) {
       drawLastEdit(svg);
     }
+
+    // Copy current metrics as last metrics
+    sidebarInfo.curGroup = 'last';
+    sidebarStore.set(sidebarInfo);
 
     // Update the footer message
     footerStore.update(value => {
@@ -686,6 +688,10 @@
       state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
     }
 
+    // Update the metrics
+    sidebarInfo.curGroup = 'recover';
+    sidebarStore.set(sidebarInfo);
+
     // Update the footer message
     footerStore.update(value => {
       // Reset the baseline
@@ -737,6 +743,8 @@
     myContextMenu.showConfirmation('increasing', 600);
 
     // Update EBM
+    sidebarInfo.curGroup = 'last';
+    sidebarStore.set(sidebarInfo);
     updateEBM('current');
 
     // Update the footer message
@@ -784,6 +792,8 @@
     myContextMenu.showConfirmation('decreasing', 600);
 
     // Update EBM
+    sidebarInfo.curGroup = 'last';
+    sidebarStore.set(sidebarInfo);
     updateEBM('current');
     
     // Update the footer message
@@ -829,6 +839,8 @@
     myContextMenu.showConfirmation('interpolation', 600);
 
     // Update EBM
+    sidebarInfo.curGroup = 'last';
+    sidebarStore.set(sidebarInfo);
     updateEBM('current');
 
     // Update the footer message
@@ -906,6 +918,8 @@
     myContextMenu.showConfirmation('merge', 600);
 
     // Update EBM
+    sidebarInfo.curGroup = 'last';
+    sidebarStore.set(sidebarInfo);
     updateEBM('current');
 
     // Update the footer message
@@ -933,6 +947,8 @@
     myContextMenu.showConfirmation('change', 600);
 
     // Update EBM
+    sidebarInfo.curGroup = 'last';
+    sidebarStore.set(sidebarInfo);
     updateEBM('current');
 
     // Update the footer message
@@ -962,6 +978,8 @@
     myContextMenu.showConfirmation('delete', 600);
 
     // Update EBM
+    sidebarInfo.curGroup = 'last';
+    sidebarStore.set(sidebarInfo);
     updateEBM('current');
 
     // Update the footer message
@@ -1002,7 +1020,6 @@
       state.additiveDataLastLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastEdit));
     }
     state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
-    
 
     // Special [interpolation]: need to save the new selectedInfo as well
     if (multiMenuControlInfo.subItemMode === 'interpolation') {
@@ -1062,6 +1079,10 @@
       // Prepare for next redrawing after recovering the last last edit graph
       state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
     }
+    
+    // Update metrics
+    sidebarInfo.curGroup = 'recover';
+    sidebarStore.set(sidebarInfo);
 
     // Recover the original graph
     redrawOriginal(svg, true, () => {

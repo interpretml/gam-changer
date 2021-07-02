@@ -9,7 +9,7 @@ import { SimpleLinearRegression } from '../../simple-linear-regression';
 // TODO: Uniform this variable across all files (use config file)
 const nodeStrokeWidth = 1;
 
-export const dragged = (e, svg, component, ebm, sidebarStore, footerStore) => {
+export const dragged = (e, svg, component, ebm, sidebarStore, footerStore, updateEBM) => {
 
   const dataYChange = state.curYScale.invert(e.y) - state.curYScale.invert(e.y - e.dy);
 
@@ -53,34 +53,7 @@ export const dragged = (e, svg, component, ebm, sidebarStore, footerStore) => {
   drawBufferGraph(svg, false);
 
   // Update the sidebar info
-  let changedBinIndexes = [];
-  let changedScores = [];
-  state.selectedInfo.nodeData.forEach(d => {
-    changedBinIndexes.push(d.id);
-    changedScores.push(d.y);
-  });
-
-  ebm.updateModel(changedBinIndexes, changedScores);
-
-  let metrics = ebm.getMetrics();
-
-  let sidebarInfo = get(sidebarStore);
-
-  if (ebm.isClassification) {
-    sidebarInfo.accuracy = metrics.accuracy;
-    sidebarInfo.rocAuc = metrics.rocAuc;
-    sidebarInfo.averagePrecision = metrics.averagePrecision;
-    sidebarInfo.confusionMatrix = metrics.confusionMatrix;
-    sidebarInfo.prCurve = metrics.prCurve;
-    sidebarInfo.rocCurve = metrics.rocCurve;
-  } else {
-    sidebarInfo.rmse = metrics.rmse;
-    sidebarInfo.mae = metrics.mae;
-  }
-
-  sidebarInfo.curGroup = 'current';
-
-  sidebarStore.set(sidebarInfo);
+  updateEBM('current');
 
   // Update the footer message
   footerStore.update(value => {

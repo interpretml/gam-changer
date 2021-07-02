@@ -26,7 +26,7 @@
     mae: 0,
     accuracy: 0,
     rocAuc: 0,
-    averagePrecision: 0,
+    balancedAccuracy: 0,
     confusionMatrix: [],
     prCurve: [],
     rocCurve: [],
@@ -98,6 +98,7 @@
 
     // Remember the number of total samples
     ebm.totalSampleNum = sampleData.samples.length;
+    sidebarInfo.totalSampleNum = ebm.totalSampleNum;
     footerStore.update(value => {
       value.totalSampleNum = ebm.totalSampleNum;
       value.sample = `<b>0/${ebm.totalSampleNum }</b> test samples selected`;
@@ -110,15 +111,17 @@
     if (ebm.isClassification) {
       sidebarInfo.accuracy = metrics.accuracy;
       sidebarInfo.rocAuc = metrics.rocAuc;
-      sidebarInfo.averagePrecision = metrics.averagePrecision;
+      sidebarInfo.balancedAccuracy = metrics.balancedAccuracy;
       sidebarInfo.confusionMatrix = metrics.confusionMatrix;
-      sidebarInfo.prCurve = metrics.prCurve;
-      sidebarInfo.rocCurve = metrics.rocCurve;
     } else {
       sidebarInfo.rmse = metrics.rmse;
       sidebarInfo.mae = metrics.mae;
     }
 
+    sidebarStore.set(sidebarInfo);
+
+    // Copy the original to current as well
+    sidebarInfo.curGroup = 'current';
     sidebarStore.set(sidebarInfo);
   };
 

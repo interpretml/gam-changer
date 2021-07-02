@@ -15,15 +15,20 @@
   const svgPadding = {top: 10, right: 20, bottom: 40, left: 20};
 
   let confusionMatrixData = {
-    original: {tn: 23.2, fn: 22.1, fp: 23.2, tp: 23.8},
-    last: {tn: 23.8, fn: 23.8, fp: 23.8, tp: 23.8},
-    current: {tn: 23.8, fn: 23.8, fp: 23.8, tp: 23.8}
+    // original: {tn: 23.2, fn: 22.1, fp: 23.2, tp: 23.8},
+    // last: {tn: 23.8, fn: 23.8, fp: 23.8, tp: 23.8},
+    // current: {tn: 23.8, fn: 23.8, fp: 23.8, tp: 23.8}
+    tn: [23.2, null, 23, null],
+    fn: [23.2, null, 23, null],
+    fp: [23.2, null, 23, null],
+    tp: [23.2, null, 23, null]
   };
 
+  // [original, last, current, last last]
   let barData = {
-    accuracy: [0.5, 0.5, 0.5],
-    rocAuc: [0.5, 0.5, 0.5],
-    averagePrecision: [0.5, 0.5, 0.5]
+    accuracy: [0.5, null, 0.5, null],
+    rocAuc: [0.5, null, 0.5, null],
+    balancedAccuracy: [0.5, null, 0.5, null]
   };
 
   onMount(() => {
@@ -46,13 +51,65 @@
     if (sidebarInfo.curGroup === 'original') {
       barData.accuracy[0] = sidebarInfo.accuracy;
       barData.rocAuc[0] = sidebarInfo.rocAuc;
-      barData.averagePrecision[0] = sidebarInfo.averagePrecision;
+      barData.balancedAccuracy[0] = sidebarInfo.balancedAccuracy;
+
+      confusionMatrixData.tn[0] = sidebarInfo.confusionMatrix[0] / sidebarInfo.totalSampleNum;
+      confusionMatrixData.fn[0] = sidebarInfo.confusionMatrix[1] / sidebarInfo.totalSampleNum;
+      confusionMatrixData.fp[0] = sidebarInfo.confusionMatrix[2] / sidebarInfo.totalSampleNum;
+      confusionMatrixData.tp[0] = sidebarInfo.confusionMatrix[3] / sidebarInfo.totalSampleNum;
     }
 
     if (sidebarInfo.curGroup === 'current') {
       barData.accuracy[2] = sidebarInfo.accuracy;
       barData.rocAuc[2] = sidebarInfo.rocAuc;
-      barData.averagePrecision[2] = sidebarInfo.averagePrecision;
+      barData.balancedAccuracy[2] = sidebarInfo.balancedAccuracy;
+
+      confusionMatrixData.tn[2] = sidebarInfo.confusionMatrix[0] / sidebarInfo.totalSampleNum;
+      confusionMatrixData.fn[2] = sidebarInfo.confusionMatrix[1] / sidebarInfo.totalSampleNum;
+      confusionMatrixData.fp[2] = sidebarInfo.confusionMatrix[2] / sidebarInfo.totalSampleNum;
+      confusionMatrixData.tp[2] = sidebarInfo.confusionMatrix[3] / sidebarInfo.totalSampleNum;
+    }
+
+    // Copy current to last, save a copy of last to last last
+    if (sidebarInfo.curGroup === 'last') {
+      barData.accuracy[3] = barData.accuracy[1];
+      barData.rocAuc[3] = barData.rocAuc[1];
+      barData.balancedAccuracy[3] = barData.balancedAccuracy[1];
+
+      barData.accuracy[1] = barData.accuracy[2];
+      barData.rocAuc[1] = barData.rocAuc[2];
+      barData.balancedAccuracy[1] = barData.balancedAccuracy[2];
+
+      confusionMatrixData.tn[3] = confusionMatrixData.tn[1]; 
+      confusionMatrixData.fn[3] = confusionMatrixData.fn[1];
+      confusionMatrixData.fp[3] = confusionMatrixData.fp[1];
+      confusionMatrixData.tp[3] = confusionMatrixData.tp[1];
+
+      confusionMatrixData.tn[1] = confusionMatrixData.tn[2]; 
+      confusionMatrixData.fn[1] = confusionMatrixData.fn[2];
+      confusionMatrixData.fp[1] = confusionMatrixData.fp[2];
+      confusionMatrixData.tp[1] = confusionMatrixData.tp[2];
+    }
+
+    // Copy last to current, copy last last to last
+    if (sidebarInfo.curGroup === 'recover') {
+      barData.accuracy[2] = barData.accuracy[1];
+      barData.rocAuc[2] = barData.rocAuc[1];
+      barData.balancedAccuracy[2] = barData.balancedAccuracy[1];
+
+      barData.accuracy[1] = barData.accuracy[3];
+      barData.rocAuc[1] = barData.rocAuc[3];
+      barData.balancedAccuracy[1] = barData.balancedAccuracy[3];
+
+      confusionMatrixData.tn[2] = confusionMatrixData.tn[1]; 
+      confusionMatrixData.fn[2] = confusionMatrixData.fn[1];
+      confusionMatrixData.fp[2] = confusionMatrixData.fp[1];
+      confusionMatrixData.tp[2] = confusionMatrixData.tp[1];
+
+      confusionMatrixData.tn[1] = confusionMatrixData.tn[3]; 
+      confusionMatrixData.fn[1] = confusionMatrixData.fn[3];
+      confusionMatrixData.fp[1] = confusionMatrixData.fp[3];
+      confusionMatrixData.tp[1] = confusionMatrixData.tp[3];
     }
 
     drawClassificationBarChart(width, svgPadding, component, barData);

@@ -116,13 +116,22 @@ export const drawClassificationBarChart = (width, svgPadding, component, barData
 
   const groupData = [
     { name: 'accuracy', text: 'Accuracy' },
+    { name: 'balancedAccuracy', text: 'Balanced Accuracy' },
     { name: 'rocAuc', text: 'ROC AUC' },
-    { name: 'averagePrecision', text: 'Average Precision' },
     { name: 'confusionMatrix', text: 'Confusion Matrix' }
   ];
 
+  let widthScale = d3.scaleLinear()
+    .domain([0, 1])
+    .range([0, width - svgPadding.left - svgPadding.right])
+    .unknown(25);
+
+  const rectOrder = ['original', 'last', 'current'];
+
   // Initialize the group structure if it is the first call
   if (svg.select('.bar-group').size() === 0) {
+    console.log('create bar first time');
+
     let barGroup = svg.append('g')
       .attr('class', 'bar-group')
       .attr('transform', `translate(0, ${10})`);
@@ -172,35 +181,44 @@ export const drawClassificationBarChart = (width, svgPadding, component, barData
       .attr('y', 2)
       .attr('x', d => d.width / 2)
       .text(d => d.name);
+    
+    // Create bars and texts
+    Object.keys(barData).forEach(k => {
+
+      barGroup.select(`.${k}-group`)
+        .selectAll('rect.bar')
+        .data(barData[k].slice(0, 3))
+        .join('rect')
+        .attr('class', (d, i) => `bar ${rectOrder[i]}`)
+        .attr('y', (d, i) => (i) * (barHeight + 0) + textHeight)
+        .attr('width', d => widthScale(d))
+        .attr('height', barHeight);
+
+      barGroup.select(`.${k}-group`)
+        .selectAll('text.bar')
+        .data(barData[k].slice(0, 3))
+        .join('text')
+        .attr('class', (d, i) => `bar-label ${rectOrder[i]}`)
+        .attr('x', 3)
+        .attr('y', (d, i) => (i) * (barHeight + 0) + barHeight / 2 + textHeight + 1)
+        .text(d => round(d, 4));
+    });
   }
+
+  // Update the bars and texts
 
   let barGroup = svg.select('.bar-group');
 
-  let widthScale = d3.scaleLinear()
-    .domain([0, 1])
-    .range([0, width - svgPadding.left - svgPadding.right]);
-
-  const rectOrder = ['original', 'last', 'current'];
-
   Object.keys(barData).forEach(k => {
-
-    barGroup.select(`.${k}-group`)
-      .selectAll('rect.bar')
-      .data(barData[k])
-      .join('rect')
-      .attr('class', (d, i) => `bar ${rectOrder[i]}`)
-      .attr('y', (d, i) => (i) * (barHeight + 0) + textHeight)
-      .attr('width', d => widthScale(d))
-      .attr('height', barHeight);
-
-    barGroup.select(`.${k}-group`)
-      .selectAll('text.bar')
-      .data(barData[k])
-      .join('text')
-      .attr('class', 'bar-label')
-      .attr('x', 3)
-      .attr('y', (d, i) => (i) * (barHeight + 0) + barHeight / 2 + textHeight + 1)
-      .text(d => round(d, 4));
+    for(let i = 0; i < 3; i++) {
+      barGroup.select(`.${k}-group`)
+        .select(`rect.bar.${rectOrder[i]}`)
+        .attr('width', widthScale(barData[k][i]));
+      
+      barGroup.select(`.${k}-group`)
+        .select(`text.bar-label.${rectOrder[i]}`)
+        .text(barData[k][i] === null ? 'NA' : round(barData[k][i], 4));
+    }
   });
 
 };
@@ -225,7 +243,7 @@ export const drawConfusionMatrix = (width, svgPadding, component, confusionMatri
       .attr('transform', `translate(0, ${textHeight})`);
 
     // Compute the rectangle width
-    const middleGap = 3;
+    const middleGap = 6;
     const rectHeight = 20;
     const explanationHeight = 14;
     const explanationWidth = 40;
@@ -346,17 +364,27 @@ export const drawConfusionMatrix = (width, svgPadding, component, confusionMatri
   let contentGroup = barGroup.select('.confusion-matrix-content');
 
   Object.keys(confusionMatrixData).forEach(k => {
-    let groups = ['tp', 'fp', 'tn', 'fn'];
+    let groups = ['original', 'last', 'current'];
 
-    groups.forEach(g => {
-      let curText = confusionMatrixData[k][g];
-      if (k === 'current' && g === 'tp') {
+    for (let i = 0; i < groups.length; i++) {
+      let g = groups[i];
+      let curText;
+
+      if (confusionMatrixData[k][i] === null) {
+        curText = 'NA';
+      } else {
+        curText = round(confusionMatrixData[k][i] * 100, 1);
+      }
+
+      if (g === 'current' && k === 'tp') {
         curText = `${curText}%`;
       }
-      contentGroup.select(`.matrix-group-${g}`)
-        .select(`.matrix-label.${k}`)
+
+      contentGroup.select(`.matrix-group-${k}`)
+        .select(`.matrix-label.${g}`)
         .text(curText);
-    });
+    }
+
 
   });
 
