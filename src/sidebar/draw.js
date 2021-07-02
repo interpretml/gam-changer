@@ -376,7 +376,7 @@ export const drawConfusionMatrix = (width, svgPadding, component, confusionMatri
         curText = round(confusionMatrixData[k][i] * 100, 1);
       }
 
-      if (g === 'current' && k === 'tp') {
+      if (g === 'current') {
         curText = `${curText}%`;
       }
 

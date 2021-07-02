@@ -433,7 +433,7 @@
 
     // Update the footer for more instruction
     footerStore.update(value => {
-      value.help = '<b>Drag</b> to pan view, <b>Wheel</b> to zoom';
+      value.help = '<b>Drag</b> to pan view, <b>Scroll</b> to zoom';
       return value;
     });
   };
@@ -501,7 +501,7 @@
       value.baseline = 0;
       value.baselineInit = false;
       value.state = '';
-      value.help = '<b>Drag</b> to marquee select, <b>Wheel</b> to zoom';
+      value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
       return value;
     });
   };
@@ -522,12 +522,12 @@
     // Update the footer message
     if (selectMode) {
       footerStore.update(value => {
-        value.help = '<b>Drag</b> to marquee select, <b>Wheel</b> to zoom';
+        value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
         return value;
       });
     } else {
       footerStore.update(value => {
-        value.help = '<b>Drag</b> to pan view, <b>Wheel</b> to zoom';
+        value.help = '<b>Drag</b> to pan view, <b>Scroll</b> to zoom';
         return value;
       });
     }
@@ -650,7 +650,7 @@
       value.baseline = 0;
       value.baselineInit = false;
       value.state = '';
-      value.help = '<b>Drag</b> to marquee select, <b>Wheel</b> to zoom';
+      value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
       return value;
     });
   };
@@ -698,7 +698,7 @@
       value.baseline = 0;
       value.baselineInit = false;
       value.state = '';
-      value.help = '<b>Drag</b> to marquee select, <b>Wheel</b> to zoom';
+      value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
       return value;
     });
   };
@@ -1043,7 +1043,7 @@
       value.baseline = 0;
       value.baselineInit = false;
       value.state = '';
-      value.help = '<b>Drag</b> to marquee select, <b>Wheel</b> to zoom';
+      value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
       return value;
     });
   };
@@ -1103,7 +1103,7 @@
       value.baseline = 0;
       value.baselineInit = false;
       value.state = '';
-      value.help = '<b>Drag</b> to marquee select, <b>Wheel</b> to zoom';
+      value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
       return value;
     });
   };
