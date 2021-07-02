@@ -6,7 +6,7 @@
   import InterCatCatGlobalExplain from './global-explanation/InterCatCatFeature.svelte';
   import Sidebar from './sidebar/Sidebar.svelte';
 
-  import { writable } from 'svelte/store';
+  import { writable, derived } from 'svelte/store';
 
   import * as d3 from 'd3';
   import { initEBM } from './ebm';
@@ -31,6 +31,14 @@
     prCurve: [],
     rocCurve: [],
     curGroup: 'original'
+  });
+
+  let footerStore = writable({
+    sample: '',
+    help: '',
+    state: '',
+    baselineInit: false,
+    baseline: 0,
   });
 
   sidebarStore.subscribe(value => {
@@ -88,6 +96,14 @@
 
     ebm = await initEBM(data, sampleData, 'LotFrontage', isClassification);
 
+    // Remember the number of total samples
+    ebm.totalSampleNum = sampleData.samples.length;
+    footerStore.update(value => {
+      value.totalSampleNum = ebm.totalSampleNum;
+      value.sample = `<b>0/${ebm.totalSampleNum }</b> test samples selected`;
+      return value;
+    });
+
     // Get the initial metrics
     let metrics = ebm.getMetrics();
 
@@ -143,8 +159,12 @@
   }
 
   .message-line {
+    display: flex;
+    gap: 5px;
     flex-grow: 1;
     font-size: 0.9em;
+    height: 100%;
+    overflow-x: scroll;
   }
 
   .button-group {
@@ -192,6 +212,14 @@
     }
   }
 
+  .separator {
+    margin: 0 3px;
+    width: 1px;
+    background-color: $gray-border;
+    height: 100%;
+    flex-shrink: 0;
+  }
+
   .feature-window {
   }
 
@@ -206,6 +234,7 @@
         scoreRange = {data === null ? null : data.scoreRange}
         bind:ebm = {ebm}
         sidebarStore = {sidebarStore}
+        footerStore = {footerStore}
         svgHeight = 500
       />
     </div>
@@ -217,7 +246,11 @@
 
   <div class='tool-footer'>
     <div class='message-line'>
-      Very helpful message.
+      <span>{@html $footerStore.help}</span>
+      <div class='separator'></div>
+      <span>{@html $footerStore.sample}</span>
+      <div class='separator'></div>
+      <span>{@html $footerStore.state}</span>
     </div>
       
     <div class='field has-addons'>

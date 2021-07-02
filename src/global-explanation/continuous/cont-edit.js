@@ -9,7 +9,7 @@ import { SimpleLinearRegression } from '../../simple-linear-regression';
 // TODO: Uniform this variable across all files (use config file)
 const nodeStrokeWidth = 1;
 
-export const dragged = (e, svg, component, ebm, sidebarStore) => {
+export const dragged = (e, svg, component, ebm, sidebarStore, footerStore) => {
 
   const dataYChange = state.curYScale.invert(e.y) - state.curYScale.invert(e.y - e.dy);
 
@@ -52,6 +52,7 @@ export const dragged = (e, svg, component, ebm, sidebarStore) => {
   // Step 2: redraw the nodes that are changed
   drawBufferGraph(svg, false);
 
+  // Update the sidebar info
   let changedBinIndexes = [];
   let changedScores = [];
   state.selectedInfo.nodeData.forEach(d => {
@@ -80,6 +81,13 @@ export const dragged = (e, svg, component, ebm, sidebarStore) => {
   sidebarInfo.curGroup = 'current';
 
   sidebarStore.set(sidebarInfo);
+
+  // Update the footer message
+  footerStore.update(value => {
+    value.baseline += dataYChange;
+    value.state = `Scores <b>${value.baseline >= 0 ? 'increased' : 'decreased'}</b> by <b>${round(Math.abs(value.baseline), 2)}</b>`;
+    return value;
+  });
 };
 
 export const redrawOriginal = (svg, bounce=true, animationEndFunc=undefined) => {

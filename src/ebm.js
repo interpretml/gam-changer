@@ -84,7 +84,7 @@ function preInstantiate(imports) {
 }
 
 const E_NOEXPORTRUNTIME = "Operation requires compiling with --exportRuntime";
-const F_NOEXPORTRUNTIME = function () { throw Error(E_NOEXPORTRUNTIME); };
+const F_NOEXPORTRUNTIME = function() { throw Error(E_NOEXPORTRUNTIME); };
 
 /** Prepares the final module once instantiation is complete. */
 function postInstantiate(extendedExports, instance) {
@@ -307,7 +307,7 @@ function postInstantiate(extendedExports, instance) {
 
   // Pull basic exports to extendedExports so code in preInstantiate can use them
   extendedExports.memory = extendedExports.memory || memory;
-  extendedExports.table = extendedExports.table || table;
+  extendedExports.table  = extendedExports.table  || table;
 
   // Demangle exports and provide the usual utility on the prototype
   return demangle(exports, extendedExports);
@@ -377,13 +377,13 @@ function demangle(exports, extendedExports = {}) {
       const className = name.substring(0, hash);
       const classElem = curr[className];
       if (typeof classElem === "undefined" || !classElem.prototype) {
-        const ctor = function (...args) {
+        const ctor = function(...args) {
           return ctor.wrap(ctor.prototype.constructor(0, ...args));
         };
         ctor.prototype = {
           valueOf() { return this[THIS]; }
         };
-        ctor.wrap = function (thisValue) {
+        ctor.wrap = function(thisValue) {
           return Object.create(ctor.prototype, { [THIS]: { value: thisValue, writable: false } });
         };
         if (classElem) Object.getOwnPropertyNames(classElem).forEach(name =>
@@ -410,7 +410,7 @@ function demangle(exports, extendedExports = {}) {
             return elem(...args);
           }).original = elem;
         } else { // instance method
-          (curr[name] = function (...args) { // !
+          (curr[name] = function(...args) { // !
             setArgumentsLength(args.length);
             return elem(this[THIS], ...args);
           }).original = elem;
@@ -446,40 +446,40 @@ var loader = {
 };
 
 class ConsoleImport {
+    
+    constructor() {
+        
+        this._exports = null;
 
-  constructor() {
+        this.wasmImports = {
+            consoleBindings: {
+                   _log: (message) => {
+        
+                    console.log(this._exports.__getString(message));
+        
+                }
+            }
+        };
+    }
 
-    this._exports = null;
+    get wasmExports() {
+		return this._exports
+	}
+	set wasmExports(e) {
+		this._exports = e;
+	}
 
-    this.wasmImports = {
-      consoleBindings: {
-        _log: (message) => {
-
-          console.log(this._exports.__getString(message));
-
-        }
-      }
-    };
-  }
-
-  get wasmExports() {
-    return this._exports
-  }
-  set wasmExports(e) {
-    this._exports = e;
-  }
-
-  getFn(fnIndex) {
-    if (!this.wasmExports)
-      throw new Error(
-        'Make sure you set .wasmExports after instantiating the Wasm module but before running the Wasm module.',
-      )
-    return this._exports.table.get(fnIndex)
-  }
+	getFn(fnIndex) {
+		if (!this.wasmExports)
+			throw new Error(
+				'Make sure you set .wasmExports after instantiating the Wasm module but before running the Wasm module.',
+			)
+		return this._exports.table.get(fnIndex)
+	}
 }
 
 const Console = new ConsoleImport();
-const imports = { ...Console.wasmImports };
+const imports = {...Console.wasmImports};
 
 
 const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) => {
@@ -738,6 +738,13 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
         return __getArray(this.ebm.getPrediction());
       }
 
+      getSelectedSampleNum(binIndexes) {
+        let binIndexesPtr = __pin(__newArray(wasm.Int32Array_ID, binIndexes));
+        let count = this.ebm.getSelectedSampleNum(binIndexesPtr);
+        __unpin(binIndexesPtr);
+        return count;
+      }
+
       updateModel(changedBinIndexes, changedScores) {
         let changedBinIndexesPtr = __newArray(wasm.Float64Array_ID, changedBinIndexes);
         let changedScoresPtr = __newArray(wasm.Float64Array_ID, changedScores);
@@ -768,8 +775,8 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
 
         /**
          * (1) regression: [[[RMSE, MAE]]]
-         * (2) binary classification: [roc 2D points, PR 2D points, [confusion matrix 1D],
-         *  [[accuracy, roc auc, average precision]]]
+         * (2) binary classification: [roc 2D points, [confusion matrix 1D],
+         *  [[accuracy, roc auc, balanced accuracy]]]
          */
 
         // Unpack the return value from getMetrics()
@@ -810,22 +817,22 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
           __unpin(result2DPtr);
 
           // Unpack PR curves
-          result1DPtrs = [];
-          let pr2D = __getArray(result3D[1]);
-          result2DPtr = __pin(roc2D);
+          // result1DPtrs = [];
+          // let pr2D = __getArray(result3D[1]);
+          // result2DPtr = __pin(roc2D);
 
-          let prPoints = pr2D.map(d => {
-            let point = __getArray(d);
-            result1DPtrs.push(__pin(point));
-            return point;
-          });
+          // let prPoints = pr2D.map(d => {
+          //   let point = __getArray(d);
+          //   result1DPtrs.push(__pin(point));
+          //   return point;
+          // });
 
-          metrics.prCurve = prPoints;
-          result1DPtrs.map(d => __unpin(d));
-          __unpin(result2DPtr);
+          // metrics.prCurve = prPoints;
+          // result1DPtrs.map(d => __unpin(d));
+          // __unpin(result2DPtr);
 
           // Unpack confusion matrix
-          let result2D = __getArray(result3D[2]);
+          let result2D = __getArray(result3D[1]);
           result2DPtr = __pin(result2D);
 
           let result1D = __getArray(result2D[0]);
@@ -837,7 +844,7 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
           __unpin(result2DPtr);
 
           // Unpack summary statistics
-          result2D = __getArray(result3D[3]);
+          result2D = __getArray(result3D[2]);
           result2DPtr = __pin(result2D);
 
           result1D = __getArray(result2D[0]);
@@ -845,7 +852,7 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
 
           metrics.accuracy = result1D[0];
           metrics.rocAuc = result1D[1];
-          metrics.averagePrecision = result1D[2];
+          metrics.balancedAccuracy = result1D[2];
 
           __unpin(result1DPtr);
           __unpin(result2DPtr);

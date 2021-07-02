@@ -31,7 +31,7 @@ const stopAnimateLine = (svg) => {
     .classed('flow-line', false);
 };
 
-export const brushDuring = (event, svg, multiMenu) => {
+export const brushDuring = (event, svg, multiMenu, ebm, footerStore) => {
   // Get the selection boundary
   let selection = event.selection;
   let svgSelect = d3.select(svg);
@@ -55,11 +55,17 @@ export const brushDuring = (event, svg, multiMenu) => {
       .classed('hidden', true);
 
     // Highlight the selected dots
+    let selectedBinIndexes = [];
     svgSelect.select('g.line-chart-node-group')
       .selectAll('circle.node')
-      .classed('selected', d =>
-        (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1])
-      );
+      .classed('selected', d => {
+        if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
+          selectedBinIndexes.push(d.id);
+          return true;
+        } else {
+          return false;
+        }
+      });
 
     // Highlight the paths associated with the selected dots
     svgSelect.select('g.line-chart-line-group.real')
@@ -68,6 +74,13 @@ export const brushDuring = (event, svg, multiMenu) => {
         (d.sx >= xRange[0] && d.sx <= xRange[1] && d.sy >= yRange[0] && d.sy <= yRange[1]) ||
         (d.x1 === d.x2 && d.x2 >= xRange[0] && d.x2 <= xRange[1] && d.y2 >= yRange[0] && d.y2 <= yRange[1])
       );
+
+    // Update the footer message
+    footerStore.update(value => {
+      let sampleNum = ebm.getSelectedSampleNum(selectedBinIndexes);
+      value.sample = `<b>${sampleNum}/${value.totalSampleNum}</b> test samples selected`;
+      return value;
+    });
   }
 };
 

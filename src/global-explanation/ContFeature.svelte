@@ -1,5 +1,7 @@
 <script>
   import * as d3 from 'd3';
+  import { get } from 'svelte/store';
+
   import { initEBM } from '../ebm';
   import { initIsotonicRegression } from '../isotonic-regression';
 
@@ -26,6 +28,7 @@
   export let svgHeight = 400;
   export let ebm = null;
   export let sidebarStore = null;
+  export let footerStore = null;
 
   let svg = null;
   let component = null;
@@ -377,7 +380,7 @@
       .on('end', e => brushEndSelect(
         e, svg, multiMenu, bboxStrokeWidth, brush, component, resetContextMenu
       ))
-      .on('start brush', e => brushDuring(e, svg, multiMenu))
+      .on('start brush', e => brushDuring(e, svg, multiMenu, ebm, footerStore))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]])
       .filter((e) => {
         if (selectMode) {
@@ -427,6 +430,12 @@
     // Now the graph is drawn, update the height to sidebar
     sidebarInfo.height = component.getBoundingClientRect().height;
     sidebarStore.set(sidebarInfo);
+
+    // Update the footer for more instruction
+    footerStore.update(value => {
+      value.help = '<b>Drag</b> to pan view, <b>Wheel</b> to zoom';
+      return value;
+    });
   };
 
   const updateEBM = (curGroup) => {
@@ -487,6 +496,16 @@
       state.pointDataBuffer = null;
       state.additiveDataBuffer = null;
     }
+
+    // Update the footer message
+    footerStore.update(value => {
+      // Reset the baseline
+      value.baseline = 0;
+      value.baselineInit = false;
+      value.state = '';
+      value.help = '<b>Drag</b> to marquee select, <b>Wheel</b> to zoom';
+      return value;
+    });
   };
 
   /**
@@ -501,6 +520,19 @@
     
     lineChartContent.select('g.brush rect.overlay')
       .attr('cursor', null);
+
+    // Update the footer message
+    if (selectMode) {
+      footerStore.update(value => {
+        value.help = '<b>Drag</b> to marquee select, <b>Wheel</b> to zoom';
+        return value;
+      });
+    } else {
+      footerStore.update(value => {
+        value.help = '<b>Drag</b> to pan view, <b>Wheel</b> to zoom';
+        return value;
+      });
+    }
   };
 
   /**
@@ -540,8 +572,6 @@
   };
 
   const multiMenuMoveClicked = async () => {
-    console.log(multiMenuControlInfo.moveMode);
-
     // Enter the move mode
 
     // Step 1. create data clone buffers for user to change
@@ -556,7 +586,16 @@
       .select('g.line-chart-content-group g.select-bbox-group')
       .style('cursor', 'row-resize')
       .call(d3.drag()
-        .on('drag', (e) => dragged(e, svg, component, ebm, sidebarStore))
+        .on('start', () => {
+          footerStore.update(value => {
+            if (!value.baselineInit) {
+              value.baseline = 0;
+              value.baselineInit = true;
+            }
+            return value;
+          });
+        })
+        .on('drag', (e) => dragged(e, svg, component, ebm, sidebarStore, footerStore))
       );
     
     bboxGroup.select('rect.original-bbox')
@@ -566,6 +605,12 @@
     if (state.additiveDataLastEdit !== undefined) {
       drawLastEdit(svg);
     }
+
+    // Update the footer message
+    footerStore.update(value => {
+      value.help = '<b>Drag</b> the <b>selected region</b> to change score';
+      return value;
+    });
     
   };
 
@@ -596,6 +641,16 @@
       state.additiveDataLastLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastEdit));
     }
     state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+
+    // Update the footer message
+    footerStore.update(value => {
+      // Reset the baseline
+      value.baseline = 0;
+      value.baselineInit = false;
+      value.state = '';
+      value.help = '<b>Drag</b> to marquee select, <b>Wheel</b> to zoom';
+      return value;
+    });
   };
 
   /**
@@ -630,6 +685,16 @@
       // Prepare for next redrawing after recovering the last last edit graph
       state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
     }
+
+    // Update the footer message
+    footerStore.update(value => {
+      // Reset the baseline
+      value.baseline = 0;
+      value.baselineInit = false;
+      value.state = '';
+      value.help = '<b>Drag</b> to marquee select, <b>Wheel</b> to zoom';
+      return value;
+    });
   };
 
   /**
@@ -673,6 +738,12 @@
 
     // Update EBM
     updateEBM('current');
+
+    // Update the footer message
+    footerStore.update(value => {
+      value.state = `Made ${xs.length} bins <b>monotonically increasing</b>`;
+      return value;
+    });
   };
   
   /**
@@ -714,6 +785,12 @@
 
     // Update EBM
     updateEBM('current');
+    
+    // Update the footer message
+    footerStore.update(value => {
+      value.state = `Made ${xs.length} bins <b>monotonically decreasing</b>`;
+      return value;
+    });
   };
 
   /**
@@ -753,6 +830,13 @@
 
     // Update EBM
     updateEBM('current');
+
+    // Update the footer message
+    footerStore.update(value => {
+      value.state = `<b>Interpolated</b> ${state.selectedInfo.nodeData.length} bins <b>in place</b>`;
+      value.interpolateEqual = 'in place';
+      return value;
+    });
   };
 
   /**
@@ -760,6 +844,7 @@
   */
   const multiMenuInterpolateUpdated = () => {
     console.log('interpolation updated');
+    let footerValue = get(footerStore);
 
     if (multiMenuControlInfo.interpolationMode === 'inplace') {
       // Special case: we want to do inplace interpolation from the original data
@@ -769,11 +854,16 @@
       state.selectedInfo.nodeDataBuffer = JSON.parse(JSON.stringify(state.selectedInfo.nodeData));
       inplaceInterpolate(svg);
 
+      footerValue.interpolateStyle = 'Interpolated';
+      footerValue.interpolateEqual = 'in place';
+
     } else if (multiMenuControlInfo.interpolationMode === 'equal') {
       // Here we don't reset the pointDataBuffer
       // If user clicks here direction => step interpolate between start & end
       // If user has clicked regression => regression with equal bins
       stepInterpolate(svg, multiMenuControlInfo.step);
+
+      footerValue.interpolateEqual = `with ${multiMenuControlInfo.step} equal-size bins`;
 
     } else if (multiMenuControlInfo.interpolationMode === 'regression') {
       // Need to recover original data
@@ -783,9 +873,17 @@
 
       regressionInterpolate(svg);
 
+      footerValue.interpolateStyle = 'Regression transformed';
+      footerValue.interpolateEqual = 'in place';
+
     } else {
       console.error('Unknown regression mode ', multiMenuControlInfo.interpolationMode);
     }
+
+    // Update the footer message
+    footerValue.state = `<b>${footerValue.interpolateStyle}</b> ${state.selectedInfo.nodeData.length}
+      bins <b>${footerValue.interpolateEqual}</b>`;
+    footerStore.set(footerValue);
   };
 
   const multiMenuMergeClicked = () => {
@@ -809,6 +907,13 @@
 
     // Update EBM
     updateEBM('current');
+
+    // Update the footer message
+    footerStore.update(value => {
+      value.state = `Set scores of ${state.selectedInfo.nodeData.length} bins to
+        <b>${round(state.selectedInfo.nodeData[0].y, 4)}</b>`;
+      return value;
+    });
   };
 
   const multiMenuInputChanged = () => {
@@ -829,6 +934,12 @@
 
     // Update EBM
     updateEBM('current');
+
+    // Update the footer message
+    footerStore.update(value => {
+      value.state = `Set scores of ${state.selectedInfo.nodeData.length} bins to <b>${multiMenuControlInfo.setValue}</b>`;
+      return value;
+    });
   };
 
   const multiMenuDeleteClicked = () => {
@@ -852,6 +963,12 @@
 
     // Update EBM
     updateEBM('current');
+
+    // Update the footer message
+    footerStore.update(value => {
+      value.state = `Set scores of ${state.selectedInfo.nodeData.length} bins to <b>${0}</b>`;
+      return value;
+    });
   };
 
   /**
@@ -902,6 +1019,16 @@
     
     // Exit the sub-item mode
     multiMenuControlInfo.subItemMode = null;
+
+    // Update the footer message
+    footerStore.update(value => {
+      // Reset the baseline
+      value.baseline = 0;
+      value.baselineInit = false;
+      value.state = '';
+      value.help = '<b>Drag</b> to marquee select, <b>Wheel</b> to zoom';
+      return value;
+    });
   };
 
   /**
@@ -948,6 +1075,16 @@
 
     // Exit the sub-item mode
     multiMenuControlInfo.subItemMode = null;
+
+    // Update the footer message
+    footerStore.update(value => {
+      // Reset the baseline
+      value.baseline = 0;
+      value.baselineInit = false;
+      value.state = '';
+      value.help = '<b>Drag</b> to marquee select, <b>Wheel</b> to zoom';
+      return value;
+    });
   };
 
   $: featureData && ebm && drawFeature(featureData);
