@@ -167,7 +167,7 @@
     flex-grow: 1;
     font-size: 0.9em;
     height: 100%;
-    overflow-x: scroll;
+    // overflow-x: scroll;
   }
 
   .button-group {
@@ -251,8 +251,10 @@
     <div class='message-line'>
       <span>{@html $footerStore.help}</span>
       <div class='separator'></div>
+
       <span>{@html $footerStore.sample}</span>
       <div class='separator'></div>
+
       <span>{@html $footerStore.state}</span>
     </div>
       

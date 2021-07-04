@@ -580,11 +580,13 @@
     &.hidden {
       visibility: hidden;
       pointer-events: none;
+    }
+  }
 
-      .item {
-        visibility: hidden;
-        pointer-events: none;
-      }
+  .hidden {
+    .item {
+      visibility: hidden;
+      pointer-events: none;
     }
   }
 

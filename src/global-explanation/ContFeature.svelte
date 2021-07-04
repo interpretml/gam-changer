@@ -644,6 +644,10 @@
     }
     state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
 
+    // Update metrics
+    sidebarInfo.curGroup = 'commit';
+    sidebarStore.set(sidebarInfo);
+
     // Update the footer message
     footerStore.update(value => {
       // Reset the baseline
@@ -1036,6 +1040,10 @@
     
     // Exit the sub-item mode
     multiMenuControlInfo.subItemMode = null;
+
+    // Update metrics
+    sidebarInfo.curGroup = 'commit';
+    sidebarStore.set(sidebarInfo);
 
     // Update the footer message
     footerStore.update(value => {

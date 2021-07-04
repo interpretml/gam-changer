@@ -118,9 +118,16 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
         state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
       }
 
-      // Update metrics
+      // Recover the metrics if user is quitting context menu without committing
       sidebarStore.update(value => {
-        value.curGroup = 'recover';
+        // Svelte would trigger an update when update() is called
+        // So if we want to avoid call 'recover' twice, we need to set another
+        // message
+        if (value.curGroup !== 'commit' && value.curGroup !== 'recover') {
+          value.curGroup = 'recover';
+        } else {
+          value.curGroup = 'no action';
+        }
         return value;
       });
 

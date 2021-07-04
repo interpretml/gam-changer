@@ -45,6 +45,17 @@
 
   });
 
+  const copyMetricData = (barData, confusionMatrixData, fromIndex, toIndex) => {
+    barData.accuracy[toIndex] = barData.accuracy[fromIndex];
+    barData.rocAuc[toIndex] = barData.rocAuc[fromIndex];
+    barData.balancedAccuracy[toIndex] = barData.balancedAccuracy[fromIndex];
+
+    confusionMatrixData.tn[toIndex] = confusionMatrixData.tn[fromIndex]; 
+    confusionMatrixData.fn[toIndex] = confusionMatrixData.fn[fromIndex];
+    confusionMatrixData.fp[toIndex] = confusionMatrixData.fp[fromIndex];
+    confusionMatrixData.tp[toIndex] = confusionMatrixData.tp[fromIndex];
+  };
+
   sidebarStore.subscribe(value => {
     sidebarInfo = value;
 
@@ -72,44 +83,19 @@
 
     // Copy current to last, save a copy of last to last last
     if (sidebarInfo.curGroup === 'last') {
-      barData.accuracy[3] = barData.accuracy[1];
-      barData.rocAuc[3] = barData.rocAuc[1];
-      barData.balancedAccuracy[3] = barData.balancedAccuracy[1];
+      // copyMetricData(barData, confusionMatrixData, 1, 3);
+      copyMetricData(barData, confusionMatrixData, 2, 1);
+    }
 
-      barData.accuracy[1] = barData.accuracy[2];
-      barData.rocAuc[1] = barData.rocAuc[2];
-      barData.balancedAccuracy[1] = barData.balancedAccuracy[2];
-
-      confusionMatrixData.tn[3] = confusionMatrixData.tn[1]; 
-      confusionMatrixData.fn[3] = confusionMatrixData.fn[1];
-      confusionMatrixData.fp[3] = confusionMatrixData.fp[1];
-      confusionMatrixData.tp[3] = confusionMatrixData.tp[1];
-
-      confusionMatrixData.tn[1] = confusionMatrixData.tn[2]; 
-      confusionMatrixData.fn[1] = confusionMatrixData.fn[2];
-      confusionMatrixData.fp[1] = confusionMatrixData.fp[2];
-      confusionMatrixData.tp[1] = confusionMatrixData.tp[2];
+    // Copy last to last last
+    if (sidebarInfo.curGroup === 'commit') {
+      copyMetricData(barData, confusionMatrixData, 1, 3);
     }
 
     // Copy last to current, copy last last to last
     if (sidebarInfo.curGroup === 'recover') {
-      barData.accuracy[2] = barData.accuracy[1];
-      barData.rocAuc[2] = barData.rocAuc[1];
-      barData.balancedAccuracy[2] = barData.balancedAccuracy[1];
-
-      barData.accuracy[1] = barData.accuracy[3];
-      barData.rocAuc[1] = barData.rocAuc[3];
-      barData.balancedAccuracy[1] = barData.balancedAccuracy[3];
-
-      confusionMatrixData.tn[2] = confusionMatrixData.tn[1]; 
-      confusionMatrixData.fn[2] = confusionMatrixData.fn[1];
-      confusionMatrixData.fp[2] = confusionMatrixData.fp[1];
-      confusionMatrixData.tp[2] = confusionMatrixData.tp[1];
-
-      confusionMatrixData.tn[1] = confusionMatrixData.tn[3]; 
-      confusionMatrixData.fn[1] = confusionMatrixData.fn[3];
-      confusionMatrixData.fp[1] = confusionMatrixData.fp[3];
-      confusionMatrixData.tp[1] = confusionMatrixData.tp[3];
+      copyMetricData(barData, confusionMatrixData, 1, 2);
+      copyMetricData(barData, confusionMatrixData, 3, 1);
     }
 
     drawClassificationBarChart(width, svgPadding, component, barData);
@@ -125,6 +111,7 @@
 
   .metrics-tab {
     height: 100%;
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
