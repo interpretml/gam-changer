@@ -111,6 +111,7 @@ export const createPointData = (featureData) => {
       y: featureData.additive[i],
       count: featureData.count[i],
       id: i,
+      ebmID: i,
       leftPointID: i == 0 ? null : i - 1,
       rightPointID: i == featureData.additive.length - 1 ? null : i + 1,
       leftLineIndex: null,

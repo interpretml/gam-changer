@@ -60,7 +60,7 @@ export const brushDuring = (event, svg, multiMenu, ebm, footerStore) => {
       .selectAll('circle.node')
       .classed('selected', d => {
         if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
-          selectedBinIndexes.push(d.id);
+          selectedBinIndexes.push(d.ebmID);
           return true;
         } else {
           return false;
@@ -104,7 +104,7 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
         .classed('hidden', true);
 
       // End move mode
-      resetContextMenu();
+      let modeInfo = resetContextMenu();
 
       // Do not save the user's change (same as clicking the cancel button)
       // Redraw the graph with original data
@@ -123,7 +123,7 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
         // Svelte would trigger an update when update() is called
         // So if we want to avoid call 'recover' twice, we need to set another
         // message
-        if (value.curGroup !== 'commit' && value.curGroup !== 'recover') {
+        if (modeInfo.moveMode || modeInfo.subItemMode !== null) {
           value.curGroup = 'recover';
         } else {
           value.curGroup = 'no action';

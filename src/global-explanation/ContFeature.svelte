@@ -466,6 +466,55 @@
     sidebarStore.set(sidebarInfo);
   };
 
+  const setEBM = async (curGroup, curNodeData) => {
+
+    // Update the complete bin edge definition in the EBM model
+    let newBinEdges = [];
+    let newScores = [];
+
+    // The left point will always have index 0
+    let curPoint = curNodeData[0];
+    let curEBMID = 0;
+
+    while (curPoint.rightPointID !== null) {
+      // Collect x and y
+      newBinEdges.push(curPoint.x);
+      newScores.push(curPoint.y);
+
+      // Update the new ID so we can map them to bin indexes later (needed for
+      // selection to check sample number)
+      curPoint.ebmID = curEBMID;
+      curEBMID++;
+
+      curPoint = curNodeData[curPoint.rightPointID];
+    }
+
+    // Add the right node
+    newBinEdges.push(curPoint.x);
+    newScores.push(curPoint.y);
+    curPoint.ebmID = curEBMID;
+
+    console.log(newBinEdges, newScores);
+
+    await ebm.setModel(newBinEdges, newScores);
+
+    let metrics = ebm.getMetrics();
+
+    if (ebm.isClassification) {
+      sidebarInfo.accuracy = metrics.accuracy;
+      sidebarInfo.rocAuc = metrics.rocAuc;
+      sidebarInfo.balancedAccuracy = metrics.balancedAccuracy;
+      sidebarInfo.confusionMatrix = metrics.confusionMatrix;
+    } else {
+      sidebarInfo.rmse = metrics.rmse;
+      sidebarInfo.mae = metrics.mae;
+    }
+
+    sidebarInfo.curGroup = curGroup;
+
+    sidebarStore.set(sidebarInfo);
+  };
+
   // ---- Interaction Functions ----
 
   /**
@@ -475,6 +524,9 @@
    * needs access to variable `multiMenuControlInfo`
    */
   const resetContextMenu = () => {
+    let moveMode = multiMenuControlInfo.moveMode;
+    let subItemMode = multiMenuControlInfo.subItemMode;
+
     if (multiMenuControlInfo.moveMode) {
       multiMenuControlInfo.moveMode = false;
       multiMenuControlInfo.toSwitchMoveMode = true;
@@ -504,6 +556,8 @@
       value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
       return value;
     });
+
+    return {moveMode: moveMode, subItemMode: subItemMode};
   };
 
   /**
@@ -845,7 +899,9 @@
     // Update EBM
     sidebarInfo.curGroup = 'last';
     sidebarStore.set(sidebarInfo);
-    updateEBM('current');
+
+    // Set the EBM model (need to change bin definition)
+    setEBM('current', state.pointDataBuffer);
 
     // Update the footer message
     footerStore.update(value => {
@@ -895,6 +951,8 @@
     } else {
       console.error('Unknown regression mode ', multiMenuControlInfo.interpolationMode);
     }
+
+    setEBM('current', state.pointDataBuffer);
 
     // Update the footer message
     footerValue.state = `<b>${footerValue.interpolateStyle}</b> ${state.selectedInfo.nodeData.length}
@@ -1086,6 +1144,12 @@
       drawLastEdit(svg);
       // Prepare for next redrawing after recovering the last last edit graph
       state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+    }
+
+    // If the current edit is interpolation, we need to recover the bin definition
+    // in the EBM model
+    if (multiMenuControlInfo.subItemMode === 'interpolation') {
+      setEBM('current', state.pointData);
     }
     
     // Update metrics
