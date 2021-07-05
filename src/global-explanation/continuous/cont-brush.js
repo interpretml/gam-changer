@@ -85,7 +85,7 @@ export const brushDuring = (event, svg, multiMenu, ebm, footerStore) => {
 };
 
 export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
-  brush, component, resetContextMenu, sidebarStore
+  brush, component, resetContextMenu, sidebarStore, setEBM
 ) => {
   // Get the selection boundary
   let selection = event.selection;
@@ -116,6 +116,12 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
         drawLastEdit(svg);
         // Prepare for next redrawing after recovering the last last edit graph
         state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+      }
+
+      // If the current edit is interpolation, we need to recover the bin definition
+      // in the EBM model
+      if (modeInfo.subItemMode === 'interpolation') {
+        setEBM('current', state.pointData);
       }
 
       // Recover the metrics if user is quitting context menu without committing

@@ -378,7 +378,8 @@
     // Add brush
     brush = d3.brush()
       .on('end', e => brushEndSelect(
-        e, svg, multiMenu, bboxStrokeWidth, brush, component, resetContextMenu, sidebarStore
+        e, svg, multiMenu, bboxStrokeWidth, brush, component, resetContextMenu,
+        sidebarStore, setEBM
       ))
       .on('start brush', e => brushDuring(e, svg, multiMenu, ebm, footerStore))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]])
@@ -466,6 +467,11 @@
     sidebarStore.set(sidebarInfo);
   };
 
+  /**
+   * Overwrite the edge definition in the EBM WASM model.
+   * @param {string} curGroup Message to the metrics sidebar
+   * @param {object} curNodeData Node data in `state`
+   */
   const setEBM = async (curGroup, curNodeData) => {
 
     // Update the complete bin edge definition in the EBM model
@@ -493,8 +499,6 @@
     newBinEdges.push(curPoint.x);
     newScores.push(curPoint.y);
     curPoint.ebmID = curEBMID;
-
-    console.log(newBinEdges, newScores);
 
     await ebm.setModel(newBinEdges, newScores);
 
