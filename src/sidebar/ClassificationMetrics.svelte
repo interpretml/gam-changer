@@ -98,9 +98,12 @@
       copyMetricData(barData, confusionMatrixData, 3, 1);
     }
 
-    drawClassificationBarChart(width, svgPadding, component, barData);
+    // We only update the graph if the user is currently in this tab
+    if (sidebarInfo.selectedTab === 'effect') {
+      drawClassificationBarChart(width, svgPadding, component, barData);
+      drawConfusionMatrix(width, svgPadding, component, confusionMatrixData); 
+    }
 
-    drawConfusionMatrix(width, svgPadding, component, confusionMatrixData);
   });
 
 </script>

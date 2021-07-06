@@ -30,7 +30,8 @@
     confusionMatrix: [],
     prCurve: [],
     rocCurve: [],
-    curGroup: 'original'
+    curGroup: 'original',
+    selectedTab: 'feature',
   });
 
   let footerStore = writable({
@@ -95,6 +96,8 @@
     let sampleData = await d3.json('/data/iow-house-sample-binary.json');
 
     ebm = await initEBM(data, sampleData, 'LotFrontage', isClassification);
+
+    console.log(data);
 
     // Remember the number of total samples
     ebm.totalSampleNum = sampleData.samples.length;

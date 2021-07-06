@@ -9,7 +9,6 @@
 
   export let sidebarStore;
 
-  let selectedTab = 'effect';
   let sidebarInfo = {};
   let component = null;
 
@@ -23,6 +22,12 @@
       sidebarStore.set(sidebarInfo);
     }
   });
+
+  const updateSelectedTab = (newTab) => {
+    sidebarInfo.selectedTab = newTab;
+    sidebarInfo = sidebarInfo;
+    sidebarStore.set(sidebarInfo);
+  };
 
 </script>
 
@@ -94,12 +99,19 @@
 
   .tab {
     height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+
     &.hidden {
-      display: none;
+      visibility: hidden;
+      pointer-events: none;
     }
   }
 
   .content {
+    position: relative;
     flex-grow: 1;
     overflow-y: scroll;
     overflow-x: hidden;
@@ -113,24 +125,24 @@
   <div class='header'>
     <div class='tab-button'
       data-text='Effect'
-      class:selected={selectedTab === 'effect'}
-      on:click={() => {selectedTab = 'effect';}}
+      class:selected={sidebarInfo.selectedTab === 'effect'}
+      on:click={() => {updateSelectedTab('effect');}}
     >
       Effect
     </div>
 
     <div class='tab-button'
       data-text='Feature'
-      class:selected={selectedTab === 'feature'}
-      on:click={() => {selectedTab = 'feature';}}
+      class:selected={sidebarInfo.selectedTab === 'feature'}
+      on:click={() => {updateSelectedTab('feature');}}
     >
       Feature
     </div>
 
     <div class='tab-button'
       data-text='History'
-      class:selected={selectedTab === 'history'}
-      on:click={() => {selectedTab = 'history';}}
+      class:selected={sidebarInfo.selectedTab === 'history'}
+      on:click={() => {updateSelectedTab('history');}}
     >
       History
     </div>
@@ -139,15 +151,15 @@
 
   <div class='content'>
 
-    <div class='tab' class:hidden={selectedTab !== 'effect'}>
+    <div class='tab' class:hidden={sidebarInfo.selectedTab !== 'effect'}>
       <ClassificationMetrics sidebarStore={sidebarStore}/>
     </div>
 
-    <div class='tab' class:hidden={selectedTab !== 'feature'}>
+    <div class='tab' class:hidden={sidebarInfo.selectedTab !== 'feature'}>
       <Feature />
     </div>
 
-    <div class='tab' class:hidden={selectedTab !== 'history'}>
+    <div class='tab' class:hidden={sidebarInfo.selectedTab !== 'history'}>
       <History />
     </div>
     
