@@ -55,8 +55,13 @@
 
     display: flex;
     align-items: flex-end;
-    justify-content: space-around;
+    justify-content: space-between;
     flex-shrink: 0;
+
+    // Hack for firefox's space-evenly
+    &::before, &::after {
+      content: '';
+    }
   }
 
   .tab-button {
@@ -113,7 +118,7 @@
   .content {
     position: relative;
     flex-grow: 1;
-    overflow-y: scroll;
+    overflow-y: hidden;
     overflow-x: hidden;
   }
 
@@ -156,7 +161,7 @@
     </div>
 
     <div class='tab' class:hidden={sidebarInfo.selectedTab !== 'feature'}>
-      <Feature />
+      <Feature sidebarStore={sidebarStore}/>
     </div>
 
     <div class='tab' class:hidden={sidebarInfo.selectedTab !== 'history'}>

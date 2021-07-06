@@ -6,11 +6,11 @@
   import InterCatCatGlobalExplain from './global-explanation/InterCatCatFeature.svelte';
   import Sidebar from './sidebar/Sidebar.svelte';
 
-  import { writable, derived } from 'svelte/store';
-
   import * as d3 from 'd3';
   import { initEBM } from './ebm';
   import { onMount } from 'svelte';
+  import { writable, derived } from 'svelte/store';
+  import { kde } from './sidebar/kde';
 
   import redoIconSVG from './img/redo-icon.svg';
   import undoIconSVG from './img/undo-icon.svg';
@@ -97,7 +97,45 @@
 
     ebm = await initEBM(data, sampleData, 'LotFrontage', isClassification);
 
+    // Get the distribution of test data on each variable
+    const testDataHistCount = ebm.getHistBinCounts();
+    console.log(testDataHistCount);
     console.log(data);
+
+    // Create the sidebar feature data
+    const bandwidth = 10;
+    let featurePlotData = {cont: [], cat: []};
+    let featureDataNameMap = new Map();
+    data.features.forEach((d, i) => featureDataNameMap.set(d.name, i));
+
+    let sampleDataNameMap = new Map();
+    sampleData.featureNames.forEach((d, i) => sampleDataNameMap.set(d, i));
+
+    for (let j = 0; j < testDataHistCount.length; j++) {
+      let curName = sampleData.featureNames[j];
+      let curType = sampleData.featureTypes[j];
+
+      if (curType === 'continuous') {
+        let histEdge = data.features[featureDataNameMap.get(curName)].histEdge.slice(0, -1);
+        featurePlotData.cont.push({
+          id: sampleDataNameMap.get(curName),
+          name: curName,
+          histEdge: histEdge,
+          histCount: testDataHistCount[j],
+          // histDensity: kde(bandwidth, histEdge, testDataHistCount[j])
+        });
+      } else {
+        let histEdge = data.features[featureDataNameMap.get(curName)].histEdge;
+        featurePlotData.cat.push({
+          id: sampleDataNameMap.get(curName),
+          name: curName,
+          histEdge: histEdge,
+          histCount: testDataHistCount[j]
+        });
+      }
+    }
+
+    sidebarInfo.featurePlotData = featurePlotData;
 
     // Remember the number of total samples
     ebm.totalSampleNum = sampleData.samples.length;

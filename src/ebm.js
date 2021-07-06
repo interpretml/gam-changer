@@ -84,7 +84,7 @@ function preInstantiate(imports) {
 }
 
 const E_NOEXPORTRUNTIME = "Operation requires compiling with --exportRuntime";
-const F_NOEXPORTRUNTIME = function() { throw Error(E_NOEXPORTRUNTIME); };
+const F_NOEXPORTRUNTIME = function () { throw Error(E_NOEXPORTRUNTIME); };
 
 /** Prepares the final module once instantiation is complete. */
 function postInstantiate(extendedExports, instance) {
@@ -307,7 +307,7 @@ function postInstantiate(extendedExports, instance) {
 
   // Pull basic exports to extendedExports so code in preInstantiate can use them
   extendedExports.memory = extendedExports.memory || memory;
-  extendedExports.table  = extendedExports.table  || table;
+  extendedExports.table = extendedExports.table || table;
 
   // Demangle exports and provide the usual utility on the prototype
   return demangle(exports, extendedExports);
@@ -377,13 +377,13 @@ function demangle(exports, extendedExports = {}) {
       const className = name.substring(0, hash);
       const classElem = curr[className];
       if (typeof classElem === "undefined" || !classElem.prototype) {
-        const ctor = function(...args) {
+        const ctor = function (...args) {
           return ctor.wrap(ctor.prototype.constructor(0, ...args));
         };
         ctor.prototype = {
           valueOf() { return this[THIS]; }
         };
-        ctor.wrap = function(thisValue) {
+        ctor.wrap = function (thisValue) {
           return Object.create(ctor.prototype, { [THIS]: { value: thisValue, writable: false } });
         };
         if (classElem) Object.getOwnPropertyNames(classElem).forEach(name =>
@@ -410,7 +410,7 @@ function demangle(exports, extendedExports = {}) {
             return elem(...args);
           }).original = elem;
         } else { // instance method
-          (curr[name] = function(...args) { // !
+          (curr[name] = function (...args) { // !
             setArgumentsLength(args.length);
             return elem(this[THIS], ...args);
           }).original = elem;
@@ -446,40 +446,40 @@ var loader = {
 };
 
 class ConsoleImport {
-    
-    constructor() {
-        
-        this._exports = null;
 
-        this.wasmImports = {
-            consoleBindings: {
-                   _log: (message) => {
-        
-                    console.log(this._exports.__getString(message));
-        
-                }
-            }
-        };
-    }
+  constructor() {
 
-    get wasmExports() {
-		return this._exports
-	}
-	set wasmExports(e) {
-		this._exports = e;
-	}
+    this._exports = null;
 
-	getFn(fnIndex) {
-		if (!this.wasmExports)
-			throw new Error(
-				'Make sure you set .wasmExports after instantiating the Wasm module but before running the Wasm module.',
-			)
-		return this._exports.table.get(fnIndex)
-	}
+    this.wasmImports = {
+      consoleBindings: {
+        _log: (message) => {
+
+          console.log(this._exports.__getString(message));
+
+        }
+      }
+    };
+  }
+
+  get wasmExports() {
+    return this._exports
+  }
+  set wasmExports(e) {
+    this._exports = e;
+  }
+
+  getFn(fnIndex) {
+    if (!this.wasmExports)
+      throw new Error(
+        'Make sure you set .wasmExports after instantiating the Wasm module but before running the Wasm module.',
+      )
+    return this._exports.table.get(fnIndex)
+  }
 }
 
 const Console = new ConsoleImport();
-const imports = {...Console.wasmImports};
+const imports = { ...Console.wasmImports };
 
 
 const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) => {
@@ -571,6 +571,12 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
         let binEdges = [];
         let scores = [];
 
+
+        // We also pass the histogram edges (defined by InterpretML) to WASM. We use
+        // WASM EBM to count bin size based on the test set, so that we only iterate
+        // the test data once.
+        let histBinEdges = [];
+
         // This loop won't encounter interaction terms
         for (let i = 0; i < sampleData.featureNames.length; i++) {
           let curName = sampleData.featureNames[i];
@@ -578,11 +584,14 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
 
           let curScore = featureData.features[curIndex].additive.slice();
           let curBinEdge;
+          let curHistBinEdge;
 
           if (sampleData.featureTypes[i] === 'categorical') {
             curBinEdge = featureData.features[curIndex].binLabel.slice();
+            curHistBinEdge = featureData.features[curIndex].histEdge.slice();
           } else {
             curBinEdge = featureData.features[curIndex].binEdge.slice(0, -1);
+            curHistBinEdge = featureData.features[curIndex].histEdge.slice(0, -1);
           }
 
           // Pin the inner 1D arrays
@@ -592,8 +601,12 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
           let curScorePtr = __newArray(wasm.Float64Array_ID, curScore);
           __pin(curScorePtr);
 
+          let curHistBinEdgesPtr = __newArray(wasm.Float64Array_ID, curHistBinEdge);
+          __pin(curHistBinEdgesPtr);
+
           binEdges.push(curBinEdgePtr);
           scores.push(curScorePtr);
+          histBinEdges.push(curHistBinEdgesPtr);
         }
 
         // Pin the 2D arrays
@@ -601,6 +614,8 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
         __pin(binEdgesPtr);
         const scoresPtr = __newArray(wasm.Float64Array2D_ID, scores);
         __pin(scoresPtr);
+        const histBinEdgesPtr = __newArray(wasm.Float64Array2D_ID, histBinEdges);
+        __pin(histBinEdgesPtr);
 
         /**
          * Step 2: For the interaction effect, we want to store the feature
@@ -685,6 +700,7 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
           featureTypesPtr,
           binEdgesPtr,
           scoresPtr,
+          histBinEdgesPtr,
           featureData.intercept,
           interactionIndexesPtr,
           interactionBinEdgesPtr,
@@ -704,6 +720,7 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
         __unpin3DArray(interactionScoresPtr);
         __unpin3DArray(interactionBinEdgesPtr);
         __unpin2DArray(interactionIndexesPtr);
+        __unpin2DArray(histBinEdgesPtr);
         __unpin2DArray(scoresPtr);
         __unpin2DArray(binEdgesPtr);
         __unpin(featureTypesPtr);
@@ -743,6 +760,12 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
         let count = this.ebm.getSelectedSampleNum(binIndexesPtr);
         __unpin(binIndexesPtr);
         return count;
+      }
+
+      getHistBinCounts() {
+        let histBinCounts = __getArray(this.ebm.histBinCounts);
+        histBinCounts = histBinCounts.map(p => __getArray(p));
+        return histBinCounts;
       }
 
       updateModel(changedBinIndexes, changedScores) {
