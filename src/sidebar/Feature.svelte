@@ -13,6 +13,8 @@
   let component = null;
   let selectedTab = 'cont';
   let sidebarInfo = {};
+  let tabHeights = {cont: '100%', cat: '100%'};
+  $: curTabHeight = tabHeights[selectedTab];
   let featureInitialized = false;
   let waitingToDrawDIV = false;
   
@@ -42,6 +44,72 @@
     const totalSampleNum = sidebarInfo.totalSampleNum;
 
     if (waitingToDrawDIV) {
+
+      // Draw the legend
+      let legendSVG = d3.select(component)
+        .select('svg#legend')
+        .attr('width', width)
+        .attr('height', 40);
+      
+      let leftGroup = legendSVG.append('g')
+        .attr('class', 'left')
+        .attr('transform', `translate(${svgCatPadding.left}, 10)`);
+
+      let rightGroup = legendSVG.append('g')
+        .attr('class', 'right')
+        .attr('transform', `translate(${svgCatPadding.left + 175}, 6)`);
+
+      
+      leftGroup.append('text')
+        .attr('x', 0)
+        .attr('y', 0)
+        .style('dominant-baseline', 'hanging')
+        .style('font-size', '0.9em')
+        .style('font-weight', 600)
+        .text('Frequency Distributions')
+        .append('tspan')
+        .style('font-size', '0.9em')
+        .style('font-weight', 400)
+        .style('fill', 'gray')
+        .attr('x', 0)
+        .attr('dy', '1.1em')
+        .text('Sorted by correlation ↓');
+
+      let labelWidth = 60;
+      rightGroup.append('rect')
+        .attr('width', labelWidth)
+        .attr('height', 16)
+        .attr('rx', 3)
+        .style('fill', '#B5CEE3');
+
+      rightGroup.append('text')
+        .attr('class', 'legend-title')
+        .attr('y', 2)
+        .attr('x', labelWidth / 2)
+        .style('dominant-baseline', 'hanging')
+        .style('text-anchor', 'middle')
+        .style('font-size', '0.8em')
+        .style('font-weight', 300)
+        .text('all');
+
+      rightGroup.append('rect')
+        .attr('y', 20)
+        .attr('width', labelWidth)
+        .attr('height', 16)
+        .attr('rx', 3)
+        .style('fill', '#FFD499');
+
+      rightGroup.append('text')
+        .attr('class', 'legend-title')
+        .attr('y', 22)
+        .attr('x', labelWidth / 2)
+        .style('dominant-baseline', 'hanging')
+        .style('text-anchor', 'middle')
+        .style('font-size', '0.8em')
+        .style('font-weight', 300)
+        .text('selected');
+      
+
 
       sortedContFeatures.forEach(f => {
 
@@ -329,6 +397,7 @@
     overflow-y: scroll;
     overflow-x: hidden;
     position: relative;
+    border-top: 1px solid hsl(210, 20%, 90%);
   }
 
   .feature-cont, .feature-cat {
@@ -340,9 +409,13 @@
     gap: 0px;
 
     &.hidden {
-      visibility: hidden;
-      pointer-events: none;
+      display: none;
     }
+  }
+
+  .feature-legend {
+    position: relative;
+    padding: 5px 0 4px 0;
   }
 
   .feature {
@@ -446,6 +519,10 @@
   </div>
 
   <div class='feature-list'>
+
+    <div class='feature-legend'>
+      <svg id='legend'></svg>
+    </div>
 
     <div class='feature-cont' class:hidden={selectedTab !== 'cont'}>
       {#each sortedContFeatures as f (f.id)}
