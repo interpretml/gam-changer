@@ -27,3 +27,46 @@ export const transpose2dArray = (array) => {
   }
   return newArray;
 };
+
+/**
+ * Shuffle the given array in place
+ * @param {[any]} array 
+ * @returns shuffled array
+ */
+export const shuffle = (array) => {
+
+  let currentIndex = array.length;
+  let randomIndex;
+
+  while (currentIndex !== 0) {
+
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // Swap random and cur index
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
+  }
+
+  return array;
+};
+
+export const l1Distance = (array1, array2) => {
+  let distance = 0;
+
+  for (let i = 0; i < array1.length; i++) {
+    distance += Math.abs(array1[i] - array2[i]);
+  }
+
+  return distance;
+};
+
+export const l2Distance = (array1, array2) => {
+  let distance = 0;
+
+  for (let i = 0; i < array1.length; i++) {
+    distance += (array1[i] - array2[i]) ** 2;
+  }
+
+  return Math.sqrt(distance);
+};

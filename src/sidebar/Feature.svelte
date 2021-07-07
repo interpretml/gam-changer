@@ -2,14 +2,16 @@
 
   import * as d3 from 'd3';
   import { onMount, afterUpdate } from 'svelte';
+  import { flip } from 'svelte/animate';
+  import { quadInOut, expoInOut, cubicInOut } from 'svelte/easing';
   import { chiCdf } from './chi2';
-  import { round } from '../utils';
+  import { round, shuffle, l1Distance } from '../utils';
 
   export let sidebarStore;
   // export let width = 0;
 
   let component = null;
-  let selectedTab = 'cont';
+  let selectedTab = 'cat';
   let sidebarInfo = {};
   let featureInitialized = false;
   let waitingToDrawDIV = false;
@@ -214,22 +216,29 @@
     }
 
     // Update the feature graph
-    if (sidebarInfo.curGroup === 'updateFeature') {
+    if (sidebarInfo.curGroup === 'updateFeature' && featureInitialized) {
 
-      sortedContFeatures = sidebarInfo.featurePlotData.cont;
-      sortedCatFeatures = sidebarInfo.featurePlotData.cat;
+      let tempSortedContFeatures = sidebarInfo.featurePlotData.cont;
+      let tempSortedCatFeatures = sidebarInfo.featurePlotData.cat;
 
       // Update the overlay histogram
-      const selectedCount = sortedContFeatures[0].histSelectedCount.reduce((a, b) => a + b);
+      const selectedSampleCount = sortedContFeatures[0].histSelectedCount.reduce((a, b) => a + b);
+      const totalSampleCount = sortedContFeatures[0].histCount.reduce((a, b) => a + b);
+      let needToResort = false;
 
-      sortedContFeatures.forEach(f => {
+      // Step 1: update the continuous feature graph
+      tempSortedContFeatures.forEach(f => {
         let svg = d3.select(component)
-          .select(`.feature-${f.id}`)
-          .select('svg');
+          .select(`svg#cont-feature-svg-${f.id}`);
 
-        let curDensitySelected = f.histSelectedCount.map(c => selectedCount === 0 ? 0 : c / selectedCount);
+        let curDensitySelected = f.histSelectedCount.map(c => selectedSampleCount === 0 ? 0 : c / selectedSampleCount);
+        let globalDensity = f.histCount.map(c => c / totalSampleCount);
+
+        // Compute teh distance between subset density vs. global density
+        f.distanceScore = l1Distance(globalDensity, curDensitySelected);
 
         const yMax = d3.max(curDensitySelected) === 0 ? 1 : d3.max(curDensitySelected);
+        needToResort = d3.max(curDensitySelected) === 0 ? false : true;
 
         let yScaleBar = d3.scaleLinear()
           .domain([0, yMax])
@@ -245,34 +254,62 @@
           .attr('height', d => svgHeight - svgContPadding.bottom - yScaleBar(d));
       });
 
-      sortedCatFeatures.forEach(f => {
+      if (needToResort) {
+        d3.timeout(() => {
+          tempSortedContFeatures.sort((a, b) => b.distanceScore - a.distanceScore);
+          sortedContFeatures = tempSortedContFeatures;
+        }, 700);
+      } else {
+        sortedContFeatures = tempSortedContFeatures;
+      }
+
+      // Step 2: update the categorical feature graph
+      needToResort = false;
+
+      tempSortedCatFeatures.forEach(f => {
 
         let svg = d3.select(component)
-          .select(`.feature-${f.id}`)
-          .select('svg');
+          .select(`#cat-feature-svg-${f.id}`);
 
         let curData = f.histEdge.map((d, i) => ({
           edge: f.histEdge[i],
           count: f.histCount[i],
           selectedCount: f.histSelectedCount[i],
-          selectedDensity: selectedCount === 0 ? 0 : f.histSelectedCount[i] / selectedCount
+          selectedDensity: selectedSampleCount === 0 ? 0 : f.histSelectedCount[i] / selectedSampleCount
         }));
+
+        // Compute the distance score
+        let selectedDensity = curData.map(d => d.selectedDensity);
+        let globalDensity = curData.map(d => d.count / totalSampleCount);
+        f.distanceScore = l1Distance(globalDensity, selectedDensity);
 
         curData.sort((a, b) => b.count - a.count);
 
         const yMax = d3.max(curData, d => d.selectedDensity) === 0 ? 1 : d3.max(curData, d => d.selectedDensity);
+        needToResort = d3.max(curData, d => d.selectedDensity) === 0 ? false : true;
+
         let yScaleSelected = d3.scaleLinear()
           .domain([0, yMax])
           .range([svgHeight - svgCatPadding.bottom, svgCatPadding.top + titleHeight]);
 
         svg.select('g.mid-content')
           .selectAll('rect.selected-bar')
-          .data(curData)
-          .transition('bar')
+          .data(curData, d => d.edge)
+          .join('rect')
+          .transition('cont-bar')
           .duration(500)
           .attr('y', d => yScaleSelected(d.selectedDensity))
           .attr('height', d => svgHeight - svgCatPadding.bottom - yScaleSelected(d.selectedDensity));
       });
+
+      if (needToResort) {
+        d3.timeout(() => {
+          tempSortedCatFeatures.sort((a, b) => b.distanceScore - a.distanceScore);
+          sortedCatFeatures = tempSortedCatFeatures;
+        }, 700);
+      } else {
+        sortedCatFeatures = tempSortedCatFeatures;
+      }
       
       sidebarInfo.curGroup = '';
       sidebarStore.set(sidebarInfo);
@@ -317,6 +354,7 @@
   }
 
   .feature {
+    will-change: transform, height;
     margin: auto;
     border-bottom: 1px solid change-color($blue-500, $alpha: 0.3);
   }
@@ -364,9 +402,9 @@
   }
 
   :global(.feature-tab .area-path) {
-    fill: $blue-500;
-    stroke: $blue-500;
-    opacity: 0.3;
+    fill: $blue-300;
+    stroke: $blue-300;
+    opacity: 1;
     stroke-linejoin: round;
   }
 
@@ -419,16 +457,22 @@
 
     <div class='feature-cont' class:hidden={selectedTab !== 'cont'}>
       {#each sortedContFeatures as f (f.id)}
-        <div class={`feature feature-${f.id}`} style={`height: ${svgHeight}px;`}>
-          <svg width={width} height={svgHeight}></svg>
+        <div class={`feature feature-${f.id}`}
+          style={`height: ${svgHeight}px;`}
+          animate:flip="{{duration: d => 30 * Math.sqrt(d)}}"
+        >
+          <svg id={`cont-feature-svg-${f.id}`} width={width} height={svgHeight}></svg>
         </div>
       {/each}
     </div>
 
     <div class='feature-cat' class:hidden={selectedTab !== 'cat'}>
       {#each sortedCatFeatures as f (f.id)}
-        <div class={`feature feature-${f.id}`} style={`height: ${svgHeight}px;`}>
-          <svg width={width} height={svgHeight}></svg>
+        <div class={`feature feature-${f.id}`}
+          style={`height: ${svgHeight}px;`}
+          animate:flip="{{duration: d => 30 * Math.sqrt(d)}}"
+        >
+          <svg id={`cat-feature-svg-${f.id}`} width={width} height={svgHeight}></svg>
         </div>
       {/each}
     </div>

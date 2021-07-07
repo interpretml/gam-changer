@@ -121,6 +121,7 @@
           name: curName,
           histEdge: histEdge,
           histCount: testDataHistCount[j],
+          histSelectedCount: new Array(testDataHistCount[j].length).fill(0)
           // histDensity: kde(bandwidth, histEdge, testDataHistCount[j])
         });
       } else {
@@ -129,7 +130,8 @@
           id: sampleDataNameMap.get(curName),
           name: curName,
           histEdge: histEdge,
-          histCount: testDataHistCount[j]
+          histCount: testDataHistCount[j],
+          histSelectedCount: new Array(testDataHistCount[j].length).fill(0)
         });
       }
     }
