@@ -31,7 +31,7 @@
     prCurve: [],
     rocCurve: [],
     curGroup: 'original',
-    selectedTab: 'effect',
+    selectedTab: 'feature',
   });
 
   let footerStore = writable({

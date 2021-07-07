@@ -22,7 +22,7 @@
   const svgHeight = 40;
 
   const svgCatPadding = {top: 2, bottom: 2, left: 10, right: 10};
-  const svgContPadding = {top: 2, bottom: 2, left: 0, right: 0};
+  const svgContPadding = svgCatPadding;
 
   const titleHeight = 10;
   let catBarWidth = 0;
@@ -42,6 +42,7 @@
     const totalSampleNum = sidebarInfo.totalSampleNum;
 
     if (waitingToDrawDIV) {
+
       sortedContFeatures.forEach(f => {
 
         let svg = d3.select(component)
@@ -63,44 +64,35 @@
         // Add the feature title
         topContent.append('text')
           .attr('class', 'feature-title')
-          .attr('x', 3)
+          .attr('x', 0)
           .text(f.name);
 
         // Compute the frequency of test samples
         let curDensity = f.histCount.map((d, i) => [f.histEdge[i], d / totalSampleNum]);
-        curDensity.unshift([f.histEdge[0], 0]);
-        curDensity.push([f.histEdge[f.histEdge.length - 1], 0]);
 
         // Create the axis scales
-        // histEdge, histCount, histDensity
+        let expectedBarWidth = (width - svgCatPadding.left - svgCatPadding.right) / f.histEdge.length;
         let xScale = d3.scaleLinear()
           .domain(d3.extent(f.histEdge))
-          .range([0, width - svgContPadding.left - svgContPadding.right]);
+          .range([0, width - svgContPadding.left - svgContPadding.right - expectedBarWidth]);
+
+        let barWidth = xScale(f.histEdge[1]) - xScale(f.histEdge[0]);
 
         let yScale = d3.scaleLinear()
           .domain([0, d3.max(curDensity, d => d[1])])
           .range([svgHeight - svgContPadding.bottom, svgContPadding.top + titleHeight]);
 
-        let curve = d3.line()
-          .curve(d3.curveMonotoneX)
-          .x(d => xScale(d[0]))
-          .y(d => yScale(d[1]));
-        
-        // Draw the area curve
-        lowContent.append('path')
-          .attr('class', 'area-path')
-          .datum(curDensity)
-          .attr('d', curve);
-        
-        // Draw a bottom border
-        lowContent.append('path')
-          .attr('class', 'area-path')
-          .attr('d', `M${xScale(curDensity[0][0])}, ${yScale(curDensity[0][1])}
-            L${xScale(curDensity[curDensity.length - 1][0])}, ${yScale(curDensity[curDensity.length - 1][1])}`);
+        lowContent.selectAll('rect.global-bar')
+          .data(curDensity)
+          .join('rect')
+          .attr('class', 'global-bar')
+          .attr('x', d => xScale(d[0]))
+          .attr('y', d => yScale(d[1]))
+          .attr('width', barWidth)
+          .attr('height', d => svgHeight - svgCatPadding.bottom - yScale(d[1]));
 
         // Draw overlay layer
         let curDensitySelected = new Array(f.histCount.length).fill(0);
-        const binWidth = xScale(f.histEdge[1]) - xScale(f.histEdge[0]);
 
         const yMax = d3.max(curDensitySelected) === 0 ? 1 : d3.max(curDensitySelected);
 
@@ -108,13 +100,13 @@
           .domain([0, yMax])
           .range([svgHeight - svgContPadding.bottom, svgContPadding.top + titleHeight]);
 
-        midContent.selectAll('rect.selected-sample')
+        midContent.selectAll('rect.selected-bar')
           .data(curDensitySelected)
           .join('rect')
-          .attr('class', 'selected-sample')
-          .attr('x', (d, i) => xScale(f.histEdge[i]) - binWidth / 2)
+          .attr('class', 'selected-bar')
+          .attr('x', (d, i) => xScale(f.histEdge[i]))
           .attr('y', d => yScaleBar(d))
-          .attr('width', binWidth)
+          .attr('width', barWidth)
           .attr('height', d => svgHeight - svgContPadding.bottom - yScaleBar(d));
 
       });
@@ -245,7 +237,7 @@
           .range([svgHeight - svgContPadding.bottom, svgContPadding.top + titleHeight]);
 
         svg.select('g.mid-content')
-          .selectAll('rect.selected-sample')
+          .selectAll('rect.selected-bar')
           .data(curDensitySelected)
           .join('rect')
           .transition('bar')
