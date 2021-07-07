@@ -11,7 +11,7 @@
   // export let width = 0;
 
   let component = null;
-  let selectedTab = 'cat';
+  let selectedTab = 'cont';
   let sidebarInfo = {};
   let featureInitialized = false;
   let waitingToDrawDIV = false;
@@ -402,14 +402,14 @@
   }
 
   :global(.feature-tab .area-path) {
-    fill: $blue-300;
-    stroke: $blue-300;
+    fill: $pastel1-blue;
+    stroke: $pastel1-blue;
     opacity: 1;
     stroke-linejoin: round;
   }
 
   :global(.feature-tab .global-bar) {
-    fill: $blue-300;
+    fill: $pastel1-blue;
     opacity: 1;
   }
 
@@ -459,7 +459,7 @@
       {#each sortedContFeatures as f (f.id)}
         <div class={`feature feature-${f.id}`}
           style={`height: ${svgHeight}px;`}
-          animate:flip="{{duration: d => 30 * Math.sqrt(d)}}"
+          animate:flip="{{duration: 800}}"
         >
           <svg id={`cont-feature-svg-${f.id}`} width={width} height={svgHeight}></svg>
         </div>
@@ -470,7 +470,7 @@
       {#each sortedCatFeatures as f (f.id)}
         <div class={`feature feature-${f.id}`}
           style={`height: ${svgHeight}px;`}
-          animate:flip="{{duration: d => 30 * Math.sqrt(d)}}"
+          animate:flip="{{duration: 800}}"
         >
           <svg id={`cat-feature-svg-${f.id}`} width={width} height={svgHeight}></svg>
         </div>
