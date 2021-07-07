@@ -9,7 +9,7 @@
   // export let width = 0;
 
   let component = null;
-  let selectedTab = 'cat';
+  let selectedTab = 'cont';
   let sidebarInfo = {};
   let featureInitialized = false;
   let waitingToDrawDIV = false;
@@ -97,18 +97,20 @@
             L${xScale(curDensity[curDensity.length - 1][0])}, ${yScale(curDensity[curDensity.length - 1][1])}`);
 
         // Draw overlay layer
-        let curDensitySelected = new Array(f.histCount.length).fill(1);
+        let curDensitySelected = new Array(f.histCount.length).fill(0);
         const binWidth = xScale(f.histEdge[1]) - xScale(f.histEdge[0]);
 
+        const yMax = d3.max(curDensitySelected) === 0 ? 1 : d3.max(curDensitySelected);
+
         let yScaleBar = d3.scaleLinear()
-          .domain([0, d3.max(curDensitySelected)])
+          .domain([0, yMax])
           .range([svgHeight - svgContPadding.bottom, svgContPadding.top + titleHeight]);
 
         midContent.selectAll('rect.selected-sample')
           .data(curDensitySelected)
           .join('rect')
           .attr('class', 'selected-sample')
-          .attr('x', (d, i) => xScale(f.histEdge[i]))
+          .attr('x', (d, i) => xScale(f.histEdge[i]) - binWidth / 2)
           .attr('y', d => yScaleBar(d))
           .attr('width', binWidth)
           .attr('height', d => svgHeight - svgContPadding.bottom - yScaleBar(d));
@@ -219,6 +221,29 @@
 
       // Update the overlay histogram
       const selectedCount = sortedContFeatures[0].histSelectedCount.reduce((a, b) => a + b);
+
+      sortedContFeatures.forEach(f => {
+        let svg = d3.select(component)
+          .select(`.feature-${f.id}`)
+          .select('svg');
+
+        let curDensitySelected = f.histSelectedCount.map(c => selectedCount === 0 ? 0 : c / selectedCount);
+
+        const yMax = d3.max(curDensitySelected) === 0 ? 1 : d3.max(curDensitySelected);
+
+        let yScaleBar = d3.scaleLinear()
+          .domain([0, yMax])
+          .range([svgHeight - svgContPadding.bottom, svgContPadding.top + titleHeight]);
+
+        svg.select('g.mid-content')
+          .selectAll('rect.selected-sample')
+          .data(curDensitySelected)
+          .join('rect')
+          .transition('bar')
+          .duration(500)
+          .attr('y', d => yScaleBar(d))
+          .attr('height', d => svgHeight - svgContPadding.bottom - yScaleBar(d));
+      });
 
       sortedCatFeatures.forEach(f => {
 
