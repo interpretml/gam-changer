@@ -379,7 +379,7 @@
     brush = d3.brush()
       .on('end', e => brushEndSelect(
         e, svg, multiMenu, bboxStrokeWidth, brush, component, resetContextMenu,
-        sidebarStore, setEBM
+        sidebarStore, setEBM, updateFeatureSidebar, resetFeatureSidebar
       ))
       .on('start brush', e => brushDuring(e, svg, multiMenu, ebm, footerStore))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]])
@@ -516,6 +516,47 @@
 
     sidebarInfo.curGroup = curGroup;
 
+    sidebarStore.set(sidebarInfo);
+  };
+
+  /**
+   * Count the feature distribution for the selected test samples
+   * @param {[number]} binIndexes Selected bin indexes
+   */
+  const updateFeatureSidebar = async (binIndexes) => {
+    // Get the selected counts
+    let selectedHistCounts = ebm.getSelectedSampleDist(binIndexes);
+
+    // Update the counts in the store
+    for (let i = 0; i < sidebarInfo.featurePlotData.cont.length; i++) {
+      let curID = sidebarInfo.featurePlotData.cont[i].id;
+      sidebarInfo.featurePlotData.cont[i].histSelectedCount = selectedHistCounts[curID];
+    }
+
+    for (let i = 0; i < sidebarInfo.featurePlotData.cat.length; i++) {
+      let curID = sidebarInfo.featurePlotData.cat[i].id;
+      sidebarInfo.featurePlotData.cat[i].histSelectedCount = selectedHistCounts[curID];
+    }
+
+    sidebarInfo.curGroup = 'updateFeature';
+    sidebarStore.set(sidebarInfo);
+  };
+
+  /**
+   * Reset the feature count of selected samples to 0
+   */
+  const resetFeatureSidebar = async () => {
+    for (let i = 0; i < sidebarInfo.featurePlotData.cont.length; i++) {
+      sidebarInfo.featurePlotData.cont[i].histSelectedCount = new Array(
+        sidebarInfo.featurePlotData.cont[i].histSelectedCount.length).fill(0);
+    }
+
+    for (let i = 0; i < sidebarInfo.featurePlotData.cat.length; i++) {
+      sidebarInfo.featurePlotData.cat[i].histSelectedCount = new Array(
+        sidebarInfo.featurePlotData.cat[i].histSelectedCount.length).fill(0);
+    }
+
+    sidebarInfo.curGroup = 'updateFeature';
     sidebarStore.set(sidebarInfo);
   };
 

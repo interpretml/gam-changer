@@ -1,3 +1,3 @@
-# Sparrow
+# GAM Changer
 
-> Aligning AI model behaviors with human users' knowledge through interactive model editing.
+> GAM-changing experience to align ML model behaviors with human users' knowledge

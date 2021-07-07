@@ -85,7 +85,8 @@ export const brushDuring = (event, svg, multiMenu, ebm, footerStore) => {
 };
 
 export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
-  brush, component, resetContextMenu, sidebarStore, setEBM
+  brush, component, resetContextMenu, sidebarStore, setEBM, updateFeatureSidebar,
+  resetFeatureSidebar
 ) => {
   // Get the selection boundary
   let selection = event.selection;
@@ -140,6 +141,9 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
       // Remove the selection bbox
       svgSelect.selectAll('g.line-chart-content-group g.select-bbox-group').remove();
 
+      // Reset the feature sidebar
+      resetFeatureSidebar();
+
       return idleTimeout = setTimeout(idled, idleDelay);
     }
   } else {
@@ -148,11 +152,14 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
     let xRange = [state.curXScale.invert(selection[0][0]), state.curXScale.invert(selection[1][0])];
     let yRange = [state.curYScale.invert(selection[1][1]), state.curYScale.invert(selection[0][1])];
 
+    let selectedBinIndexes = [];
+
     // Highlight the selected dots
     svgSelect.select('g.line-chart-node-group')
       .selectAll('circle.node')
       .classed('selected', d => {
         if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
+          selectedBinIndexes.push(d.ebmID);
           state.selectedInfo.nodeData.push({x: d.x, y: d.y, id: d.id});
           return true;
         } else {
@@ -194,6 +201,9 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
       d3.select(multiMenu)
         .call(moveMenubar, svg, component)
         .classed('hidden', false);
+
+      // Trigger a counting of the feature distribution of the selected samples
+      updateFeatureSidebar(selectedBinIndexes);
     }
 
     // Remove the brush box

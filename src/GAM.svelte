@@ -99,11 +99,10 @@
 
     // Get the distribution of test data on each variable
     const testDataHistCount = ebm.getHistBinCounts();
-    console.log(testDataHistCount);
     console.log(data);
 
     // Create the sidebar feature data
-    const bandwidth = 10;
+    // const bandwidth = 10;
     let featurePlotData = {cont: [], cat: []};
     let featureDataNameMap = new Map();
     data.features.forEach((d, i) => featureDataNameMap.set(d.name, i));

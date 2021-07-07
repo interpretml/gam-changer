@@ -19,6 +19,12 @@
 
   const svgHeight = 40;
 
+  const svgCatPadding = {top: 2, bottom: 2, left: 10, right: 10};
+  const svgContPadding = {top: 2, bottom: 2, left: 0, right: 0};
+
+  const titleHeight = 10;
+  let catBarWidth = 0;
+
   let sortedContFeatures = [];
   let sortedCatFeatures = [];
 
@@ -35,9 +41,6 @@
 
     if (waitingToDrawDIV) {
       sortedContFeatures.forEach(f => {
-        const svgPadding = {top: 2, bottom: 2, left: 0, right: 0};
-
-        const titleHeight = 10;
 
         let svg = d3.select(component)
           .select(`.feature-${f.id}`)
@@ -45,15 +48,15 @@
 
         let lowContent = svg.append('g')
           .attr('class', 'low-content')
-          .attr('transform', `translate(${svgPadding.left}, ${svgPadding.top})`);
+          .attr('transform', `translate(${svgContPadding.left}, ${svgContPadding.top})`);
 
         let midContent = svg.append('g')
           .attr('class', 'mid-content')
-          .attr('transform', `translate(${svgPadding.left}, ${svgPadding.top})`);
+          .attr('transform', `translate(${svgContPadding.left}, ${svgContPadding.top})`);
 
         let topContent = svg.append('g')
           .attr('class', 'top-content')
-          .attr('transform', `translate(${svgPadding.left}, ${svgPadding.top})`);
+          .attr('transform', `translate(${svgContPadding.left}, ${svgContPadding.top})`);
 
         // Add the feature title
         topContent.append('text')
@@ -70,11 +73,11 @@
         // histEdge, histCount, histDensity
         let xScale = d3.scaleLinear()
           .domain(d3.extent(f.histEdge))
-          .range([0, width - svgPadding.left - svgPadding.right]);
+          .range([0, width - svgContPadding.left - svgContPadding.right]);
 
         let yScale = d3.scaleLinear()
           .domain([0, d3.max(curDensity, d => d[1])])
-          .range([svgHeight - svgPadding.bottom, svgPadding.top + titleHeight]);
+          .range([svgHeight - svgContPadding.bottom, svgContPadding.top + titleHeight]);
 
         let curve = d3.line()
           .curve(d3.curveMonotoneX)
@@ -99,7 +102,7 @@
 
         let yScaleBar = d3.scaleLinear()
           .domain([0, d3.max(curDensitySelected)])
-          .range([svgHeight - svgPadding.bottom, svgPadding.top + titleHeight]);
+          .range([svgHeight - svgContPadding.bottom, svgContPadding.top + titleHeight]);
 
         midContent.selectAll('rect.selected-sample')
           .data(curDensitySelected)
@@ -108,16 +111,14 @@
           .attr('x', (d, i) => xScale(f.histEdge[i]))
           .attr('y', d => yScaleBar(d))
           .attr('width', binWidth)
-          .attr('height', d => svgHeight - svgPadding.bottom - yScaleBar(d));
+          .attr('height', d => svgHeight - svgContPadding.bottom - yScaleBar(d));
 
       });
 
       // Find the max equal bar width
-      const svgPadding = {top: 2, bottom: 2, left: 10, right: 10};
-      const barWidth = (width - svgPadding.left - svgPadding.right) / d3.max(sortedCatFeatures, d => d.histCount.length);
+      catBarWidth = (width - svgCatPadding.left - svgCatPadding.right) / d3.max(sortedCatFeatures, d => d.histCount.length);
 
       sortedCatFeatures.forEach(f => {
-        const titleHeight = 10;
 
         let svg = d3.select(component)
           .select(`.feature-${f.id}`)
@@ -125,20 +126,20 @@
 
         let lowContent = svg.append('g')
           .attr('class', 'low-content')
-          .attr('transform', `translate(${svgPadding.left}, ${svgPadding.top})`);
+          .attr('transform', `translate(${svgCatPadding.left}, ${svgCatPadding.top})`);
 
         let midContent = svg.append('g')
           .attr('class', 'mid-content')
-          .attr('transform', `translate(${svgPadding.left}, ${svgPadding.top})`);
+          .attr('transform', `translate(${svgCatPadding.left}, ${svgCatPadding.top})`);
 
         let topContent = svg.append('g')
           .attr('class', 'top-content')
-          .attr('transform', `translate(${svgPadding.left}, ${svgPadding.top})`);
+          .attr('transform', `translate(${svgCatPadding.left}, ${svgCatPadding.top})`);
 
         // Add the feature title
         topContent.append('text')
           .attr('class', 'feature-title')
-          .attr('x', -barWidth / 2)
+          .attr('x', -catBarWidth / 2)
           .text(f.name);
 
         // Sort the bins from high count to low count, and save the sorting order
@@ -147,8 +148,9 @@
           edge: f.histEdge[i],
           count: f.histCount[i],
           density: f.histCount[i] / totalSampleNum,
+          // Initialize selected bars with 0 density
           selectedCount: 0,
-          selectedDensity: 1
+          selectedDensity: 0
         }));
 
         curData.sort((a, b) => b.count - a.count);
@@ -158,37 +160,35 @@
         let xScale = d3.scalePoint()
           .domain(curData.map(d => d.edge))
           .padding(0)
-          .range([0, width - svgPadding.left - svgPadding.right]);
+          .range([0, width - svgCatPadding.left - svgCatPadding.right]);
 
         let yScale = d3.scaleLinear()
           .domain([0, d3.max(curData, d => d.density)])
-          .range([svgHeight - svgPadding.bottom, svgPadding.top + titleHeight]);
+          .range([svgHeight - svgCatPadding.bottom, svgCatPadding.top + titleHeight]);
 
         // Draw the global histogram
         lowContent.selectAll('rect.global-bar')
           .data(curData)
           .join('rect')
           .attr('class', 'global-bar')
-          .attr('x', d => xScale(d.edge) - barWidth / 2)
+          .attr('x', d => xScale(d.edge) - catBarWidth / 2)
           .attr('y', d => yScale(d.density))
-          .attr('width', barWidth)
-          .attr('height', d => svgHeight - svgPadding.bottom - yScale(d.density));
+          .attr('width', catBarWidth)
+          .attr('height', d => svgHeight - svgCatPadding.bottom - yScale(d.density));
 
         // Draw overlay layer
-        let curDensitySelected = new Array(f.histCount.length).fill(1);
-
         let yScaleSelected = d3.scaleLinear()
-          .domain([0, d3.max(curData, d => d.selectedDensity)])
-          .range([svgHeight - svgPadding.bottom, svgPadding.top + titleHeight]);
+          .domain([0, 1])
+          .range([svgHeight - svgCatPadding.bottom, svgCatPadding.top + titleHeight]);
 
         midContent.selectAll('rect.selected-bar')
           .data(curData)
           .join('rect')
           .attr('class', 'selected-bar')
-          .attr('x', d => xScale(d.edge) - barWidth / 2)
+          .attr('x', d => xScale(d.edge) - catBarWidth / 2)
           .attr('y', d => yScaleSelected(d.selectedDensity))
-          .attr('width', barWidth)
-          .attr('height', d => svgHeight - svgPadding.bottom - yScaleSelected(d.selectedDensity));
+          .attr('width', catBarWidth)
+          .attr('height', d => svgHeight - svgCatPadding.bottom - yScaleSelected(d.selectedDensity));
       });
 
       waitingToDrawDIV = false;
@@ -209,6 +209,48 @@
 
       // Wait for the DOM to update (will trigger afterUpdate)
       waitingToDrawDIV = true;
+    }
+
+    // Update the feature graph
+    if (sidebarInfo.curGroup === 'updateFeature') {
+
+      sortedContFeatures = sidebarInfo.featurePlotData.cont;
+      sortedCatFeatures = sidebarInfo.featurePlotData.cat;
+
+      // Update the overlay histogram
+      const selectedCount = sortedContFeatures[0].histSelectedCount.reduce((a, b) => a + b);
+
+      sortedCatFeatures.forEach(f => {
+
+        let svg = d3.select(component)
+          .select(`.feature-${f.id}`)
+          .select('svg');
+
+        let curData = f.histEdge.map((d, i) => ({
+          edge: f.histEdge[i],
+          count: f.histCount[i],
+          selectedCount: f.histSelectedCount[i],
+          selectedDensity: selectedCount === 0 ? 0 : f.histSelectedCount[i] / selectedCount
+        }));
+
+        curData.sort((a, b) => b.count - a.count);
+
+        const yMax = d3.max(curData, d => d.selectedDensity) === 0 ? 1 : d3.max(curData, d => d.selectedDensity);
+        let yScaleSelected = d3.scaleLinear()
+          .domain([0, yMax])
+          .range([svgHeight - svgCatPadding.bottom, svgCatPadding.top + titleHeight]);
+
+        svg.select('g.mid-content')
+          .selectAll('rect.selected-bar')
+          .data(curData)
+          .transition('bar')
+          .duration(500)
+          .attr('y', d => yScaleSelected(d.selectedDensity))
+          .attr('height', d => svgHeight - svgCatPadding.bottom - yScaleSelected(d.selectedDensity));
+      });
+      
+      sidebarInfo.curGroup = '';
+      sidebarStore.set(sidebarInfo);
     }
 
   });
@@ -304,18 +346,18 @@
   }
 
   :global(.feature-tab .global-bar) {
-    fill: $blue-500;
-    opacity: 0.3;
+    fill: $blue-300;
+    opacity: 1;
   }
 
   :global(.feature-tab .selected-bar) {
     fill: $orange-400;
-    opacity: 0.3;
+    opacity: 0.4;
   }
 
   :global(.feature-tab rect.selected-sample) {
     fill: $orange-400;
-    opacity: 0.3;
+    opacity: 0.4;
   }
 
 </style>
