@@ -35,8 +35,8 @@
   }
 
   #logo-icon {
-    width: 26px;
-    margin-right: 10px;
+    width: 250px;
+    display: flex;
   }
 
   #logo-tagline {
@@ -68,10 +68,14 @@
 <div id="header">
 
   <div id="logo">
-    <div id="logo-text">
+    <!-- <div id="logo-text">
       GAM Changer
-    </div>
+    </div> -->
     
+    <div id='logo-icon'>
+      <img src='/img/logo.svg' alt='logo img'>
+    </div>
+
     <!-- <div id='logo-tagline'>
       Exploring transformer models in your browser! 
     </div> -->

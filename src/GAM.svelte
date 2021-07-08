@@ -1,3 +1,7 @@
+<header>
+  <link ref='icon' href='favicon.svg'>
+</header>
+
 <script>
   import ContGlobalExplain from './global-explanation/ContFeature.svelte';
   import CatGlobalExplain from './global-explanation/CatFeature.svelte';
