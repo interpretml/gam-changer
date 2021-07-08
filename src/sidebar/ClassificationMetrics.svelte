@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { config } from '../config';
   import { round } from '../utils';
-  import { drawCurve, drawClassificationBarChart, drawConfusionMatrix } from './draw';
+  import { drawCurve, drawClassificationBarChart, drawConfusionMatrix } from './draw-metric';
 
   export let sidebarStore;
 

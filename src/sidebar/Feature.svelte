@@ -5,7 +5,8 @@
   import { flip } from 'svelte/animate';
   import { quadInOut, expoInOut, cubicInOut } from 'svelte/easing';
   import { chiCdf } from './chi2';
-  import { round, shuffle, l1Distance } from '../utils';
+  import { round, shuffle } from '../utils';
+  import { initLegend, initContFeature, initCatFeature, updateContFeature, updateCatFeature } from './draw-feature';
 
   export let sidebarStore;
   // export let width = 0;
@@ -46,205 +47,19 @@
     if (waitingToDrawDIV) {
 
       // Draw the legend
-      let legendSVG = d3.select(component)
-        .select('svg#legend')
-        .attr('width', width)
-        .attr('height', 40);
-      
-      let leftGroup = legendSVG.append('g')
-        .attr('class', 'left')
-        .attr('transform', `translate(${svgCatPadding.left}, 10)`);
-
-      let rightGroup = legendSVG.append('g')
-        .attr('class', 'right')
-        .attr('transform', `translate(${svgCatPadding.left + 175}, 6)`);
-
-      
-      leftGroup.append('text')
-        .attr('x', 0)
-        .attr('y', 0)
-        .style('dominant-baseline', 'hanging')
-        .style('font-size', '0.9em')
-        .style('font-weight', 600)
-        .text('Frequency Distributions')
-        .append('tspan')
-        .style('font-size', '0.9em')
-        .style('font-weight', 400)
-        .style('fill', 'gray')
-        .attr('x', 0)
-        .attr('dy', '1.1em')
-        .text('Sorted by correlation ↓');
-
-      let labelWidth = 60;
-      rightGroup.append('rect')
-        .attr('width', labelWidth)
-        .attr('height', 16)
-        .attr('rx', 3)
-        .style('fill', '#B5CEE3');
-
-      rightGroup.append('text')
-        .attr('class', 'legend-title')
-        .attr('y', 2)
-        .attr('x', labelWidth / 2)
-        .text('all');
-
-      rightGroup.append('rect')
-        .attr('y', 20)
-        .attr('width', labelWidth)
-        .attr('height', 16)
-        .attr('rx', 3)
-        .style('fill', '#FFD499');
-
-      rightGroup.append('text')
-        .attr('class', 'legend-title')
-        .attr('y', 22)
-        .attr('x', labelWidth / 2)
-        .text('selected');
-      
-
+      initLegend(component, width, svgCatPadding);
 
       sortedContFeatures.forEach(f => {
-
-        let svg = d3.select(component)
-          .select(`.feature-${f.id}`)
-          .select('svg');
-
-        let lowContent = svg.append('g')
-          .attr('class', 'low-content')
-          .attr('transform', `translate(${svgContPadding.left}, ${svgContPadding.top})`);
-
-        let midContent = svg.append('g')
-          .attr('class', 'mid-content')
-          .attr('transform', `translate(${svgContPadding.left}, ${svgContPadding.top})`);
-
-        let topContent = svg.append('g')
-          .attr('class', 'top-content')
-          .attr('transform', `translate(${svgContPadding.left}, ${svgContPadding.top})`);
-
-        // Add the feature title
-        topContent.append('text')
-          .attr('class', 'feature-title')
-          .attr('x', 0)
-          .text(f.name);
-
-        // Compute the frequency of test samples
-        let curDensity = f.histCount.map((d, i) => [f.histEdge[i], d / totalSampleNum]);
-
-        // Create the axis scales
-        let expectedBarWidth = (width - svgCatPadding.left - svgCatPadding.right) / f.histEdge.length;
-        let xScale = d3.scaleLinear()
-          .domain(d3.extent(f.histEdge))
-          .range([0, width - svgContPadding.left - svgContPadding.right - expectedBarWidth]);
-
-        let barWidth = xScale(f.histEdge[1]) - xScale(f.histEdge[0]);
-
-        let yScale = d3.scaleLinear()
-          .domain([0, d3.max(curDensity, d => d[1])])
-          .range([svgHeight - svgContPadding.bottom, svgContPadding.top + titleHeight]);
-
-        lowContent.selectAll('rect.global-bar')
-          .data(curDensity)
-          .join('rect')
-          .attr('class', 'global-bar')
-          .attr('x', d => xScale(d[0]))
-          .attr('y', d => yScale(d[1]))
-          .attr('width', barWidth)
-          .attr('height', d => svgHeight - svgCatPadding.bottom - yScale(d[1]));
-
-        // Draw overlay layer
-        let curDensitySelected = new Array(f.histCount.length).fill(0);
-
-        const yMax = d3.max(curDensitySelected) === 0 ? 1 : d3.max(curDensitySelected);
-
-        let yScaleBar = d3.scaleLinear()
-          .domain([0, yMax])
-          .range([svgHeight - svgContPadding.bottom, svgContPadding.top + titleHeight]);
-
-        midContent.selectAll('rect.selected-bar')
-          .data(curDensitySelected)
-          .join('rect')
-          .attr('class', 'selected-bar')
-          .attr('x', (d, i) => xScale(f.histEdge[i]))
-          .attr('y', d => yScaleBar(d))
-          .attr('width', barWidth)
-          .attr('height', d => svgHeight - svgContPadding.bottom - yScaleBar(d));
-
+        initContFeature(component, f, svgContPadding, totalSampleNum,
+          width, svgHeight, titleHeight);
       });
 
       // Find the max equal bar width
       catBarWidth = (width - svgCatPadding.left - svgCatPadding.right) / d3.max(sortedCatFeatures, d => d.histCount.length);
 
       sortedCatFeatures.forEach(f => {
-
-        let svg = d3.select(component)
-          .select(`.feature-${f.id}`)
-          .select('svg');
-
-        let lowContent = svg.append('g')
-          .attr('class', 'low-content')
-          .attr('transform', `translate(${svgCatPadding.left}, ${svgCatPadding.top})`);
-
-        let midContent = svg.append('g')
-          .attr('class', 'mid-content')
-          .attr('transform', `translate(${svgCatPadding.left}, ${svgCatPadding.top})`);
-
-        let topContent = svg.append('g')
-          .attr('class', 'top-content')
-          .attr('transform', `translate(${svgCatPadding.left}, ${svgCatPadding.top})`);
-
-        // Add the feature title
-        topContent.append('text')
-          .attr('class', 'feature-title')
-          .attr('x', -catBarWidth / 2)
-          .text(f.name);
-
-        // Sort the bins from high count to low count, and save the sorting order
-        // (needed to update selected bins)
-        let curData = f.histEdge.map((d, i) => ({
-          edge: f.histEdge[i],
-          count: f.histCount[i],
-          density: f.histCount[i] / totalSampleNum,
-          // Initialize selected bars with 0 density
-          selectedCount: 0,
-          selectedDensity: 0
-        }));
-
-        curData.sort((a, b) => b.count - a.count);
-
-        // Create the axis scales
-        // histEdge, histCount, histDensity
-        let xScale = d3.scalePoint()
-          .domain(curData.map(d => d.edge))
-          .padding(0)
-          .range([0, width - svgCatPadding.left - svgCatPadding.right]);
-
-        let yScale = d3.scaleLinear()
-          .domain([0, d3.max(curData, d => d.density)])
-          .range([svgHeight - svgCatPadding.bottom, svgCatPadding.top + titleHeight]);
-
-        // Draw the global histogram
-        lowContent.selectAll('rect.global-bar')
-          .data(curData)
-          .join('rect')
-          .attr('class', 'global-bar')
-          .attr('x', d => xScale(d.edge) - catBarWidth / 2)
-          .attr('y', d => yScale(d.density))
-          .attr('width', catBarWidth)
-          .attr('height', d => svgHeight - svgCatPadding.bottom - yScale(d.density));
-
-        // Draw overlay layer
-        let yScaleSelected = d3.scaleLinear()
-          .domain([0, 1])
-          .range([svgHeight - svgCatPadding.bottom, svgCatPadding.top + titleHeight]);
-
-        midContent.selectAll('rect.selected-bar')
-          .data(curData)
-          .join('rect')
-          .attr('class', 'selected-bar')
-          .attr('x', d => xScale(d.edge) - catBarWidth / 2)
-          .attr('y', d => yScaleSelected(d.selectedDensity))
-          .attr('width', catBarWidth)
-          .attr('height', d => svgHeight - svgCatPadding.bottom - yScaleSelected(d.selectedDensity));
+        initCatFeature(component, f, svgCatPadding, catBarWidth, totalSampleNum,
+          width, svgHeight, titleHeight);
       });
 
       waitingToDrawDIV = false;
@@ -280,30 +95,8 @@
 
       // Step 1: update the continuous feature graph
       tempSortedContFeatures.forEach(f => {
-        let svg = d3.select(component)
-          .select(`svg#cont-feature-svg-${f.id}`);
-
-        let curDensitySelected = f.histSelectedCount.map(c => selectedSampleCount === 0 ? 0 : c / selectedSampleCount);
-        let globalDensity = f.histCount.map(c => c / totalSampleCount);
-
-        // Compute teh distance between subset density vs. global density
-        f.distanceScore = l1Distance(globalDensity, curDensitySelected);
-
-        const yMax = d3.max(curDensitySelected) === 0 ? 1 : d3.max(curDensitySelected);
-        needToResort = d3.max(curDensitySelected) === 0 ? false : true;
-
-        let yScaleBar = d3.scaleLinear()
-          .domain([0, yMax])
-          .range([svgHeight - svgContPadding.bottom, svgContPadding.top + titleHeight]);
-
-        svg.select('g.mid-content')
-          .selectAll('rect.selected-bar')
-          .data(curDensitySelected)
-          .join('rect')
-          .transition('bar')
-          .duration(500)
-          .attr('y', d => yScaleBar(d))
-          .attr('height', d => svgHeight - svgContPadding.bottom - yScaleBar(d));
+        needToResort = updateContFeature(component, f, selectedSampleCount,
+          totalSampleCount, svgHeight, svgContPadding, titleHeight);
       });
 
       if (needToResort) {
@@ -319,39 +112,8 @@
       needToResort = false;
 
       tempSortedCatFeatures.forEach(f => {
-
-        let svg = d3.select(component)
-          .select(`#cat-feature-svg-${f.id}`);
-
-        let curData = f.histEdge.map((d, i) => ({
-          edge: f.histEdge[i],
-          count: f.histCount[i],
-          selectedCount: f.histSelectedCount[i],
-          selectedDensity: selectedSampleCount === 0 ? 0 : f.histSelectedCount[i] / selectedSampleCount
-        }));
-
-        // Compute the distance score
-        let selectedDensity = curData.map(d => d.selectedDensity);
-        let globalDensity = curData.map(d => d.count / totalSampleCount);
-        f.distanceScore = l1Distance(globalDensity, selectedDensity);
-
-        curData.sort((a, b) => b.count - a.count);
-
-        const yMax = d3.max(curData, d => d.selectedDensity) === 0 ? 1 : d3.max(curData, d => d.selectedDensity);
-        needToResort = d3.max(curData, d => d.selectedDensity) === 0 ? false : true;
-
-        let yScaleSelected = d3.scaleLinear()
-          .domain([0, yMax])
-          .range([svgHeight - svgCatPadding.bottom, svgCatPadding.top + titleHeight]);
-
-        svg.select('g.mid-content')
-          .selectAll('rect.selected-bar')
-          .data(curData, d => d.edge)
-          .join('rect')
-          .transition('cont-bar')
-          .duration(500)
-          .attr('y', d => yScaleSelected(d.selectedDensity))
-          .attr('height', d => svgHeight - svgCatPadding.bottom - yScaleSelected(d.selectedDensity));
+        needToResort = updateCatFeature(component, f, selectedSampleCount,
+          totalSampleCount, svgHeight, svgCatPadding, titleHeight);
       });
 
       if (needToResort) {
