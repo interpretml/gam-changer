@@ -31,7 +31,7 @@
     prCurve: [],
     rocCurve: [],
     curGroup: 'original',
-    selectedTab: 'feature',
+    selectedTab: 'effect',
   });
 
   let footerStore = writable({
@@ -266,6 +266,8 @@
   }
 
   .feature-window {
+    background-color: $brown-50;
+    border-radius: 5px;
   }
 
 </style>

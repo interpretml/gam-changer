@@ -51,7 +51,7 @@
     border-bottom: 1px solid $gray-border;
     padding: 10px 0;
     border-top-right-radius: 5px;
-    background: $gray-background;
+    background: white;
 
     display: flex;
     align-items: flex-end;

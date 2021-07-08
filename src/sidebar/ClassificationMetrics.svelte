@@ -118,7 +118,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    overflow-y: scroll;
+    overflow-y: hidden;
     overflow-x: hidden;
   }
 
@@ -128,6 +128,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
+    overflow-y: scroll;
+    background-color: $brown-50;
+    border-top: 1px solid $blue-50;
 
     svg {
       flex-shrink: 0;
@@ -144,8 +147,8 @@
   }
 
   .scope-selection {
-    margin-top: 15px;
-    margin-bottom: 5px;
+    margin-top: 11px;
+    margin-bottom: 11px;
   }
 
   .button {

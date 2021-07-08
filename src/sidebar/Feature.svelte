@@ -86,10 +86,6 @@
         .attr('class', 'legend-title')
         .attr('y', 2)
         .attr('x', labelWidth / 2)
-        .style('dominant-baseline', 'hanging')
-        .style('text-anchor', 'middle')
-        .style('font-size', '0.8em')
-        .style('font-weight', 300)
         .text('all');
 
       rightGroup.append('rect')
@@ -103,10 +99,6 @@
         .attr('class', 'legend-title')
         .attr('y', 22)
         .attr('x', labelWidth / 2)
-        .style('dominant-baseline', 'hanging')
-        .style('text-anchor', 'middle')
-        .style('font-size', '0.8em')
-        .style('font-weight', 300)
         .text('selected');
       
 
@@ -397,7 +389,8 @@
     overflow-y: scroll;
     overflow-x: hidden;
     position: relative;
-    border-top: 1px solid hsl(210, 20%, 90%);
+    border-top: 1px solid $blue-50;
+    background-color: $brown-50;
   }
 
   .feature-cont, .feature-cat {
@@ -424,9 +417,9 @@
     border-bottom: 1px solid change-color($blue-500, $alpha: 0.3);
   }
 
-  .scope-selection {
-    margin-top: 15px;
-    margin-bottom: 5px;
+  .scope-selection.field {
+    margin-top: 11px;
+    margin-bottom: 11px;
   }
 
   .button {
@@ -486,6 +479,14 @@
   :global(.feature-tab rect.selected-sample) {
     fill: $orange-400;
     opacity: 0.4;
+  }
+
+  :global(.feature-tab .legend-title) {
+    dominant-baseline: hanging;
+    text-anchor: middle;
+    font-size: 0.8em;
+    font-weight: 300;
+    fill: $indigo-dark;
   }
 
 </style>
