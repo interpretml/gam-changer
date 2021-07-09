@@ -718,6 +718,9 @@
   const multiMenuMoveClicked = async () => {
     // Enter the move mode
 
+    // If users have done some other edits without committing, discard the changes
+    multiMenuSubItemCancelClicked(true);
+
     // Step 1. create data clone buffers for user to change
     // We only do this when buffer has not been created --- it is possible that
     // user switch to move from other editing mode
@@ -801,6 +804,7 @@
       curEditBaseline = value.baseline;
       value.baseline = 0;
       value.baselineInit = false;
+      value.type = '';
       value.state = '';
       value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
       return value;
@@ -811,8 +815,9 @@
     const binNum = state.selectedInfo.nodeData.length;
     const binLeft = state.selectedInfo.nodeData[0];
     const binRight = state.pointData[state.pointData[state.selectedInfo.nodeData[binNum - 1].id].rightPointID];
+    const binRange = binRight === undefined ? `${binLeft.x} <= x` : `${binLeft.x} <= x < ${binRight.x}`;
     const message = `${curEditBaseline >= 0 ? 'Increased' : 'Decreased'} scores of ${binNum} ` +
-      `bins (${binLeft.x} <= x < ${binRight.x}) by ${round(Math.abs(curEditBaseline), 2)}.`;
+      `bins (${binRange}) by ${round(Math.abs(curEditBaseline), 2)}.`;
     pushCurStateToHistoryStack('move', message);
   };
 
@@ -859,6 +864,7 @@
       value.baseline = 0;
       value.baselineInit = false;
       value.state = '';
+      value.type = '';
       value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
       return value;
     });
@@ -911,6 +917,7 @@
     // Update the footer message
     footerStore.update(value => {
       value.state = `Made ${xs.length} bins <b>monotonically increasing</b>`;
+      value.type = 'increasing';
       return value;
     });
   };
@@ -960,6 +967,7 @@
     // Update the footer message
     footerStore.update(value => {
       value.state = `Made ${xs.length} bins <b>monotonically decreasing</b>`;
+      value.type = 'decreasing';
       return value;
     });
   };
@@ -1010,6 +1018,11 @@
     footerStore.update(value => {
       value.state = `<b>Interpolated</b> ${state.selectedInfo.nodeData.length} bins <b>in place</b>`;
       value.interpolateEqual = 'in place';
+      if (multiMenuControlInfo.interpolationMode === 'equal') {
+        value.type = 'equal-interpolate';
+      } else {
+        value.type = 'inplace-interpolate';
+      }
       return value;
     });
   };
@@ -1060,6 +1073,21 @@
     // Update the footer message
     footerValue.state = `<b>${footerValue.interpolateStyle}</b> ${state.selectedInfo.nodeData.length}
       bins <b>${footerValue.interpolateEqual}</b>`;
+
+    if (footerValue.interpolateEqual !== 'in place') {
+      if (footerValue.interpolateStyle === 'Interpolated') {
+        footerValue.type = 'inplace-interpolate';
+      } else {
+        footerValue.type = 'inplace-regression';
+      }
+    } else {
+      if (footerValue.interpolateStyle === 'Interpolated') {
+        footerValue.type = 'equal-interpolate';
+      } else {
+        footerValue.type = 'equal-regression';
+      }
+    }
+
     footerStore.set(footerValue);
   };
 
@@ -1089,6 +1117,7 @@
 
     // Update the footer message
     footerStore.update(value => {
+      value.type = 'merge';
       value.state = `Set scores of ${state.selectedInfo.nodeData.length} bins to
         <b>${round(state.selectedInfo.nodeData[0].y, 4)}</b>`;
       return value;
@@ -1118,6 +1147,7 @@
 
     // Update the footer message
     footerStore.update(value => {
+      value.type = 'merge';
       value.state = `Set scores of ${state.selectedInfo.nodeData.length} bins to <b>${multiMenuControlInfo.setValue}</b>`;
       return value;
     });
@@ -1149,6 +1179,7 @@
 
     // Update the footer message
     footerStore.update(value => {
+      value.type = 'delete';
       value.state = `Set scores of ${state.selectedInfo.nodeData.length} bins to <b>${0}</b>`;
       return value;
     });
@@ -1207,27 +1238,71 @@
     sidebarStore.set(sidebarInfo);
 
     // Update the footer message
+    let editType = '';
     footerStore.update(value => {
+      editType = value.type;
       // Reset the baseline
       value.baseline = 0;
       value.baselineInit = false;
       value.state = '';
+      value.type = '';
       value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
       return value;
     });
+
+    // Push the commit to history
+
+    // Get the info of edited bins
+    const binNum = state.selectedInfo.nodeData.length;
+    const binLeft = state.selectedInfo.nodeData[0];
+    const binRight = state.pointData[state.pointData[state.selectedInfo.nodeData[binNum - 1].id].rightPointID];
+    const binRange = binRight === undefined ? `${binLeft.x} <= x` : `${binLeft.x} <= x < ${binRight.x}`;
+    let description = '';
+
+    switch(editType) {
+    case 'increasing':
+      description = `Made ${binNum} bins (${binRange}) monotonically increasing.`;
+      break;
+    case 'decreasing':
+      description = `Made ${binNum} bins (${binRange}) monotonically decreasing.`;
+      break;
+    case 'inplace-interpolate':
+      description = `Interpolated ${binNum} bins (${binRange}) inplace.`;
+      break;
+    case 'inplace-regression':
+      description = `Regression transformed ${binNum} bins (${binRange}) inplace.`;
+      break;
+    case 'equal-interpolate':
+      description = `Interpolated ${binNum} bins (${binRange}) with ${multiMenuControlInfo.step} equal-size bins.`;
+      break;
+    case 'equal-regression':
+      description = `Regression transformed ${binNum} bins (${binRange}) with ${multiMenuControlInfo.step} equal-size bins.`;
+      break;
+    case 'merge':
+      description = `Set ${binNum} bins (${binRange}) to score ${round(state.selectedInfo.nodeData[0].y, 4)}.`;
+      break;
+    case 'delete':
+      description = `Set ${binNum} bins (${binRange}) to score 0.`;
+      break;
+    default:
+      break;
+    }
+
+    pushCurStateToHistoryStack(editType, description);
+    console.log(get(historyStore));
   };
 
   /**
    * Event handler when user clicks the cross icon in the sub-menu
    */
-  const multiMenuSubItemCancelClicked = () => {
+  const multiMenuSubItemCancelClicked = (cancelFromMove = false) => {
     console.log('sub item cancel clicked');
-    if (multiMenuControlInfo.subItemMode === null) {
+    if (!cancelFromMove && multiMenuControlInfo.subItemMode === null) {
       console.error('No sub item is selected but check is clicked!');
     }
 
     const existingModes = new Set(['increasing', 'decreasing', 'interpolation', 'change', 'merge', 'delete']);
-    if (!existingModes.has(multiMenuControlInfo.subItemMode)) {
+    if (!cancelFromMove && !existingModes.has(multiMenuControlInfo.subItemMode)) {
       console.error(`Encountered unknown subItemMode: ${multiMenuControlInfo.subItemMode}`);
     }
 
@@ -1278,6 +1353,7 @@
       value.baseline = 0;
       value.baselineInit = false;
       value.state = '';
+      value.type = '';
       value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
       return value;
     });
