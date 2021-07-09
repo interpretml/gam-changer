@@ -463,25 +463,7 @@
     });
 
     // Push the initial state into the history stack
-    historyStore.update(value => {
-      let type = 'original';
-      let description = 'original graph';
-      let time = Date.now();
-
-      value.push({
-        graph: {
-          pointData: JSON.parse(JSON.stringify(state.pointData)),
-          additiveData: JSON.parse(JSON.stringify(state.additiveData))
-        },
-        featureId: 1,
-        type: 'original',
-        description: 'original graph',
-        time: time,
-        hash: MD5(`${type}${description}${time}`)
-      });
-      console.log(value);
-      return value;
-    });
+    pushCurStateToHistoryStack('original', 'original graph');
   };
 
   const updateEBM = async (curGroup) => {
@@ -603,6 +585,26 @@
 
     sidebarInfo.curGroup = 'updateFeature';
     sidebarStore.set(sidebarInfo);
+  };
+
+  const pushCurStateToHistoryStack = (type, description) => {
+    historyStore.update(value => {
+      console.log(value);
+      const time = Date.now();
+
+      value.push({
+        graph: {
+          pointData: JSON.parse(JSON.stringify(state.pointData)),
+          additiveData: JSON.parse(JSON.stringify(state.additiveData))
+        },
+        featureId: 1,
+        type: type,
+        description: description,
+        time: time,
+        hash: MD5(`${type}${description}${time}`)
+      });
+      return value;
+    });
   };
 
   // ---- Interaction Functions ----
@@ -793,14 +795,25 @@
     sidebarStore.set(sidebarInfo);
 
     // Update the footer message
+    let curEditBaseline = 0;
     footerStore.update(value => {
       // Reset the baseline
+      curEditBaseline = value.baseline;
       value.baseline = 0;
       value.baselineInit = false;
       value.state = '';
       value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
       return value;
     });
+
+    // Save into the history
+    // Generate the description message
+    const binNum = state.selectedInfo.nodeData.length;
+    const binLeft = state.selectedInfo.nodeData[0];
+    const binRight = state.pointData[state.pointData[state.selectedInfo.nodeData[binNum - 1].id].rightPointID];
+    const message = `${curEditBaseline >= 0 ? 'Increased' : 'Decreased'} scores of ${binNum} ` +
+      `bins (${binLeft.x} <= x < ${binRight.x}) by ${round(Math.abs(curEditBaseline), 2)}.`;
+    pushCurStateToHistoryStack('move', message);
   };
 
   /**
