@@ -1,6 +1,6 @@
 <script>
   import * as d3 from 'd3';
-  import { round, transpose2dArray } from '../utils';
+  import { round, transpose2dArray } from '../utils/utils';
   import { config } from '../config';
   import { drawHorizontalColorLegend } from './draw';
 

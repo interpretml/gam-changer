@@ -1,6 +1,3 @@
-<header>
-  <link ref='icon' href='favicon.svg'>
-</header>
 
 <script>
   import ContGlobalExplain from './global-explanation/ContFeature.svelte';
@@ -14,7 +11,6 @@
   import { initEBM } from './ebm';
   import { onMount } from 'svelte';
   import { writable, derived } from 'svelte/store';
-  import { kde } from './sidebar/kde';
 
   import redoIconSVG from './img/redo-icon.svg';
   import undoIconSVG from './img/undo-icon.svg';
@@ -46,9 +42,13 @@
     baseline: 0,
   });
 
+  let footerActionStore = writable('');
+
   sidebarStore.subscribe(value => {
     sidebarInfo = value;
   });
+
+  let historyStore = writable([]);
 
   /**
    * Pre-process the data loaded from a json file or passed from other sources
@@ -103,7 +103,6 @@
 
     // Get the distribution of test data on each variable
     const testDataHistCount = ebm.getHistBinCounts();
-    console.log(data);
 
     // Create the sidebar feature data
     // const bandwidth = 10;
@@ -169,6 +168,10 @@
     // Copy the original to current as well
     sidebarInfo.curGroup = 'current';
     sidebarStore.set(sidebarInfo);
+  };
+
+  const footerActionTriggered = (message) => {
+    footerActionStore.set(message);
   };
 
   initData();
@@ -286,6 +289,8 @@
         bind:ebm = {ebm}
         sidebarStore = {sidebarStore}
         footerStore = {footerStore}
+        footerActionStore = {footerActionStore}
+        historyStore = {historyStore}
         svgHeight = 500
       />
     </div>
@@ -309,7 +314,7 @@
     <div class='field has-addons'>
 
       <div class='control'>
-        <button class='button' title='undo last edit'>
+        <button class='button' title='undo last edit' on:click={() => footerActionTriggered('undo')}>
           <span class='icon is-small'>
             <div class='svg-icon icon-undo'></div>
           </span>
@@ -317,7 +322,7 @@
       </div>
 
       <div class='control'>
-        <button class='button' title='redo last undo'>
+        <button class='button' title='redo last undo' on:click={() => footerActionTriggered('redo')}>
           <span class='icon is-small'>
             <div class='svg-icon icon-redo'></div>
           </span>
@@ -325,7 +330,7 @@
       </div>
 
       <div class='control'>
-        <button class='button right-button' title='save edits'>
+        <button class='button right-button' title='save edits' on:click={() => footerActionTriggered('save')}>
           <span class='icon is-small'>
             <div class='svg-icon icon-export'></div>
           </span>

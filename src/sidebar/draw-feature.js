@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { l1Distance } from '../utils';
+import { l1Distance } from '../utils/utils';
 
 
 /**

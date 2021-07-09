@@ -2,7 +2,7 @@
   import * as d3 from 'd3';
   import { onMount } from 'svelte';
   import { config } from '../config';
-  import { round } from '../utils';
+  import { round } from '../utils/utils';
   import { drawCurve, drawClassificationBarChart, drawConfusionMatrix } from './draw-metric';
 
   export let sidebarStore;

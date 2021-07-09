@@ -5,7 +5,8 @@
   import { initEBM } from '../ebm';
   import { initIsotonicRegression } from '../isotonic-regression';
 
-  import { round } from '../utils';
+  import { round, hashString } from '../utils/utils';
+  import { MD5 } from '../utils/md5';
   import { config } from '../config';
 
   import { SelectedInfo } from './continuous/cont-class';
@@ -29,11 +30,14 @@
   export let ebm = null;
   export let sidebarStore = null;
   export let footerStore = null;
+  export let footerActionStore = null;
+  export let historyStore = null;
 
   let svg = null;
   let component = null;
   let multiMenu = null;
   let myContextMenu = null;
+  let redoStack = [];
 
   // Visualization constants
   const svgPadding = config.svgPadding;
@@ -94,6 +98,26 @@
   let sidebarInfo = {};
   sidebarStore.subscribe(value => {
     sidebarInfo = value;
+  });
+
+  // Listen to footer buttons
+  footerActionStore.subscribe(message => {
+    switch(message){
+    case 'undo':
+      console.log('undo clicked');
+      break;
+
+    case 'redo':
+      console.log('redo clicked');
+      break;
+    
+    case 'save':
+      console.log('save clicked');
+      break;
+    
+    default:
+      break;
+    }
   });
 
   /**
@@ -435,6 +459,27 @@
     // Update the footer for more instruction
     footerStore.update(value => {
       value.help = '<b>Drag</b> to pan view, <b>Scroll</b> to zoom';
+      return value;
+    });
+
+    // Push the initial state into the history stack
+    historyStore.update(value => {
+      let type = 'original';
+      let description = 'original graph';
+      let time = Date.now();
+
+      value.push({
+        graph: {
+          pointData: JSON.parse(JSON.stringify(state.pointData)),
+          additiveData: JSON.parse(JSON.stringify(state.additiveData))
+        },
+        featureId: 1,
+        type: 'original',
+        description: 'original graph',
+        time: time,
+        hash: MD5(`${type}${description}${time}`)
+      });
+      console.log(value);
       return value;
     });
   };

@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import { config } from '../config';
-import { round } from '../utils';
+import { round } from '../utils/utils';
 
 const barHeight = 18;
 const textHeight = 22;

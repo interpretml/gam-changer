@@ -1,6 +1,6 @@
 <script>
   import * as d3 from 'd3';
-  import { round } from '../utils';
+  import { round } from '../utils/utils';
   import { config } from '../config';
 
   import { state } from './categorical/cat-state';

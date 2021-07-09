@@ -4,8 +4,7 @@
   import { onMount, afterUpdate } from 'svelte';
   import { flip } from 'svelte/animate';
   import { quadInOut, expoInOut, cubicInOut } from 'svelte/easing';
-  import { chiCdf } from './chi2';
-  import { round, shuffle } from '../utils';
+  import { round, shuffle } from '../utils/utils';
   import { initLegend, initContFeature, initCatFeature, updateContFeature, updateCatFeature } from './draw-feature';
 
   export let sidebarStore;
