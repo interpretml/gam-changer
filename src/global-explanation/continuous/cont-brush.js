@@ -84,6 +84,45 @@ export const brushDuring = (event, svg, multiMenu, ebm, footerStore) => {
   }
 };
 
+/**
+ * Discard the current marquee selection. This function does not handle any graph
+ * drawing/redrawing.
+ * @param {object} svg The svg object
+ * @param {object} multiMenu The multimenu object
+ * @param {func} resetContextMenu Function to reset the context menu
+ * @param {func} resetFeatureSidebar Function to reset the feature sidebar
+ */
+export const quitSelection = (svg, multiMenu, resetContextMenu, resetFeatureSidebar) => {
+  let svgSelect = d3.select(svg);
+
+  stopAnimateLine();
+  state.selectedInfo = new SelectedInfo();
+
+  // De-highlight the paths associated with the selected dots
+  svgSelect.select('g.line-chart-node-group')
+    .selectAll('circle.node')
+    .classed('selected', false);
+
+  svgSelect.select('g.line-chart-line-group.real')
+    .selectAll('path.additive-line-segment')
+    .classed('selected', false);
+
+  svgSelect.select('g.line-chart-content-group g.brush rect.overlay')
+    .attr('cursor', null);
+
+  d3.select(multiMenu)
+    .classed('hidden', true);
+
+  // End move mode
+  resetContextMenu();
+
+  // Remove the selection bbox
+  svgSelect.selectAll('g.line-chart-content-group g.select-bbox-group').remove();
+
+  // Reset the feature sidebar
+  resetFeatureSidebar();
+};
+
 export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
   brush, component, resetContextMenu, sidebarStore, setEBM, updateFeatureSidebar,
   resetFeatureSidebar

@@ -11,10 +11,10 @@
 
   import { SelectedInfo } from './continuous/cont-class';
   import { createConfidenceData, createAdditiveData, createPointData, linkPointToAdditive } from './continuous/cont-data';
-  import { brushDuring, brushEndSelect } from './continuous/cont-brush';
+  import { brushDuring, brushEndSelect, quitSelection } from './continuous/cont-brush';
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './continuous/cont-zoom';
   import { dragged, redrawOriginal, redrawMonotone, inplaceInterpolate,
-    stepInterpolate, merge, drawLastEdit, regressionInterpolate } from './continuous/cont-edit';
+    stepInterpolate, merge, drawLastEdit, regressionInterpolate, drawBufferGraph } from './continuous/cont-edit';
   import { state } from './continuous/cont-state';
   import { moveMenubar } from './continuous/cont-bbox';
 
@@ -103,10 +103,71 @@
   // Listen to footer buttons
   footerActionStore.subscribe(message => {
     switch(message){
-    case 'undo':
+    case 'undo': {
       console.log('undo clicked');
-      break;
 
+      let curCommit;
+      let lastCommit;
+
+      if (get(historyStore).length > 1) {
+
+        // If the user has selected some nodes, discard the selections
+        quitSelection(svg, multiMenu, resetContextMenu, resetFeatureSidebar);
+
+        // Remove the current commit from history
+        historyStore.update(value => {
+          curCommit = value.pop();
+          lastCommit = value[value.length - 1];
+          return value;
+        });
+
+        let curHistoryStoreValue = get(historyStore);
+        // Save the current commit into the redo stack
+        redoStack.push(curCommit);
+
+        console.log(curCommit, lastCommit);
+        console.log(curHistoryStoreValue);
+
+        // Replace the current state with last commit
+        state.additiveData = lastCommit.state.additiveData;
+        state.pointData = lastCommit.state.pointData;
+
+        // Need to use buffer to draw the svg
+        state.additiveDataBuffer = null;
+        state.pointDataBuffer = null;
+
+        // Update the last edit state, redraw the last edit graphs
+        if (curHistoryStoreValue.length > 1) {
+          state.additiveDataLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 2].state.additiveData;
+          drawLastEdit(svg);
+        } else {
+          // If there is no last edit, then it is the origin
+          state.additiveDataLastEdit = undefined;
+        }
+
+        if (curHistoryStoreValue.length > 2) {
+          state.additiveDataLastLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 3].state.additiveData;
+          drawLastEdit(svg);
+        } else {
+          // If there is no last last edit, then it is the origin or the first edit
+          state.additiveDataLastLastEdit = undefined;
+        }
+
+        // If the current edit has changed the EBM bin definition, then we need
+        // to reset the definition in WASM
+        if (curCommit.type.includes('equal')) {
+          setEBM('current', state.pointData);
+        }
+
+        // TODO: update the metrics, last metrics,
+
+        // Redraw the graph
+        redrawOriginal(svg);
+
+      }
+
+      break;
+    }
     case 'redo':
       console.log('redo clicked');
       break;
@@ -118,6 +179,8 @@
     default:
       break;
     }
+
+    footerActionStore.set('');
   });
 
   /**
@@ -593,9 +656,9 @@
       const time = Date.now();
 
       value.push({
-        graph: {
-          pointData: JSON.parse(JSON.stringify(state.pointData)),
-          additiveData: JSON.parse(JSON.stringify(state.additiveData))
+        state: {
+          pointData: state.pointData,
+          additiveData: state.additiveData
         },
         featureId: 1,
         type: type,
@@ -1076,15 +1139,15 @@
 
     if (footerValue.interpolateEqual !== 'in place') {
       if (footerValue.interpolateStyle === 'Interpolated') {
-        footerValue.type = 'inplace-interpolate';
-      } else {
-        footerValue.type = 'inplace-regression';
-      }
-    } else {
-      if (footerValue.interpolateStyle === 'Interpolated') {
         footerValue.type = 'equal-interpolate';
       } else {
         footerValue.type = 'equal-regression';
+      }
+    } else {
+      if (footerValue.interpolateStyle === 'Interpolated') {
+        footerValue.type = 'inplace-interpolate';
+      } else {
+        footerValue.type = 'inplace-regression';
       }
     }
 
@@ -1273,10 +1336,10 @@
       description = `Regression transformed ${binNum} bins (${binRange}) inplace.`;
       break;
     case 'equal-interpolate':
-      description = `Interpolated ${binNum} bins (${binRange}) with ${multiMenuControlInfo.step} equal-size bins.`;
+      description = `Interpolated ${binNum} bins (${binRange}) into ${multiMenuControlInfo.step} equal-size bins.`;
       break;
     case 'equal-regression':
-      description = `Regression transformed ${binNum} bins (${binRange}) with ${multiMenuControlInfo.step} equal-size bins.`;
+      description = `Regression transformed ${binNum} bins (${binRange}) into ${multiMenuControlInfo.step} equal-size bins.`;
       break;
     case 'merge':
       description = `Set ${binNum} bins (${binRange}) to score ${round(state.selectedInfo.nodeData[0].y, 4)}.`;
@@ -1331,8 +1394,10 @@
     }
     
     // Update metrics
-    sidebarInfo.curGroup = 'recover';
-    sidebarStore.set(sidebarInfo);
+    if (!cancelFromMove) {
+      sidebarInfo.curGroup = 'recover';
+      sidebarStore.set(sidebarInfo);
+    }
 
     // Recover the original graph
     redrawOriginal(svg, true, () => {

@@ -403,7 +403,7 @@ export const merge = (svg, value=undefined) => {
   drawBufferGraph(svg, true, 500);
 };
 
-const drawBufferGraph = (svg, animated=true, duration=400) => {
+export const drawBufferGraph = (svg, animated=true, duration=400) => {
 
   const svgSelect = d3.select(svg);
 
