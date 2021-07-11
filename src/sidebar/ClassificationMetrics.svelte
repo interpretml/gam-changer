@@ -59,7 +59,9 @@
   sidebarStore.subscribe(value => {
     sidebarInfo = value;
 
-    if (sidebarInfo.curGroup === 'original') {
+    switch(sidebarInfo.curGroup) {
+    case 'original':
+      console.log('original callback');
       barData.accuracy[0] = sidebarInfo.accuracy;
       barData.rocAuc[0] = sidebarInfo.rocAuc;
       barData.balancedAccuracy[0] = sidebarInfo.balancedAccuracy;
@@ -68,9 +70,16 @@
       confusionMatrixData.fn[0] = sidebarInfo.confusionMatrix[1] / sidebarInfo.totalSampleNum;
       confusionMatrixData.fp[0] = sidebarInfo.confusionMatrix[2] / sidebarInfo.totalSampleNum;
       confusionMatrixData.tp[0] = sidebarInfo.confusionMatrix[3] / sidebarInfo.totalSampleNum;
-    }
 
-    if (sidebarInfo.curGroup === 'current') {
+      copyMetricData(barData, confusionMatrixData, 0, 2);
+
+      sidebarInfo.barData = JSON.parse(JSON.stringify(barData));
+      sidebarInfo.confusionMatrixData = JSON.parse(JSON.stringify(confusionMatrixData));
+      sidebarInfo.curGroup = 'originalCompleted';
+      sidebarStore.set(sidebarInfo);
+      break;
+
+    case 'current':
       barData.accuracy[2] = sidebarInfo.accuracy;
       barData.rocAuc[2] = sidebarInfo.rocAuc;
       barData.balancedAccuracy[2] = sidebarInfo.balancedAccuracy;
@@ -79,23 +88,40 @@
       confusionMatrixData.fn[2] = sidebarInfo.confusionMatrix[1] / sidebarInfo.totalSampleNum;
       confusionMatrixData.fp[2] = sidebarInfo.confusionMatrix[2] / sidebarInfo.totalSampleNum;
       confusionMatrixData.tp[2] = sidebarInfo.confusionMatrix[3] / sidebarInfo.totalSampleNum;
-    }
+      break;
 
-    // Copy current to last, save a copy of last to last last
-    if (sidebarInfo.curGroup === 'last') {
-      // copyMetricData(barData, confusionMatrixData, 1, 3);
+    case 'last':
+      // Copy current to last, save a copy of last to last last
       copyMetricData(barData, confusionMatrixData, 2, 1);
-    }
+      break;
 
-    // Copy last to last last
-    if (sidebarInfo.curGroup === 'commit') {
+    case 'commit': 
+
+      // Copy last to last last
       copyMetricData(barData, confusionMatrixData, 1, 3);
-    }
 
-    // Copy last to current, copy last last to last
-    if (sidebarInfo.curGroup === 'recover') {
+      // Track the barData and confusionMatrix in the store so they can saved
+      // in the history stack
+      sidebarInfo.barData = JSON.parse(JSON.stringify(barData));
+      sidebarInfo.confusionMatrixData = JSON.parse(JSON.stringify(confusionMatrixData));
+      sidebarInfo.curGroup = 'commitCompleted';
+      sidebarStore.set(sidebarInfo);
+      break;
+
+    case 'recover':
+      // Copy last to current, copy last last to last
       copyMetricData(barData, confusionMatrixData, 1, 2);
       copyMetricData(barData, confusionMatrixData, 3, 1);
+      break;
+
+    case 'overwrite':
+      console.log('overwrite');
+      barData = sidebarInfo.barData;
+      confusionMatrixData = sidebarInfo.confusionMatrixData;
+      break;
+    
+    default:
+      break;
     }
 
     // We only update the graph if the user is currently in this tab

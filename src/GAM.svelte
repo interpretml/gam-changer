@@ -30,7 +30,7 @@
     confusionMatrix: [],
     prCurve: [],
     rocCurve: [],
-    curGroup: 'original',
+    curGroup: '',
     selectedTab: 'effect',
   });
 
@@ -163,10 +163,7 @@
       sidebarInfo.mae = metrics.mae;
     }
 
-    sidebarStore.set(sidebarInfo);
-
-    // Copy the original to current as well
-    sidebarInfo.curGroup = 'current';
+    sidebarInfo.curGroup = 'original';
     sidebarStore.set(sidebarInfo);
   };
 

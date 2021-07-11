@@ -109,12 +109,14 @@
       let curCommit;
       let lastCommit;
 
+      console.log(get(historyStore));
+
       if (get(historyStore).length > 1) {
 
-        // If the user has selected some nodes, discard the selections
+        // Step 1: If the user has selected some nodes, discard the selections
         quitSelection(svg, multiMenu, resetContextMenu, resetFeatureSidebar);
 
-        // Remove the current commit from history
+        // Step 2: Remove the current commit from history
         historyStore.update(value => {
           curCommit = value.pop();
           lastCommit = value[value.length - 1];
@@ -122,13 +124,14 @@
         });
 
         let curHistoryStoreValue = get(historyStore);
-        // Save the current commit into the redo stack
+
+        // Step 3: Save the current commit into the redo stack
         redoStack.push(curCommit);
 
         console.log(curCommit, lastCommit);
         console.log(curHistoryStoreValue);
 
-        // Replace the current state with last commit
+        // Step 4: Replace the current state with last commit
         state.additiveData = lastCommit.state.additiveData;
         state.pointData = lastCommit.state.pointData;
 
@@ -136,7 +139,7 @@
         state.additiveDataBuffer = null;
         state.pointDataBuffer = null;
 
-        // Update the last edit state, redraw the last edit graphs
+        // Step 5: Update the last edit state, redraw the last edit graphs
         if (curHistoryStoreValue.length > 1) {
           state.additiveDataLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 2].state.additiveData;
           drawLastEdit(svg);
@@ -145,21 +148,25 @@
           state.additiveDataLastEdit = undefined;
         }
 
+        // Step 6: Update the last last edit state
         if (curHistoryStoreValue.length > 2) {
           state.additiveDataLastLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 3].state.additiveData;
-          drawLastEdit(svg);
         } else {
           // If there is no last last edit, then it is the origin or the first edit
           state.additiveDataLastLastEdit = undefined;
         }
 
-        // If the current edit has changed the EBM bin definition, then we need
+        // Step 7: If the current edit has changed the EBM bin definition, then we need
         // to reset the definition in WASM
         if (curCommit.type.includes('equal')) {
           setEBM('current', state.pointData);
         }
 
-        // TODO: update the metrics, last metrics,
+        // Step 8: Update the metrics, last metrics
+        sidebarInfo.curGroup = 'overwrite';
+        sidebarInfo.barData = JSON.parse(JSON.stringify(lastCommit.metrics.barData));
+        sidebarInfo.confusionMatrixData = JSON.parse(JSON.stringify(lastCommit.metrics.confusionMatrixData));
+        sidebarStore.set(sidebarInfo);
 
         // Redraw the graph
         redrawOriginal(svg);
@@ -288,7 +295,7 @@
       .attr('width', lineChartWidth)
       .attr('height', lineChartHeight - 1);
 
-    // For the histogram clippath, need to carefully play around with the
+    // For the histogram clip-path, need to carefully play around with the
     // transformation, the path should be in a static group; the group having
     // clip-path attr should be static. Therefore we apply the transformation to
     // histChart's child later.
@@ -660,12 +667,18 @@
           pointData: state.pointData,
           additiveData: state.additiveData
         },
+        metrics: {
+          barData: JSON.parse(JSON.stringify(sidebarInfo.barData)),
+          confusionMatrixData: JSON.parse(JSON.stringify(sidebarInfo.confusionMatrixData))
+        },
         featureId: 1,
         type: type,
         description: description,
         time: time,
         hash: MD5(`${type}${description}${time}`)
       });
+
+      console.log(value.map(d => d.metrics.barData));
       return value;
     });
   };
@@ -831,7 +844,7 @@
   /**
    * Call this handler when users click the check button
    */
-  const multiMenuMoveCheckClicked = () => {
+  const multiMenuMoveCheckClicked = async () => {
     // Save the changes
     state.pointData = JSON.parse(JSON.stringify(state.pointDataBuffer));
     state.additiveData = JSON.parse(JSON.stringify(state.additiveDataBuffer));
@@ -859,6 +872,11 @@
     // Update metrics
     sidebarInfo.curGroup = 'commit';
     sidebarStore.set(sidebarInfo);
+
+    // Wait until the the effect sidebar is updated
+    while (sidebarInfo.curGroup !== 'commitCompleted') {
+      await new Promise(r => setTimeout(r, 500));
+    }
 
     // Update the footer message
     let curEditBaseline = 0;
