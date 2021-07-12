@@ -37,7 +37,7 @@
     width = component.getBoundingClientRect().width;
     height = component.getBoundingClientRect().height;
 
-    console.log(width, height);
+    console.log(`feature tab: [${width}, ${height}]`);
   });
 
   afterUpdate(() => {
@@ -71,7 +71,6 @@
 
     // Initialize the feature elements in DOM when we have the data
     if (sidebarInfo.featurePlotData !== undefined && !featureInitialized) {
-      console.log(sidebarInfo.featurePlotData);
       featureInitialized = true;
 
       sortedContFeatures = sidebarInfo.featurePlotData.cont;

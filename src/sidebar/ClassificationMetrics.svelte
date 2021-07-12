@@ -35,7 +35,7 @@
     width = component.getBoundingClientRect().width;
     height = component.getBoundingClientRect().height;
 
-    console.log(width, height);
+    console.log(`effect tab: [${width}, ${height}]`);
 
     // Initialize the size of all svgs
     d3.select(component)
@@ -61,7 +61,6 @@
 
     switch(sidebarInfo.curGroup) {
     case 'original':
-      console.log('original callback');
       barData.accuracy[0] = sidebarInfo.accuracy;
       barData.rocAuc[0] = sidebarInfo.rocAuc;
       barData.balancedAccuracy[0] = sidebarInfo.balancedAccuracy;
@@ -115,7 +114,6 @@
       break;
 
     case 'overwrite':
-      console.log('overwrite');
       barData = sidebarInfo.barData;
       confusionMatrixData = sidebarInfo.confusionMatrixData;
       break;

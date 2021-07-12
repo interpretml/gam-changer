@@ -19,6 +19,7 @@
   let data = null;
   let ebm = null;
   let component = null;
+  let keyCodes = [];
 
   let sidebarInfo = {};
   let sidebarStore = writable({
@@ -171,19 +172,26 @@
     footerActionStore.set(message);
   };
 
+  const bindUndoKey = (undoCallback, redoCallback) => {
+    d3.select('body')
+      .on('keydown', e => {
+        if (e.metaKey && !e.shiftKey && e.key === 'z') {
+          e.preventDefault();
+          e.stopPropagation();
+          undoCallback();
+        } else if (e.metaKey && e.shiftKey && e.key === 'z') {
+          e.preventDefault();
+          e.stopPropagation();
+          redoCallback();
+        }
+      });
+  };
+
   initData();
 
   onMount(() => {
     bindInlineSVG();
-
-    // Fix the width of the footer once it is initialized
-    let footerLine = d3.select(component)
-      .select('.message-line');
-    
-    console.log(footerLine.node().getBoundingClientRect());
-    
-    let width = footerLine.node().getBoundingClientRect().width;
-    // footerLine.style('width', `${width}px`);
+    bindUndoKey(() => footerActionTriggered('undo'), () => footerActionTriggered('redo'));
   });
 
 </script>

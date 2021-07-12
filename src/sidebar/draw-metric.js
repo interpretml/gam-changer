@@ -130,7 +130,6 @@ export const drawClassificationBarChart = (width, svgPadding, component, barData
 
   // Initialize the group structure if it is the first call
   if (svg.select('.bar-group').size() === 0) {
-    console.log('create bar first time');
 
     let barGroup = svg.append('g')
       .attr('class', 'bar-group')
