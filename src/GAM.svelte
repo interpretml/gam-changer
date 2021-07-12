@@ -192,9 +192,6 @@
 
   @import 'define';
 
-  $svg-height: 500px;
-  $svg-width: $svg-height * 600 / 400;
-  $sidebar-width: 250px;
   $tool-width: $svg-width + $sidebar-width + 2px;
 
   .main-tool {
@@ -209,6 +206,10 @@
   .tool {
     display: flex;
     flex-direction: row;
+  }
+
+  .sidebar-wrapper {
+    width: $sidebar-width;
   }
 
   .tool-footer {

@@ -36,7 +36,7 @@
   @import '../define';
 
   .sidebar {
-    width: 250px;
+    width: $sidebar-width;
     height: 100%;
     border-left: 1px double $gray-border;
     display: flex;
@@ -116,6 +116,7 @@
   }
 
   .content {
+    width: 100%;
     position: relative;
     flex-grow: 1;
     overflow-y: hidden;
