@@ -2,21 +2,20 @@
   import * as d3 from 'd3';
   import { get } from 'svelte/store';
 
-  import { initEBM } from '../ebm';
   import { initIsotonicRegression } from '../isotonic-regression';
 
-  import { round, hashString } from '../utils/utils';
-  import { MD5 } from '../utils/md5';
+  import { round } from '../utils/utils';
   import { config } from '../config';
 
   import { SelectedInfo } from './continuous/cont-class';
   import { createConfidenceData, createAdditiveData, createPointData, linkPointToAdditive } from './continuous/cont-data';
-  import { brushDuring, brushEndSelect, quitSelection } from './continuous/cont-brush';
+  import { brushDuring, brushEndSelect } from './continuous/cont-brush';
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './continuous/cont-zoom';
   import { dragged, redrawOriginal, redrawMonotone, inplaceInterpolate,
-    stepInterpolate, merge, drawLastEdit, regressionInterpolate, drawBufferGraph } from './continuous/cont-edit';
+    stepInterpolate, merge, drawLastEdit, regressionInterpolate } from './continuous/cont-edit';
   import { state } from './continuous/cont-state';
   import { moveMenubar } from './continuous/cont-bbox';
+  import { undoHandler, redoHandler, pushCurStateToHistoryStack } from './continuous/cont-history';
 
   import selectIconSVG from '../img/select-icon.svg';
   import dragIconSVG from '../img/drag-icon.svg';
@@ -106,64 +105,9 @@
     case 'undo': {
       console.log('undo clicked');
 
-      let curCommit;
-      let lastCommit;
-
       if (get(historyStore).length > 1) {
-
-        // Step 1: If the user has selected some nodes, discard the selections
-        quitSelection(svg, multiMenu, resetContextMenu, resetFeatureSidebar);
-
-        // Step 2: Remove the current commit from history
-        historyStore.update(value => {
-          curCommit = value.pop();
-          lastCommit = value[value.length - 1];
-          return value;
-        });
-
-        let curHistoryStoreValue = get(historyStore);
-
-        // Step 3: Save the current commit into the redo stack
-        redoStack.push(curCommit);
-
-        // Step 4: Replace the current state with last commit
-        state.additiveData = lastCommit.state.additiveData;
-        state.pointData = lastCommit.state.pointData;
-
-        state.additiveDataBuffer = null;
-        state.pointDataBuffer = null;
-
-        // Step 5: Update the last edit state, redraw the last edit graphs
-        if (curHistoryStoreValue.length > 1) {
-          state.additiveDataLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 2].state.additiveData;
-          drawLastEdit(svg);
-        } else {
-          // If there is no last edit, then it is the origin
-          state.additiveDataLastEdit = undefined;
-        }
-
-        // Step 6: Update the last last edit state
-        if (curHistoryStoreValue.length > 2) {
-          state.additiveDataLastLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 3].state.additiveData;
-        } else {
-          // If there is no last last edit, then it is the origin or the first edit
-          state.additiveDataLastLastEdit = undefined;
-        }
-
-        // Step 7: If the current edit has changed the EBM bin definition, then we need
-        // to reset the definition in WASM
-        if (curCommit.type.includes('equal')) {
-          setEBM('current', state.pointData);
-        }
-
-        // Step 8: Update the metrics, last metrics
-        sidebarInfo.curGroup = 'overwrite';
-        sidebarInfo.barData = JSON.parse(JSON.stringify(lastCommit.metrics.barData));
-        sidebarInfo.confusionMatrixData = JSON.parse(JSON.stringify(lastCommit.metrics.confusionMatrixData));
-        sidebarStore.set(sidebarInfo);
-
-        // Redraw the graph
-        redrawOriginal(svg);
+        undoHandler(svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+          historyStore, redoStack, setEBM, sidebarStore);
       }
       break;
     }
@@ -172,60 +116,9 @@
       console.log('redo clicked');
 
       if (redoStack.length > 0) {
-
-        // Step 1: If the user has selected some nodes, discard the selections
-        quitSelection(svg, multiMenu, resetContextMenu, resetFeatureSidebar);
-
-        // Step 2: Pop the redo stack and add it to the history stack
-        let newCommit = redoStack.pop();
-
-        historyStore.update(value => {
-          value.push(newCommit);
-          return value;
-        });
-
-        let curHistoryStoreValue = get(historyStore);
-
-        // Replace the current state with the new commit
-        state.additiveData = newCommit.state.additiveData;
-        state.pointData = newCommit.state.pointData;
-
-        state.additiveDataBuffer = null;
-        state.pointDataBuffer = null;
-
-        // Update the last edit state, redraw the last edit graphs
-        if (curHistoryStoreValue.length > 1) {
-          state.additiveDataLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 2].state.additiveData;
-          drawLastEdit(svg);
-        } else {
-          // If there is no last edit, then it is the origin
-          state.additiveDataLastEdit = undefined;
-        }
-
-        // Step 6: Update the last last edit state
-        if (curHistoryStoreValue.length > 2) {
-          state.additiveDataLastLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 3].state.additiveData;
-        } else {
-          // If there is no last last edit, then it is the origin or the first edit
-          state.additiveDataLastLastEdit = undefined;
-        }
-
-        // If the current edit has changed the EBM bin definition, then we need
-        // to reset the definition in WASM
-        if (newCommit.type.includes('equal')) {
-          setEBM('current', state.pointData);
-        }
-
-        // Step 8: Update the metrics, last metrics
-        sidebarInfo.curGroup = 'overwrite';
-        sidebarInfo.barData = JSON.parse(JSON.stringify(newCommit.metrics.barData));
-        sidebarInfo.confusionMatrixData = JSON.parse(JSON.stringify(newCommit.metrics.confusionMatrixData));
-        sidebarStore.set(sidebarInfo);
-
-        // Redraw the graph
-        redrawOriginal(svg);
+        redoHandler(svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+          historyStore, redoStack, setEBM, sidebarStore);
       }
-
       break;
     }
     
@@ -583,7 +476,7 @@
     });
 
     // Push the initial state into the history stack
-    pushCurStateToHistoryStack('original', 'original graph');
+    pushCurStateToHistoryStack('original', 'original graph', historyStore, sidebarInfo);
   };
 
   const updateEBM = async (curGroup) => {
@@ -705,32 +598,6 @@
 
     sidebarInfo.curGroup = 'updateFeature';
     sidebarStore.set(sidebarInfo);
-  };
-
-  const pushCurStateToHistoryStack = (type, description) => {
-    historyStore.update(value => {
-      console.log(value);
-      const time = Date.now();
-
-      value.push({
-        state: {
-          pointData: state.pointData,
-          additiveData: state.additiveData
-        },
-        metrics: {
-          barData: JSON.parse(JSON.stringify(sidebarInfo.barData)),
-          confusionMatrixData: JSON.parse(JSON.stringify(sidebarInfo.confusionMatrixData))
-        },
-        featureId: 1,
-        type: type,
-        description: description,
-        time: time,
-        hash: MD5(`${type}${description}${time}`)
-      });
-
-      console.log(value.map(d => d.metrics.barData));
-      return value;
-    });
   };
 
   // ---- Interaction Functions ----
@@ -949,7 +816,7 @@
     const binRange = binRight === undefined ? `${binLeft.x} <= x` : `${binLeft.x} <= x < ${binRight.x}`;
     const message = `${curEditBaseline >= 0 ? 'Increased' : 'Decreased'} scores of ${binNum} ` +
       `bins (${binRange}) by ${round(Math.abs(curEditBaseline), 2)}.`;
-    pushCurStateToHistoryStack('move', message);
+    pushCurStateToHistoryStack('move', message, historyStore, sidebarInfo);
 
     // Any new commit purges the redo stack
     redoStack = [];
@@ -1424,7 +1291,7 @@
       break;
     }
 
-    pushCurStateToHistoryStack(editType, description);
+    pushCurStateToHistoryStack(editType, description, historyStore, sidebarInfo);
 
     // Any new commit purges the redo stack
     redoStack = [];
