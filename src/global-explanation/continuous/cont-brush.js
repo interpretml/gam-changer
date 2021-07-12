@@ -4,6 +4,7 @@ import { moveMenubar } from './cont-bbox';
 import { rScale } from './cont-zoom';
 import { state } from './cont-state';
 import { redrawOriginal, drawLastEdit } from './cont-edit';
+import { config } from '../../config';
 
 // Need a timer to avoid the brush event call after brush.move()
 let idleTimeout = null;
@@ -228,7 +229,7 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
 
     bbox.clone(true)
       .classed('original-bbox', false)
-      .style('stroke', 'white')
+      .style('stroke', config.colors.background)
       .style('stroke-dasharray', null)
       .style('stroke-width', bboxStrokeWidth * 3)
       .lower();

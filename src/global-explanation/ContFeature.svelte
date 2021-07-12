@@ -109,8 +109,6 @@
       let curCommit;
       let lastCommit;
 
-      console.log(get(historyStore));
-
       if (get(historyStore).length > 1) {
 
         // Step 1: If the user has selected some nodes, discard the selections
@@ -128,14 +126,10 @@
         // Step 3: Save the current commit into the redo stack
         redoStack.push(curCommit);
 
-        console.log(curCommit, lastCommit);
-        console.log(curHistoryStoreValue);
-
         // Step 4: Replace the current state with last commit
         state.additiveData = lastCommit.state.additiveData;
         state.pointData = lastCommit.state.pointData;
 
-        // Need to use buffer to draw the svg
         state.additiveDataBuffer = null;
         state.pointDataBuffer = null;
 
@@ -170,14 +164,70 @@
 
         // Redraw the graph
         redrawOriginal(svg);
+      }
+      break;
+    }
 
+    case 'redo': {
+      console.log('redo clicked');
+
+      if (redoStack.length > 0) {
+
+        // Step 1: If the user has selected some nodes, discard the selections
+        quitSelection(svg, multiMenu, resetContextMenu, resetFeatureSidebar);
+
+        // Step 2: Pop the redo stack and add it to the history stack
+        let newCommit = redoStack.pop();
+
+        historyStore.update(value => {
+          value.push(newCommit);
+          return value;
+        });
+
+        let curHistoryStoreValue = get(historyStore);
+
+        // Replace the current state with the new commit
+        state.additiveData = newCommit.state.additiveData;
+        state.pointData = newCommit.state.pointData;
+
+        state.additiveDataBuffer = null;
+        state.pointDataBuffer = null;
+
+        // Update the last edit state, redraw the last edit graphs
+        if (curHistoryStoreValue.length > 1) {
+          state.additiveDataLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 2].state.additiveData;
+          drawLastEdit(svg);
+        } else {
+          // If there is no last edit, then it is the origin
+          state.additiveDataLastEdit = undefined;
+        }
+
+        // Step 6: Update the last last edit state
+        if (curHistoryStoreValue.length > 2) {
+          state.additiveDataLastLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 3].state.additiveData;
+        } else {
+          // If there is no last last edit, then it is the origin or the first edit
+          state.additiveDataLastLastEdit = undefined;
+        }
+
+        // If the current edit has changed the EBM bin definition, then we need
+        // to reset the definition in WASM
+        if (newCommit.type.includes('equal')) {
+          setEBM('current', state.pointData);
+        }
+
+        // Step 8: Update the metrics, last metrics
+        sidebarInfo.curGroup = 'overwrite';
+        sidebarInfo.barData = JSON.parse(JSON.stringify(newCommit.metrics.barData));
+        sidebarInfo.confusionMatrixData = JSON.parse(JSON.stringify(newCommit.metrics.confusionMatrixData));
+        sidebarStore.set(sidebarInfo);
+
+        // Redraw the graph
+        redrawOriginal(svg);
       }
 
       break;
     }
-    case 'redo':
-      console.log('redo clicked');
-      break;
     
     case 'save':
       console.log('save clicked');
@@ -900,6 +950,9 @@
     const message = `${curEditBaseline >= 0 ? 'Increased' : 'Decreased'} scores of ${binNum} ` +
       `bins (${binRange}) by ${round(Math.abs(curEditBaseline), 2)}.`;
     pushCurStateToHistoryStack('move', message);
+
+    // Any new commit purges the redo stack
+    redoStack = [];
   };
 
   /**
@@ -1372,7 +1425,9 @@
     }
 
     pushCurStateToHistoryStack(editType, description);
-    console.log(get(historyStore));
+
+    // Any new commit purges the redo stack
+    redoStack = [];
   };
 
   /**

@@ -16,6 +16,7 @@ export const config = {
     dotConfidence: 'hsl(222, 100%, 79%)',
     hist: 'hsl(222, 10%, 93%)',
     histAxis: 'hsl(222, 10%, 70%)',
-    line0: 'hsla(222, 0%, 0%, 5%)'
+    line0: 'hsla(222, 0%, 0%, 5%)',
+    background: 'hsl(20, 16%, 99%)'
   },
 };

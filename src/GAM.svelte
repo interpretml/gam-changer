@@ -175,6 +175,15 @@
 
   onMount(() => {
     bindInlineSVG();
+
+    // Fix the width of the footer once it is initialized
+    let footerLine = d3.select(component)
+      .select('.message-line');
+    
+    console.log(footerLine.node().getBoundingClientRect());
+    
+    let width = footerLine.node().getBoundingClientRect().width;
+    // footerLine.style('width', `${width}px`);
   });
 
 </script>
@@ -183,12 +192,18 @@
 
   @import 'define';
 
+  $svg-height: 500px;
+  $svg-width: $svg-height * 600 / 400;
+  $sidebar-width: 250px;
+  $tool-width: $svg-width + $sidebar-width + 2px;
+
   .main-tool {
     display: flex;
     flex-direction: column;
     border: 1px solid $gray-border;
     border-radius: 5px;
     background: white;
+    width: $tool-width;
   }
 
   .tool {
@@ -213,7 +228,15 @@
     flex-grow: 1;
     font-size: 0.9em;
     height: 100%;
-    // overflow-x: scroll;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+
+    span {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
   }
 
   .button-group {
