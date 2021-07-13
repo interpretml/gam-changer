@@ -165,6 +165,11 @@
       };
       break;
 
+    case 'copy-current-last':
+      Object.keys(confusionMatrixData).forEach(k => confusionMatrixData[k][1] = null);
+      Object.keys(barData).forEach(k => barData[k][1] = null);
+      break;
+
     case 'original-only':
       updateData(0, barData, confusionMatrixData, sidebarInfo);
       break;

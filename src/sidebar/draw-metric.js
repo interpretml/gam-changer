@@ -204,7 +204,7 @@ export const drawClassificationBarChart = (width, svgPadding, component, barData
     });
   }
 
-  // Update the bars and texts
+  // Update the bars
 
   let barGroup = svg.select('.bar-group');
 
@@ -212,6 +212,8 @@ export const drawClassificationBarChart = (width, svgPadding, component, barData
     for(let i = 0; i < 3; i++) {
       barGroup.select(`.${k}-group`)
         .select(`rect.bar.${rectOrder[i]}`)
+        .transition('update-metric')
+        .duration(200)
         .attr('width', widthScale(barData[k][i]));
       
       barGroup.select(`.${k}-group`)

@@ -134,6 +134,12 @@
 
         // Step 2.3: Current edit
         await setEBM('current-only', historyInfo[historyInfo.length - 1].state.pointData);
+
+        // Step 2.2.5: If we didn't restore the last edit, use the current edit as last
+        if (historyInfo.length === 1) {
+          sidebarInfo.curGroup = 'last';
+          sidebarStore.set(sidebarInfo);
+        }
       }
 
       break;
