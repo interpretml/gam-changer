@@ -58,16 +58,26 @@ export const undoHandler = (svg, multiMenu, resetContextMenu, resetFeatureSideba
    * Step 8: Update the metrics, last metrics
    * It depends on the current effect mode:
    * 1. Global: load the metrics from history stack => update the tab
-   * 2. Selected: the selection is canceled => show NA everywhere
-   * 3. Slice: Reset EBM to compute the metrics :(
+   * 2. Selected: load the metrics from history stack (no draw);
+   *  then the selection is canceled => show NA everywhere
+   * 3. Slice: load the metrics from history stack (no draw);
+   *  then reset EBM to compute the metrics
    */
   let sidebarInfo = get(sidebarStore);
+
+  // No matter what scope it is, we need to reload the global metrics from the
+  // history stack
+  sidebarStore.update(value => {
+    value.curGroup = 'no action';
+    value.barData = JSON.parse(JSON.stringify(lastCommit.metrics.barData));
+    value.confusionMatrixData = JSON.parse(JSON.stringify(lastCommit.metrics.confusionMatrixData));
+    return value;
+  });
+
   switch (sidebarInfo.effectScope) {
   case 'global':
     sidebarStore.update(value => {
       value.curGroup = 'overwrite';
-      value.barData = JSON.parse(JSON.stringify(lastCommit.metrics.barData));
-      value.confusionMatrixData = JSON.parse(JSON.stringify(lastCommit.metrics.confusionMatrixData));
       return value;
     });
     break;
@@ -136,16 +146,26 @@ export const redoHandler = (svg, multiMenu, resetContextMenu, resetFeatureSideba
    * Update the metrics, last metrics
    * It depends on the current effect mode:
    * 1. Global: load the metrics from redo stack => update the tab
-   * 2. Selected: the selection is canceled => show NA everywhere
-   * 3. Slice: Reset EBM to compute the metrics :(
+   * 2. Selected: load the metrics from redo stack (no draw);
+   *  then the selection is canceled => show NA everywhere
+   * 3. Slice: load the metrics from history stack (no draw);
+   *  then reset EBM to compute the metrics
    */
   let sidebarInfo = get(sidebarStore);
+
+  // No matter what scope it is, we need to reload the global metrics from the
+  // history stack
+  sidebarStore.update(value => {
+    value.curGroup = 'no action';
+    value.barData = JSON.parse(JSON.stringify(newCommit.metrics.barData));
+    value.confusionMatrixData = JSON.parse(JSON.stringify(newCommit.metrics.confusionMatrixData));
+    return value;
+  });
+
   switch (sidebarInfo.effectScope) {
   case 'global':
     sidebarStore.update(value => {
       value.curGroup = 'overwrite';
-      value.barData = JSON.parse(JSON.stringify(newCommit.metrics.barData));
-      value.confusionMatrixData = JSON.parse(JSON.stringify(newCommit.metrics.confusionMatrixData));
       return value;
     });
     break;

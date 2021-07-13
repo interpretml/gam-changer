@@ -146,8 +146,8 @@
       break;
 
     case 'overwrite':
-      barData = sidebarInfo.barData;
-      confusionMatrixData = sidebarInfo.confusionMatrixData;
+      barData = JSON.parse(JSON.stringify(sidebarInfo.barData));
+      confusionMatrixData = JSON.parse(JSON.stringify(sidebarInfo.confusionMatrixData));
       break;
 
     case 'nullify':

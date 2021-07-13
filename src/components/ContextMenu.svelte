@@ -412,7 +412,6 @@
   $border-radius: 13px;
   $dot-background: $blue-dark;
   $hover-color: $blue-dark;
-  $check-color:  change-color($blue-600, $lightness: 90%);
   $check-hover-color: $blue-600;
 
   @mixin item-input-arrow {
@@ -509,7 +508,7 @@
       width: 30px;
 
       .svg-icon {
-        color: change-color($blue-600, $lightness: 90%);
+        color: $indigo-dark;
 
         :global(svg) {
           width: 1em;
@@ -518,7 +517,7 @@
       }
 
       .svg-icon.icon-check {
-        color: $check-color
+        color: $indigo-dark;
       }
 
       &:hover {
@@ -556,7 +555,7 @@
       height: 30px;
 
       .svg-icon {
-        color: change-color($blue-600, $lightness: 90%);
+        color: $indigo-dark;
 
         :global(svg) {
           width: 1em;
@@ -614,10 +613,10 @@
     margin: 0 5px;
 
     &.selected {
-      border: 2px solid change-color($blue-600, $lightness: 80%);
+      border: 2px solid change-color($blue-600, $lightness: 70%);
       
       .sub-item-child .svg-icon {
-        color: change-color($blue-600, $lightness: 80%);
+        color: $blue-600;
 
         &:hover {
           color: $blue-600;
@@ -629,7 +628,7 @@
   .sub-item-child {
 
     .icon-check.svg-icon {
-      color: $check-color
+      color: $indigo-dark;
     }
 
   }
@@ -639,7 +638,7 @@
     border-left: 2px solid $gray-200;
     height: 24px;
     width: 30px;
-    color: change-color($blue-600, $lightness: 90%);
+    color: $indigo-dark;
     text-align: center;
 
     &:hover {
@@ -648,8 +647,8 @@
 
     &.selected {
       color: $blue-600;
-      border-right: 2px solid change-color($blue-600, $lightness: 80%);
-      border-left: 2px solid change-color($blue-600, $lightness: 80%);
+      border-right: 2px solid change-color($blue-600, $lightness: 70%);
+      border-left: 2px solid change-color($blue-600, $lightness: 70%);
     }
   }
 
