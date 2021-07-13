@@ -54,13 +54,34 @@ export const undoHandler = (svg, multiMenu, resetContextMenu, resetFeatureSideba
     setEBM('current', state.pointData);
   }
 
-  // Step 8: Update the metrics, last metrics
-  sidebarStore.update(value => {
-    value.curGroup = 'overwrite';
-    value.barData = JSON.parse(JSON.stringify(lastCommit.metrics.barData));
-    value.confusionMatrixData = JSON.parse(JSON.stringify(lastCommit.metrics.confusionMatrixData));
-    return value;
-  });
+  /**
+   * Step 8: Update the metrics, last metrics
+   * It depends on the current effect mode:
+   * 1. Global: load the metrics from history stack => update the tab
+   * 2. Selected: the selection is canceled => show NA everywhere
+   * 3. Slice: Reset EBM to compute the metrics :(
+   */
+  let sidebarInfo = get(sidebarStore);
+  switch (sidebarInfo.effectScope) {
+  case 'global':
+    sidebarStore.update(value => {
+      value.curGroup = 'overwrite';
+      value.barData = JSON.parse(JSON.stringify(lastCommit.metrics.barData));
+      value.confusionMatrixData = JSON.parse(JSON.stringify(lastCommit.metrics.confusionMatrixData));
+      return value;
+    });
+    break;
+  case 'selected':
+    sidebarStore.update(value => {
+      value.curGroup = 'nullify';
+      return value;
+    });
+    break;
+  case 'slice':
+    break;
+  default:
+    break;
+  }
 
   // Redraw the graph
   redrawOriginal(svg);
@@ -111,13 +132,34 @@ export const redoHandler = (svg, multiMenu, resetContextMenu, resetFeatureSideba
     setEBM('current', state.pointData);
   }
 
-  // Update the metrics, last metrics
-  sidebarStore.update(value => {
-    value.curGroup = 'overwrite';
-    value.barData = JSON.parse(JSON.stringify(newCommit.metrics.barData));
-    value.confusionMatrixData = JSON.parse(JSON.stringify(newCommit.metrics.confusionMatrixData));
-    return value;
-  });
+  /**
+   * Update the metrics, last metrics
+   * It depends on the current effect mode:
+   * 1. Global: load the metrics from redo stack => update the tab
+   * 2. Selected: the selection is canceled => show NA everywhere
+   * 3. Slice: Reset EBM to compute the metrics :(
+   */
+  let sidebarInfo = get(sidebarStore);
+  switch (sidebarInfo.effectScope) {
+  case 'global':
+    sidebarStore.update(value => {
+      value.curGroup = 'overwrite';
+      value.barData = JSON.parse(JSON.stringify(newCommit.metrics.barData));
+      value.confusionMatrixData = JSON.parse(JSON.stringify(newCommit.metrics.confusionMatrixData));
+      return value;
+    });
+    break;
+  case 'selected':
+    sidebarStore.update(value => {
+      value.curGroup = 'nullify';
+      return value;
+    });
+    break;
+  case 'slice':
+    break;
+  default:
+    break;
+  }
 
   // Redraw the graph
   redrawOriginal(svg);

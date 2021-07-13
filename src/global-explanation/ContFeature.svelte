@@ -649,8 +649,6 @@
     newScores.push(curPoint.y);
     curPoint.ebmID = curEBMID;
 
-    console.log(curGroup, newScores);
-
     await ebm.setModel(newBinEdges, newScores);
 
     switch(sidebarInfo.effectScope) {
