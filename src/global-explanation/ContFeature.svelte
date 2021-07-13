@@ -95,8 +95,56 @@
 
   // Communicate with the sidebar
   let sidebarInfo = {};
-  sidebarStore.subscribe(value => {
+  sidebarStore.subscribe(async value => {
     sidebarInfo = value;
+
+    // Listen to events ['globalClicked', 'selectedClicked', 'sliceClicked']
+    // from the sidebar
+    switch(value.curGroup) {
+    case 'globalClicked':
+      console.log('globalClicked');
+
+      // We keep track of the global metrics in history in any current scope
+      // To restore the global tab, we just need to query the history stack
+      sidebarInfo.curGroup = 'overwrite';
+      sidebarStore.set(sidebarInfo);
+      break;
+
+    case 'selectedClicked':
+      console.log('selectedClicked');
+
+      // Step 1: If there is no selected nodes, then the metrics are all NAs
+      if (!state.selectedInfo.hasSelected) {
+        sidebarInfo.curGroup = 'nullify';
+        sidebarStore.set(sidebarInfo);
+      } else {
+        // Step 2: Reset/Update EBM 3 times and compute three metrics on the selected nodes
+
+        // Step 2.1: Original
+        // Here we reset the EBM model completely, because
+        // the intermediate historical events might update() different portions
+        // of the EBM
+        let historyInfo = get(historyStore);
+        await setEBM('original-only', historyInfo[0].state.pointData);
+
+        // Step 2.2: Last edit
+        if (historyInfo.length > 1) {
+          await setEBM('last-only', historyInfo[historyInfo.length - 2].state.pointData);
+        }
+
+        // Step 2.3: Current edit
+        await setEBM('current-only', historyInfo[historyInfo.length - 1].state.pointData);
+      }
+
+      break;
+
+    case 'sliceClicked':
+      console.log('sliceClicked');
+      break;
+
+    default:
+      break;
+    }
   });
 
   // Listen to footer buttons
@@ -416,7 +464,8 @@
     brush = d3.brush()
       .on('end', e => brushEndSelect(
         e, svg, multiMenu, bboxStrokeWidth, brush, component, resetContextMenu,
-        sidebarStore, setEBM, updateFeatureSidebar, resetFeatureSidebar
+        sidebarStore, setEBM, updateFeatureSidebar, resetFeatureSidebar,
+        nullifyMetrics, computeSelectedEffects
       ))
       .on('start brush', e => brushDuring(e, svg, multiMenu, ebm, footerStore))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]])
@@ -479,19 +528,33 @@
     pushCurStateToHistoryStack('original', 'original graph', historyStore, sidebarInfo);
   };
 
-  const updateEBM = async (curGroup) => {
-    let changedBinIndexes = [];
-    let changedScores = [];
+  const getEBMMetrics = async (scope='global') => {
+    // Depending on the selected scope, we have different modes of getMetrics()
+    let metrics;
 
-    state.selectedInfo.nodeData.forEach(d => {
-      changedBinIndexes.push(d.id);
-      changedScores.push(d.y);
-    });
+    switch(scope) {
+    case 'global':
+      metrics = ebm.getMetrics();
+      break;
+    case 'selected': {
+      let selectedBinIndexes = state.selectedInfo.nodeData.map(d => d.ebmID);
+      metrics = ebm.getMetricsOnSelectedBins(selectedBinIndexes);
+      break;
+    }
+    case 'slice':
+      break;
+    default:
+      break;
+    }
+    return metrics;
+  };
 
-    await ebm.updateModel(changedBinIndexes, changedScores);
-
-    let metrics = ebm.getMetrics();
-
+  /**
+   * Pass the metrics info to sidebar handler (classification or egression metrics tab)
+   * @param metrics Metrics info from the EBM
+   * @param curGroup Name of the message
+   */
+  const transferMetricToSidebar = (metrics, curGroup) => {
     if (ebm.isClassification) {
       sidebarInfo.accuracy = metrics.accuracy;
       sidebarInfo.rocAuc = metrics.rocAuc;
@@ -505,6 +568,46 @@
     sidebarInfo.curGroup = curGroup;
 
     sidebarStore.set(sidebarInfo);
+  };
+
+  const updateEBM = async (curGroup, nodeData=undefined) => {
+    let changedBinIndexes = [];
+    let changedScores = [];
+
+    if (nodeData === undefined) {
+      nodeData = state.selectedInfo.nodeData;
+    }
+
+    nodeData.forEach(d => {
+      changedBinIndexes.push(d.id);
+      changedScores.push(d.y);
+    });
+
+    await ebm.updateModel(changedBinIndexes, changedScores);
+
+    /**
+     * Depending on the current scope, we have different metrics updating methods
+     */
+    switch(sidebarInfo.effectScope) {
+    case 'global': {
+      let metrics = await getEBMMetrics('global');
+
+      // Pass the metrics to sidebar
+      transferMetricToSidebar(metrics, curGroup);
+      break;
+    }
+    case 'selected': {
+      let metrics = await getEBMMetrics('selected');
+
+      // Pass the metrics to sidebar
+      transferMetricToSidebar(metrics, curGroup);
+      break;
+    }
+    case 'slice':
+      break;
+    default:
+      break;
+    }
   };
 
   /**
@@ -540,23 +643,52 @@
     newScores.push(curPoint.y);
     curPoint.ebmID = curEBMID;
 
+    console.log(curGroup, newScores);
+
     await ebm.setModel(newBinEdges, newScores);
 
-    let metrics = ebm.getMetrics();
-
-    if (ebm.isClassification) {
-      sidebarInfo.accuracy = metrics.accuracy;
-      sidebarInfo.rocAuc = metrics.rocAuc;
-      sidebarInfo.balancedAccuracy = metrics.balancedAccuracy;
-      sidebarInfo.confusionMatrix = metrics.confusionMatrix;
-    } else {
-      sidebarInfo.rmse = metrics.rmse;
-      sidebarInfo.mae = metrics.mae;
+    switch(sidebarInfo.effectScope) {
+    case 'global': {
+      let metrics = await getEBMMetrics('global');
+      transferMetricToSidebar(metrics, curGroup);
+      break;
     }
+    case 'selected': {
+      let metrics = await getEBMMetrics('selected');
+      transferMetricToSidebar(metrics, curGroup);
+      break;
+    }
+    case 'slice':
+      break;
+    default:
+      break;
+    }
+  };
 
-    sidebarInfo.curGroup = curGroup;
+  /**
+   * Set all metrics to null if there is no selection and the scope is 'selected'.
+  */
+  const nullifyMetrics = () => {
+    if (!state.selectedInfo.hasSelected && get(sidebarStore).effectScope === 'selected') {
+      sidebarInfo.curGroup = 'nullify';
+      sidebarStore.set(sidebarInfo);
+    }
+  };
 
-    sidebarStore.set(sidebarInfo);
+  const computeSelectedEffects = async () => {
+    if (get(sidebarStore).effectScope === 'selected' && state.selectedInfo.hasSelected) {
+      // Step 1: compute the original metrics
+      let historyInfo = get(historyStore);
+      await setEBM('original-only', historyInfo[0].state.pointData);
+
+      // Step 2: Last edit
+      if (historyInfo.length > 1) {
+        await setEBM('last-only', historyInfo[historyInfo.length - 2].state.pointData);
+      }
+
+      // Step 3: Current edit
+      await setEBM('current-only', historyInfo[historyInfo.length - 1].state.pointData);
+    }
   };
 
   /**
@@ -789,6 +921,12 @@
     // Update metrics
     sidebarInfo.curGroup = 'commit';
     sidebarStore.set(sidebarInfo);
+
+    // Query the global metrics and save it in the history if the scope is not in global
+    if (sidebarInfo.effectScope !== 'global') {
+      let metrics = await getEBMMetrics('global');
+      transferMetricToSidebar(metrics, 'commit-not-global');
+    }
 
     // Wait until the the effect sidebar is updated
     while (sidebarInfo.curGroup !== 'commitCompleted') {

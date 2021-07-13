@@ -15,9 +15,6 @@
   const svgPadding = {top: 10, right: 20, bottom: 40, left: 20};
 
   let confusionMatrixData = {
-    // original: {tn: 23.2, fn: 22.1, fp: 23.2, tp: 23.8},
-    // last: {tn: 23.8, fn: 23.8, fp: 23.8, tp: 23.8},
-    // current: {tn: 23.8, fn: 23.8, fp: 23.8, tp: 23.8}
     tn: [23.2, null, 23, null],
     fn: [23.2, null, 23, null],
     fp: [23.2, null, 23, null],
@@ -56,19 +53,34 @@
     confusionMatrixData.tp[toIndex] = confusionMatrixData.tp[fromIndex];
   };
 
+  const tabClicked = (tab) => {
+    if (sidebarInfo.effectScope !== tab) {
+      sidebarInfo.curGroup = `${tab}Clicked`;
+      sidebarInfo.effectScope = tab;
+      sidebarStore.set(sidebarInfo);
+      // selectedTab = tab;
+    }
+  };
+
+  const updateData = (index, barData, confusionMatrixData, sidebarInfo) => {
+    barData.accuracy[index] = sidebarInfo.accuracy;
+    barData.rocAuc[index] = sidebarInfo.rocAuc;
+    barData.balancedAccuracy[index] = sidebarInfo.balancedAccuracy;
+
+    let total = sidebarInfo.confusionMatrix.reduce((a, b) => a + b);
+
+    confusionMatrixData.tn[index] = sidebarInfo.confusionMatrix[0] / total;
+    confusionMatrixData.fn[index] = sidebarInfo.confusionMatrix[1] / total;
+    confusionMatrixData.fp[index] = sidebarInfo.confusionMatrix[2] / total;
+    confusionMatrixData.tp[index] = sidebarInfo.confusionMatrix[3] / total;
+  };
+
   sidebarStore.subscribe(value => {
     sidebarInfo = value;
 
     switch(sidebarInfo.curGroup) {
     case 'original':
-      barData.accuracy[0] = sidebarInfo.accuracy;
-      barData.rocAuc[0] = sidebarInfo.rocAuc;
-      barData.balancedAccuracy[0] = sidebarInfo.balancedAccuracy;
-
-      confusionMatrixData.tn[0] = sidebarInfo.confusionMatrix[0] / sidebarInfo.totalSampleNum;
-      confusionMatrixData.fn[0] = sidebarInfo.confusionMatrix[1] / sidebarInfo.totalSampleNum;
-      confusionMatrixData.fp[0] = sidebarInfo.confusionMatrix[2] / sidebarInfo.totalSampleNum;
-      confusionMatrixData.tp[0] = sidebarInfo.confusionMatrix[3] / sidebarInfo.totalSampleNum;
+      updateData(0, barData, confusionMatrixData, sidebarInfo);
 
       copyMetricData(barData, confusionMatrixData, 0, 2);
 
@@ -79,18 +91,11 @@
       break;
 
     case 'current':
-      barData.accuracy[2] = sidebarInfo.accuracy;
-      barData.rocAuc[2] = sidebarInfo.rocAuc;
-      barData.balancedAccuracy[2] = sidebarInfo.balancedAccuracy;
-
-      confusionMatrixData.tn[2] = sidebarInfo.confusionMatrix[0] / sidebarInfo.totalSampleNum;
-      confusionMatrixData.fn[2] = sidebarInfo.confusionMatrix[1] / sidebarInfo.totalSampleNum;
-      confusionMatrixData.fp[2] = sidebarInfo.confusionMatrix[2] / sidebarInfo.totalSampleNum;
-      confusionMatrixData.tp[2] = sidebarInfo.confusionMatrix[3] / sidebarInfo.totalSampleNum;
+      updateData(2, barData, confusionMatrixData, sidebarInfo);
       break;
 
     case 'last':
-      // Copy current to last, save a copy of last to last last
+      // Copy current to last
       copyMetricData(barData, confusionMatrixData, 2, 1);
       break;
 
@@ -100,12 +105,39 @@
       copyMetricData(barData, confusionMatrixData, 1, 3);
 
       // Track the barData and confusionMatrix in the store so they can saved
-      // in the history stack
-      sidebarInfo.barData = JSON.parse(JSON.stringify(barData));
-      sidebarInfo.confusionMatrixData = JSON.parse(JSON.stringify(confusionMatrixData));
+      // in the history stack (only if the commit is global)
+      if (sidebarInfo.effectScope === 'global') {
+        sidebarInfo.barData = JSON.parse(JSON.stringify(barData));
+        sidebarInfo.confusionMatrixData = JSON.parse(JSON.stringify(confusionMatrixData));
+        
+        sidebarInfo.curGroup = 'commitCompleted';
+        sidebarStore.set(sidebarInfo);
+      }
+
+      break;
+    
+    case 'commit-not-global': {
+      let globalBarData = sidebarInfo.barData;
+      let globalConfusionMatrixData = sidebarInfo.confusionMatrixData;
+
+      // Copy last to last last
+      copyMetricData(globalBarData, globalConfusionMatrixData, 1, 3);
+
+      // Copy current to last
+      copyMetricData(globalBarData, globalConfusionMatrixData, 2, 1);
+
+      // Update the current 
+      updateData(2, globalBarData, globalConfusionMatrixData, sidebarInfo);
+
+      // Save into the history stack
+      sidebarInfo.barData = JSON.parse(JSON.stringify(globalBarData));
+      sidebarInfo.confusionMatrixData = JSON.parse(JSON.stringify(globalConfusionMatrixData));
+
       sidebarInfo.curGroup = 'commitCompleted';
       sidebarStore.set(sidebarInfo);
+
       break;
+    }
 
     case 'recover':
       // Copy last to current, copy last last to last
@@ -116,6 +148,33 @@
     case 'overwrite':
       barData = sidebarInfo.barData;
       confusionMatrixData = sidebarInfo.confusionMatrixData;
+      break;
+
+    case 'nullify':
+      confusionMatrixData = {
+        tn: [null, null, null, null],
+        fn: [null, null, null, null],
+        fp: [null, null, null, null],
+        tp: [null, null, null, null]
+      };
+
+      barData = {
+        accuracy: [null, null, null, null],
+        rocAuc: [null, null, null, null],
+        balancedAccuracy: [null, null, null, null]
+      };
+      break;
+
+    case 'original-only':
+      updateData(0, barData, confusionMatrixData, sidebarInfo);
+      break;
+
+    case 'last-only':
+      updateData(1, barData, confusionMatrixData, sidebarInfo);
+      break;
+
+    case 'current-only':
+      updateData(2, barData, confusionMatrixData, sidebarInfo);
       break;
     
     default:
@@ -188,6 +247,14 @@
 
     &:focus:not(:active) {
       box-shadow: none;
+    }
+
+    &:focus {
+      border-color: $gray-border;
+    }
+
+    &.selected {
+      background: $gray-200;
     }
   }
 
@@ -262,7 +329,10 @@
     <div class='scope-selection field has-addons'>
 
       <div class='control'>
-        <button class='button' title='undo last edit'>
+        <button class='button' title='Show model performance across all test samples'
+          class:selected={sidebarInfo.effectScope === 'global'}
+          on:click={() => tabClicked('global')}
+        >
           <span class='is-small'>
             Global
           </span>
@@ -270,7 +340,10 @@
       </div>
 
       <div class='control'>
-        <button class='button' title='redo last undo'>
+        <button class='button' title='Show model performance on the selected test samples'
+          class:selected={sidebarInfo.effectScope === 'selected'}
+          on:click={() => tabClicked('selected')}
+        >
           <span class='is-small'>
             Selected
           </span>
@@ -278,7 +351,10 @@
       </div>
 
       <div class='control'>
-        <button class='button right-button' title='save edits'>
+        <button class='button right-button' title='Show model performance on the sliced test samples'
+          class:selected={sidebarInfo.effectScope === 'slice'}
+          on:click={() => tabClicked('slice')}
+        >
           <span class='is-small'>
             Slice
           </span>

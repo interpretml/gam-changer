@@ -126,7 +126,7 @@ export const quitSelection = (svg, multiMenu, resetContextMenu, resetFeatureSide
 
 export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
   brush, component, resetContextMenu, sidebarStore, setEBM, updateFeatureSidebar,
-  resetFeatureSidebar
+  resetFeatureSidebar, nullifyMetrics, computeSelectedEffects
 ) => {
   // Get the selection boundary
   let selection = event.selection;
@@ -184,6 +184,9 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
       // Reset the feature sidebar
       resetFeatureSidebar();
 
+      // Nullify the metrics if in selected tab
+      nullifyMetrics();
+
       return idleTimeout = setTimeout(idled, idleDelay);
     }
   } else {
@@ -200,7 +203,7 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
       .classed('selected', d => {
         if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
           selectedBinIndexes.push(d.ebmID);
-          state.selectedInfo.nodeData.push({x: d.x, y: d.y, id: d.id});
+          state.selectedInfo.nodeData.push({x: d.x, y: d.y, id: d.id, ebmID: d.ebmID});
           return true;
         } else {
           return false;
@@ -245,6 +248,12 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
       // Trigger a counting of the feature distribution of the selected samples
       updateFeatureSidebar(selectedBinIndexes);
     }
+
+    // Nullify the metrics if in selected tab and no selection
+    nullifyMetrics();
+
+    // Recompute the selected effects if in selected tab and we do have selection
+    computeSelectedEffects();
 
     // Remove the brush box
     svgSelect.select('g.line-chart-content-group g.brush')

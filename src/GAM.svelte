@@ -33,6 +33,7 @@
     rocCurve: [],
     curGroup: '',
     selectedTab: 'effect',
+    effectScope: 'global'
   });
 
   let footerStore = writable({

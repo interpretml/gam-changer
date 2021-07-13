@@ -595,14 +595,9 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
           }
 
           // Pin the inner 1D arrays
-          let curBinEdgePtr = __newArray(wasm.Float64Array_ID, curBinEdge);
-          __pin(curBinEdgePtr);
-
-          let curScorePtr = __newArray(wasm.Float64Array_ID, curScore);
-          __pin(curScorePtr);
-
-          let curHistBinEdgesPtr = __newArray(wasm.Float64Array_ID, curHistBinEdge);
-          __pin(curHistBinEdgesPtr);
+          let curBinEdgePtr = __pin(__newArray(wasm.Float64Array_ID, curBinEdge));
+          let curScorePtr = __pin(__newArray(wasm.Float64Array_ID, curScore));
+          let curHistBinEdgesPtr = __pin(__newArray(wasm.Float64Array_ID, curHistBinEdge));
 
           binEdges.push(curBinEdgePtr);
           scores.push(curScorePtr);
@@ -610,12 +605,9 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
         }
 
         // Pin the 2D arrays
-        const binEdgesPtr = __newArray(wasm.Float64Array2D_ID, binEdges);
-        __pin(binEdgesPtr);
-        const scoresPtr = __newArray(wasm.Float64Array2D_ID, scores);
-        __pin(scoresPtr);
-        const histBinEdgesPtr = __newArray(wasm.Float64Array2D_ID, histBinEdges);
-        __pin(histBinEdgesPtr);
+        const binEdgesPtr = __pin(__newArray(wasm.Float64Array2D_ID, binEdges));
+        const scoresPtr = __pin(__newArray(wasm.Float64Array2D_ID, scores));
+        const histBinEdgesPtr = __pin(__newArray(wasm.Float64Array2D_ID, histBinEdges));
 
         /**
          * Step 2: For the interaction effect, we want to store the feature
@@ -633,8 +625,7 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
             let index1 = sampleData.featureNames.indexOf(d.name1);
             let index2 = sampleData.featureNames.indexOf(d.name2);
 
-            let curIndexesPtr = __newArray(wasm.Int32Array_ID, [index1, index2]);
-            __pin(curIndexesPtr);
+            let curIndexesPtr = __pin(__newArray(wasm.Int32Array_ID, [index1, index2]));
             interactionIndexes.push(curIndexesPtr);
 
             // Collect two bin edges
@@ -654,19 +645,16 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
               binEdge2Ptr = __pin(__newArray(wasm.Float64Array_ID, d.binLabel2.slice(0, -1)));
             }
 
-            let curBinEdgesPtr = __newArray(wasm.Float64Array2D_ID, [binEdge1Ptr, binEdge2Ptr]);
-            __pin(curBinEdgesPtr);
+            let curBinEdgesPtr = __pin(__newArray(wasm.Float64Array2D_ID, [binEdge1Ptr, binEdge2Ptr]));
 
             interactionBinEdges.push(curBinEdgesPtr);
 
             // Add the scores
             let curScore2D = d.additive.map((a) => {
-              let aPtr = __newArray(wasm.Float64Array_ID, a);
-              __pin(aPtr);
+              let aPtr = __pin(__newArray(wasm.Float64Array_ID, a));
               return aPtr;
             });
-            let curScore2DPtr = __newArray(wasm.Float64Array2D_ID, curScore2D);
-            __pin(curScore2DPtr);
+            let curScore2DPtr = __pin(__newArray(wasm.Float64Array2D_ID, curScore2D));
             interactionScores.push(curScore2DPtr);
           }
         });
@@ -680,17 +668,9 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
          * Step 3: Pass the sample data to WASM. We directly transfer this 2D float
          * array to WASM (assume categorical features are encoded already)
          */
-        let samples = sampleData.samples.map((d) => {
-          let curPtr = __newArray(wasm.Float64Array_ID, d);
-          __pin(curPtr);
-          return curPtr;
-        });
-
-        let samplesPtr = __newArray(wasm.Float64Array2D_ID, samples);
-        __pin(samplesPtr);
-
-        let labelsPtr = __newArray(wasm.Float64Array_ID, sampleData.labels);
-        __pin(labelsPtr);
+        let samples = sampleData.samples.map((d) => __pin(__newArray(wasm.Float64Array_ID, d)));
+        let samplesPtr = __pin(__newArray(wasm.Float64Array2D_ID, samples));
+        let labelsPtr = __pin(__newArray(wasm.Float64Array_ID, sampleData.labels));
 
         /**
          * Step 4: Initialize the EBM in WASM
@@ -777,11 +757,8 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
       }
 
       updateModel(changedBinIndexes, changedScores) {
-        let changedBinIndexesPtr = __newArray(wasm.Float64Array_ID, changedBinIndexes);
-        let changedScoresPtr = __newArray(wasm.Float64Array_ID, changedScores);
-
-        __pin(changedBinIndexesPtr);
-        __pin(changedScoresPtr);
+        let changedBinIndexesPtr = __pin(__newArray(wasm.Int32Array2D_ID, changedBinIndexes));
+        let changedScoresPtr = __pin(__newArray(wasm.Float64Array_ID, changedScores));
 
         this.ebm.updateModel(changedBinIndexesPtr, changedScoresPtr);
 
@@ -790,11 +767,8 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
       }
 
       setModel(newBinEdges, newScores) {
-        let newBinEdgesPtr = __newArray(wasm.Float64Array_ID, newBinEdges);
-        let newScoresPtr = __newArray(wasm.Float64Array_ID, newScores);
-
-        __pin(newBinEdgesPtr);
-        __pin(newScoresPtr);
+        let newBinEdgesPtr = __pin(__newArray(wasm.Float64Array_ID, newBinEdges));
+        let newScoresPtr = __pin(__newArray(wasm.Float64Array_ID, newScores));
 
         this.ebm.setModel(newBinEdgesPtr, newScoresPtr);
 
@@ -894,6 +868,158 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
         // let metrics = __getArray(this.ebm.getMetrics());
         return metrics;
       }
+
+      getMetricsOnSelectedBins(binIndexes) {
+        let binIndexesPtr = __pin(__newArray(wasm.Int32Array_ID, binIndexes));
+
+        /**
+         * (1) regression: [[[RMSE, MAE]]]
+         * (2) binary classification: [roc 2D points, [confusion matrix 1D],
+         *  [[accuracy, roc auc, balanced accuracy]]]
+         */
+
+        // Unpack the return value from getMetrics()
+        let metrics = {};
+        if (!this.isClassification) {
+          let result3D = __getArray(this.ebm.getMetricsOnSelectedBins(binIndexesPtr));
+          let result3DPtr = __pin(result3D);
+
+          let result2D = __getArray(result3D[0]);
+          let result2DPtr = __pin(result2D);
+
+          let result1D = __getArray(result2D[0]);
+          let result1DPtr = __pin(result1D);
+
+          metrics.rmse = result1D[0];
+          metrics.mae = result1D[1];
+
+          __unpin(result1DPtr);
+          __unpin(result2DPtr);
+          __unpin(result3DPtr);
+        } else {
+          // Unpack ROC curves
+          let result3D = __getArray(this.ebm.getMetricsOnSelectedBins(binIndexesPtr));
+          let result3DPtr = __pin(result3D);
+
+          let result1DPtrs = [];
+          let roc2D = __getArray(result3D[0]);
+          let result2DPtr = __pin(roc2D);
+
+          let rocPoints = roc2D.map(d => {
+            let point = __getArray(d);
+            result1DPtrs.push(__pin(point));
+            return point;
+          });
+
+          metrics.rocCurve = rocPoints;
+          result1DPtrs.map(d => __unpin(d));
+          __unpin(result2DPtr);
+
+          // Unpack confusion matrix
+          let result2D = __getArray(result3D[1]);
+          result2DPtr = __pin(result2D);
+
+          let result1D = __getArray(result2D[0]);
+          let result1DPtr = __pin(result1D);
+
+          metrics.confusionMatrix = result1D;
+
+          __unpin(result1DPtr);
+          __unpin(result2DPtr);
+
+          // Unpack summary statistics
+          result2D = __getArray(result3D[2]);
+          result2DPtr = __pin(result2D);
+
+          result1D = __getArray(result2D[0]);
+          result1DPtr = __pin(result1D);
+
+          metrics.accuracy = result1D[0];
+          metrics.rocAuc = result1D[1];
+          metrics.balancedAccuracy = result1D[2];
+
+          __unpin(result1DPtr);
+          __unpin(result2DPtr);
+          __unpin(result3DPtr);
+        }
+        __unpin(binIndexesPtr);
+
+        return metrics;
+      }
+
+      getMetricsOnSelectedSlice() {
+        // Unpack the return value from getMetrics()
+        let metrics = {};
+        if (!this.isClassification) {
+          let result3D = __getArray(this.ebm.getMetricsOnSelectedSlice());
+          let result3DPtr = __pin(result3D);
+
+          let result2D = __getArray(result3D[0]);
+          let result2DPtr = __pin(result2D);
+
+          let result1D = __getArray(result2D[0]);
+          let result1DPtr = __pin(result1D);
+
+          metrics.rmse = result1D[0];
+          metrics.mae = result1D[1];
+
+          __unpin(result1DPtr);
+          __unpin(result2DPtr);
+          __unpin(result3DPtr);
+        } else {
+          // Unpack ROC curves
+          let result3D = __getArray(this.ebm.getMetricsOnSelectedSlice());
+          let result3DPtr = __pin(result3D);
+
+          let result1DPtrs = [];
+          let roc2D = __getArray(result3D[0]);
+          let result2DPtr = __pin(roc2D);
+
+          let rocPoints = roc2D.map(d => {
+            let point = __getArray(d);
+            result1DPtrs.push(__pin(point));
+            return point;
+          });
+
+          metrics.rocCurve = rocPoints;
+          result1DPtrs.map(d => __unpin(d));
+          __unpin(result2DPtr);
+
+          // Unpack confusion matrix
+          let result2D = __getArray(result3D[1]);
+          result2DPtr = __pin(result2D);
+
+          let result1D = __getArray(result2D[0]);
+          let result1DPtr = __pin(result1D);
+
+          metrics.confusionMatrix = result1D;
+
+          __unpin(result1DPtr);
+          __unpin(result2DPtr);
+
+          // Unpack summary statistics
+          result2D = __getArray(result3D[2]);
+          result2DPtr = __pin(result2D);
+
+          result1D = __getArray(result2D[0]);
+          result1DPtr = __pin(result1D);
+
+          metrics.accuracy = result1D[0];
+          metrics.rocAuc = result1D[1];
+          metrics.balancedAccuracy = result1D[2];
+
+          __unpin(result1DPtr);
+          __unpin(result2DPtr);
+          __unpin(result3DPtr);
+        }
+
+        return metrics;
+      }
+
+      setSliceData(featureID, featureLevel) {
+        this.ebm.setSliceData(featureID, featureLevel);
+      }
+
     }
 
     let model = new EBM(_featureData, _sampleData, _editingFeature, _isClassification);
