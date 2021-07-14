@@ -148,9 +148,41 @@
 
       break;
 
-    case 'sliceClicked':
+    case 'sliceClicked': {
       console.log('sliceClicked');
+
+      // Step 1: set the slice feature ID and level ID to EBM
+      ebm.setSliceData(sidebarInfo.sliceInfo.featureID, sidebarInfo.sliceInfo.level);
+
+      // Step 2: Reset/Update EBM 3 times and compute three metrics on the selected nodes
+
+      // Step 2.1: Original
+      // Here we reset the EBM model completely, because
+      // the intermediate historical events might update() different portions
+      // of the EBM
+      let historyInfo = get(historyStore);
+      await setEBM('original-only', historyInfo[0].state.pointData);
+
+      // Step 2.2: Last edit
+      if (historyInfo.length > 1) {
+        await setEBM('last-only', historyInfo[historyInfo.length - 2].state.pointData);
+      }
+
+      // Step 2.3: Current edit
+      let curPointData = state.pointDataBuffer === null ?
+        historyInfo[historyInfo.length - 1].state.pointData :
+        state.pointDataBuffer;
+
+      await setEBM('current-only', curPointData);
+
+      // Step 2.2.5: If we didn't restore the last edit, use the current edit as last
+      if (historyInfo.length === 1) {
+        sidebarInfo.curGroup = 'last';
+        sidebarStore.set(sidebarInfo);
+      }
+
       break;
+    }
 
     default:
       break;
@@ -552,6 +584,7 @@
       break;
     }
     case 'slice':
+      metrics = ebm.getMetricsOnSelectedSlice();
       break;
     default:
       break;
@@ -613,8 +646,13 @@
       transferMetricToSidebar(metrics, curGroup);
       break;
     }
-    case 'slice':
+    case 'slice': {
+      let metrics = await getEBMMetrics('slice');
+
+      // Pass the metrics to sidebar
+      transferMetricToSidebar(metrics, curGroup);
       break;
+    }
     default:
       break;
     }
@@ -666,8 +704,11 @@
       transferMetricToSidebar(metrics, curGroup);
       break;
     }
-    case 'slice':
+    case 'slice': {
+      let metrics = await getEBMMetrics('slice');
+      transferMetricToSidebar(metrics, curGroup);
       break;
+    }
     default:
       break;
     }

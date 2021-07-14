@@ -166,6 +166,28 @@
     }
 
     sidebarInfo.curGroup = 'original';
+
+    // Get the list of all categorical variables and their values to popularize
+    // the select dropdown
+    let sliceOptions = [];
+    data.features.forEach(f => {
+      if (f.type === 'categorical') {
+        let curOptionGroup = [];
+        f.binLabel.forEach(b => curOptionGroup.push(
+          {
+            name: f.name,
+            level: b,
+            levelName: data.labelEncoder[f.name][parseInt(b)],
+            featureID: sampleDataNameMap.get(f.name)
+          }
+        ));
+        sliceOptions.push(curOptionGroup);
+      }
+    });
+    
+    sliceOptions.sort((a, b) => a[0].name.localeCompare(b[0].name));
+    sidebarInfo.sliceOptions = sliceOptions;
+    
     sidebarStore.set(sidebarInfo);
   };
 
@@ -176,11 +198,12 @@
   const bindUndoKey = (undoCallback, redoCallback) => {
     d3.select('body')
       .on('keydown', e => {
-        if (e.metaKey && !e.shiftKey && e.key === 'z') {
+        if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === 'z') {
           e.preventDefault();
           e.stopPropagation();
           undoCallback();
-        } else if (e.metaKey && e.shiftKey && e.key === 'z') {
+        } else if ((e.metaKey && e.shiftKey && e.key === 'z') ||
+          (e.ctrlKey && e.shiftKey && e.key === 'Z')) {
           e.preventDefault();
           e.stopPropagation();
           redoCallback();

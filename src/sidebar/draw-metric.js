@@ -218,7 +218,7 @@ export const drawClassificationBarChart = (width, svgPadding, component, barData
       
       barGroup.select(`.${k}-group`)
         .select(`text.bar-label.${rectOrder[i]}`)
-        .text(barData[k][i] === null ? 'NA' : round(barData[k][i], 4));
+        .text(barData[k][i] === null || isNaN(barData[k][i]) ? 'NA' : round(barData[k][i], 4));
     }
   });
 

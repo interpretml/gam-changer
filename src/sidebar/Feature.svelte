@@ -201,6 +201,10 @@
       border-color: $gray-border;
     }
 
+    &:active {
+      border-color: $gray-border;
+    }
+
     &.selected {
       background: $gray-200;
     }

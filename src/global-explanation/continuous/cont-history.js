@@ -4,7 +4,7 @@ import { state } from './cont-state';
 import { drawLastEdit, redrawOriginal } from './cont-edit';
 import { MD5 } from '../../utils/md5';
 
-export const undoHandler = (svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+export const undoHandler = async (svg, multiMenu, resetContextMenu, resetFeatureSidebar,
   historyStore, redoStack, setEBM, sidebarStore) => {
   let curCommit;
   let lastCommit;
@@ -51,7 +51,7 @@ export const undoHandler = (svg, multiMenu, resetContextMenu, resetFeatureSideba
   // Step 7: If the current edit has changed the EBM bin definition, then we need
   // to reset the definition in WASM
   if (curCommit.type.includes('equal')) {
-    setEBM('current', state.pointData);
+    await setEBM('current', state.pointData);
   }
 
   /**
@@ -87,8 +87,29 @@ export const undoHandler = (svg, multiMenu, resetContextMenu, resetFeatureSideba
       return value;
     });
     break;
-  case 'slice':
+  case 'slice': {
+    let historyInfo = get(historyStore);
+    await setEBM('original-only', historyInfo[0].state.pointData);
+
+    // Step 2.2: Last edit
+    if (historyInfo.length > 1) {
+      await setEBM('last-only', historyInfo[historyInfo.length - 2].state.pointData);
+    }
+
+    // Step 2.3: Current edit
+    let curPointData = state.pointDataBuffer === null ?
+      historyInfo[historyInfo.length - 1].state.pointData :
+      state.pointDataBuffer;
+
+    await setEBM('current-only', curPointData);
+
+    // Step 2.2.5: If we didn't restore the last edit, use the current edit as last
+    if (historyInfo.length === 1) {
+      sidebarInfo.curGroup = 'last';
+      sidebarStore.set(sidebarInfo);
+    }
     break;
+  }
   default:
     break;
   }
@@ -97,7 +118,7 @@ export const undoHandler = (svg, multiMenu, resetContextMenu, resetFeatureSideba
   redrawOriginal(svg);
 };
 
-export const redoHandler = (svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+export const redoHandler = async (svg, multiMenu, resetContextMenu, resetFeatureSidebar,
   historyStore, redoStack, setEBM, sidebarStore) => {
   // Step 1: If the user has selected some nodes, discard the selections
   quitSelection(svg, multiMenu, resetContextMenu, resetFeatureSidebar);
@@ -139,7 +160,7 @@ export const redoHandler = (svg, multiMenu, resetContextMenu, resetFeatureSideba
   // If the current edit has changed the EBM bin definition, then we need
   // to reset the definition in WASM
   if (newCommit.type.includes('equal')) {
-    setEBM('current', state.pointData);
+    await setEBM('current', state.pointData);
   }
 
   /**
@@ -175,8 +196,29 @@ export const redoHandler = (svg, multiMenu, resetContextMenu, resetFeatureSideba
       return value;
     });
     break;
-  case 'slice':
+  case 'slice': {
+    let historyInfo = get(historyStore);
+    await setEBM('original-only', historyInfo[0].state.pointData);
+
+    // Step 2.2: Last edit
+    if (historyInfo.length > 1) {
+      await setEBM('last-only', historyInfo[historyInfo.length - 2].state.pointData);
+    }
+
+    // Step 2.3: Current edit
+    let curPointData = state.pointDataBuffer === null ?
+      historyInfo[historyInfo.length - 1].state.pointData :
+      state.pointDataBuffer;
+
+    await setEBM('current-only', curPointData);
+
+    // Step 2.2.5: If we didn't restore the last edit, use the current edit as last
+    if (historyInfo.length === 1) {
+      sidebarInfo.curGroup = 'last';
+      sidebarStore.set(sidebarInfo);
+    }
     break;
+  }
   default:
     break;
   }

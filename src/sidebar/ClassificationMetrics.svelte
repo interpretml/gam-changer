@@ -8,6 +8,7 @@
   export let sidebarStore;
 
   let component = null;
+  let sliceSelect = null;
   let sidebarInfo = {};
   let width = 0;
   let height = 0;
@@ -54,12 +55,41 @@
   };
 
   const tabClicked = (tab) => {
-    if (sidebarInfo.effectScope !== tab) {
+    let opt = sliceSelect.options[sliceSelect.selectedIndex];
+
+    if (sidebarInfo.effectScope !== 'slice') {
       sidebarInfo.curGroup = `${tab}Clicked`;
       sidebarInfo.effectScope = tab;
       sidebarStore.set(sidebarInfo);
-      // selectedTab = tab;
+    } else {
+      if (opt.value !== 'slice') {
+        sidebarInfo.curGroup = `${tab}Clicked`;
+        sidebarInfo.effectScope = tab;
+        sidebarStore.set(sidebarInfo);
+      }
     }
+  };
+
+  const sliceChanged = () => {
+    // Change the focus to the slice tab
+    sidebarInfo.curGroup = 'sliceClicked';
+    sidebarInfo.effectScope = 'slice';
+
+    // Get the selected variable info
+    console.log(sliceSelect.options[sliceSelect.selectedIndex]);
+    let opt = sliceSelect.options[sliceSelect.selectedIndex];
+
+    // User clicks the default 'slice' => jump back to global
+    if (opt.value === 'slice') {
+      sidebarInfo.curGroup = 'globalClicked';
+      sidebarInfo.effectScope = 'global';
+    } else {
+      sidebarInfo.sliceInfo = {
+        featureID: parseInt(opt.value),
+        level: parseInt(opt.dataset.level)
+      };
+    }
+    sidebarStore.set(sidebarInfo);
   };
 
   const updateData = (index, barData, confusionMatrixData, sidebarInfo) => {
@@ -79,7 +109,7 @@
     sidebarInfo = value;
 
     switch(sidebarInfo.curGroup) {
-    case 'original':
+    case 'original': {
       updateData(0, barData, confusionMatrixData, sidebarInfo);
 
       copyMetricData(barData, confusionMatrixData, 0, 2);
@@ -87,8 +117,24 @@
       sidebarInfo.barData = JSON.parse(JSON.stringify(barData));
       sidebarInfo.confusionMatrixData = JSON.parse(JSON.stringify(confusionMatrixData));
       sidebarInfo.curGroup = 'originalCompleted';
+
+      // Popularize the slice option list
+      let selectElement = d3.select(component).select('#slice-select');
+      sidebarInfo.sliceOptions.forEach(optionGroup => {
+        let optGroup = selectElement.append('optgroup')
+          .attr('label', optionGroup[0].name);
+        
+        optionGroup.forEach(opt => {
+          optGroup.append('option')
+            .attr('value', opt.featureID)
+            .attr('data-level', opt.level)
+            .text(opt.levelName);
+        });
+      });
+
       sidebarStore.set(sidebarInfo);
       break;
+    }
 
     case 'current':
       updateData(2, barData, confusionMatrixData, sidebarInfo);
@@ -234,12 +280,19 @@
     margin-top: 0px;
   }
 
-  .scope-selection {
+  .scope-selection.field {
     margin-top: 11px;
     margin-bottom: 11px;
+    padding: 0 5px;
+    justify-content: space-around;
+  }
+
+  .control {
+    flex: 1;
   }
 
   .button {
+    width: 100%;
     padding: 1px 11px;
     font-size: 0.9em;
     font-weight: 400;
@@ -261,6 +314,11 @@
     &.selected {
       background: $gray-200;
     }
+  }
+
+  .select {
+    text-overflow: ellipsis;
+    width: 100%;
   }
 
   :global(.metrics-tab text.bar) {
@@ -356,15 +414,19 @@
       </div>
 
       <div class='control'>
-        <button class='button right-button' title='Show model performance on the sliced test samples'
+        <select class='button right-button select' name='slice'
+          bind:this={sliceSelect}
+          id='slice-select'
+          title='Show model performance on the sliced test samples'
           class:selected={sidebarInfo.effectScope === 'slice'}
           on:click={() => tabClicked('slice')}
+          on:blur={() => {}}
+          on:change={sliceChanged}
         >
-          <span class='is-small'>
-            Slice
-          </span>
+          <option selected value='slice'>Slice</option>
+
           <!-- <span style='color: hsla(0, 0%, 0%, 0.2); margin-left: 5px;'>▼</span> -->
-        </button>
+      </select>
       </div>
 
     </div>
