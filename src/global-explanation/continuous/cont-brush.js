@@ -64,14 +64,14 @@ export const brushDuring = (event, svg, multiMenu, ebm, footerStore) => {
       .classed('selected', d => {
         if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
           selectedBinIndexes.push(d.ebmID);
-          selectedBinIDs.push(d.id);
+          selectedBinIDs.push([d.id, d.x]);
           return true;
         } else if (d.rightPointID !== null){
           let rd = state.pointData[d.rightPointID];
           if (d.y >= yRange[0] && d.y <= yRange[1] && rd.x >= xRange[0] &&
               rd.x <= xRange[1] && rd.y >= yRange[0] && rd.y <= yRange[1]) {
             selectedBinIndexes.push(d.ebmID);
-            selectedBinIDs.push(d.id);
+            selectedBinIDs.push([d.id, d.x]);
             return true;
           }
         } else {
@@ -79,12 +79,14 @@ export const brushDuring = (event, svg, multiMenu, ebm, footerStore) => {
         }
       });
 
+    selectedBinIDs.sort((a, b) => a[1] - b[1]);
       
     svgSelect.select('g.line-chart-line-group.real')
       .selectAll('path.additive-line-segment')
       .classed('selected', false);
 
-    selectedBinIDs.forEach((id, i) => {
+    selectedBinIDs.forEach((pair, i) => {
+      let id = pair[0];
       svgSelect.select('g.line-chart-line-group.real')
         .select(`#path-${id}-${state.pointData[id].rightPointID}-r`)
         .classed('selected', true);
@@ -241,7 +243,7 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
     // Compute the bounding box
     state.selectedInfo.computeBBox(state.pointData);
 
-    let curPadding = (rScale(state.curTransform.k) + state.bboxPadding) * state.curTransform.k;
+    let curPadding = rScale(state.curTransform.k) + state.bboxPadding * state.curTransform.k;
 
     let bbox = svgSelect.select('g.line-chart-content-group')
       .append('g')

@@ -148,7 +148,7 @@ export const redrawOriginal = (svg, bounce=true, animationEndFunc=undefined) => 
     );
 
   // Step 4: move the selected bbox to their original place
-  let curPadding = (rScale(state.curTransform.k) + state.bboxPadding) * state.curTransform.k;
+  let curPadding = rScale(state.curTransform.k) + state.bboxPadding * state.curTransform.k;
 
   svgSelect.select('g.line-chart-content-group g.select-bbox-group')
     .selectAll('rect.select-bbox')
@@ -326,21 +326,21 @@ export const stepInterpolate = (svg, steps) => {
       x: curX,
       y: curY,
       count: totalCount / steps,
-      id: `(${leftPoint.id}):(${rightPoint.id})-${s}`,
+      id: `q${leftPoint.id}pxq${rightPoint.id}p-${s}`,
       ebmID: leftPoint.id + s,
-      leftPointID: s == 1 ? leftPoint.id : `(${leftPoint.id}):(${rightPoint.id})-${s - 1}`,
-      rightPointID: s == steps ? rightPoint.id : `(${leftPoint.id}):(${rightPoint.id})-${s + 1}`,
+      leftPointID: s == 1 ? leftPoint.id : `q${leftPoint.id}pxq${rightPoint.id}p-${s - 1}`,
+      rightPointID: s == steps ? rightPoint.id : `q${leftPoint.id}pxq${rightPoint.id}p-${s + 1}`,
       leftLineIndex: null,
       rightLineIndex: null
     };
 
     // Step 3.2: Add it to the buffer array
-    state.pointDataBuffer[`(${leftPoint.id}):(${rightPoint.id})-${s}`] = curPoint;
+    state.pointDataBuffer[`q${leftPoint.id}pxq${rightPoint.id}p-${s}`] = curPoint;
   }
 
   // Step 3.3: Link the left point and right point to these new points
-  leftPoint.rightPointID = `(${leftPoint.id}):(${rightPoint.id})-${1}`;
-  rightPoint.leftPointID = `(${leftPoint.id}):(${rightPoint.id})-${steps}`;
+  leftPoint.rightPointID = `q${leftPoint.id}pxq${rightPoint.id}p-${1}`;
+  rightPoint.leftPointID = `q${leftPoint.id}pxq${rightPoint.id}p-${steps}`;
 
   // Step 3.4: Update the ebmID of all points in the buffer
   // The first point will always have ID 0
@@ -538,7 +538,7 @@ export const drawBufferGraph = (svg, animated=true, duration=400) => {
   }
 
   // Step 2.3: move the selected bbox
-  let curPadding = (rScale(state.curTransform.k) + state.bboxPadding) * state.curTransform.k;
+  let curPadding = rScale(state.curTransform.k) + state.bboxPadding * state.curTransform.k;
 
   if (animated) {
     svgSelect.select('g.line-chart-content-group g.select-bbox-group')

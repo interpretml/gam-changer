@@ -171,7 +171,7 @@
       let sliceSize = ebm.setSliceData(sidebarInfo.sliceInfo.featureID, sidebarInfo.sliceInfo.level);
 
       footerStore.update(value => {
-        value.sample += ',';
+        if (!value.sample.includes(',')) value.sample += ',';
         value.slice = `<b>${sliceSize}</b> sliced`;
         return value;
       });
@@ -1646,6 +1646,7 @@
 </style>
 
 <div class='explain-panel' bind:this={component}>
+    <a id="download-anchor" style="display:none"> </a>
 
     <div class='context-menu-container hidden' bind:this={multiMenu}>
       <ContextMenu 

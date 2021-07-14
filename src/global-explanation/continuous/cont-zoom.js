@@ -98,7 +98,7 @@ export const zoomed = (event, xScale, yScale, svg,
 
     // We want to compute the world coordinate here
     // Need to transfer back the scale factor from the node radius
-    let curPadding = (rScale(state.curTransform.k) + state.bboxPadding) * state.curTransform.k;
+    let curPadding = rScale(state.curTransform.k) + state.bboxPadding * state.curTransform.k;
 
     svgSelect.select('g.line-chart-content-group')
       .selectAll('rect.select-bbox')
