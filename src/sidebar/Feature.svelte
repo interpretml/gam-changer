@@ -37,7 +37,15 @@
     width = component.getBoundingClientRect().width;
     height = component.getBoundingClientRect().height;
 
-    console.log(`feature tab: [${width}, ${height}]`);
+    let instance = d3.select(component)
+      .select('.feature-list')
+      .node();
+    
+    let scrollBarWidth = instance.offsetWidth - instance.clientWidth;
+
+    console.log(`effect tab: [${width}, ${height}, ${scrollBarWidth}]`);
+
+    width -= scrollBarWidth;
   });
 
   afterUpdate(() => {

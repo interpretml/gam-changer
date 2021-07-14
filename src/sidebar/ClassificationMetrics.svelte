@@ -33,7 +33,16 @@
     width = component.getBoundingClientRect().width;
     height = component.getBoundingClientRect().height;
 
-    console.log(`effect tab: [${width}, ${height}]`);
+    let svgInstance = d3.select(component)
+      .select('.bar-svg')
+      .node()
+      .parentNode;
+    
+    let scrollBarWidth = svgInstance.offsetWidth - svgInstance.clientWidth;
+
+    console.log(`effect tab: [${width}, ${height}, ${scrollBarWidth}]`);
+
+    width -= scrollBarWidth;
 
     // Initialize the size of all svgs
     d3.select(component)

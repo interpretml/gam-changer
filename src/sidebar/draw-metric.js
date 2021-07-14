@@ -164,7 +164,7 @@ export const drawClassificationBarChart = (width, svgPadding, component, barData
       .data(legendData)
       .join('g')
       .style('cursor', 'default')
-      .attr('transform', d => `translate(${90 + d.x}, 0)`);
+      .attr('transform', d => `translate(${80 + d.x}, 0)`);
 
     items.append('title')
       .text(d => d.title);

@@ -20,7 +20,7 @@ export const initLegend = (component, width, svgCatPadding) => {
 
   let rightGroup = legendSVG.append('g')
     .attr('class', 'right')
-    .attr('transform', `translate(${svgCatPadding.left + 175}, 6)`);
+    .attr('transform', `translate(${svgCatPadding.left + 170}, 6)`);
 
 
   leftGroup.append('text')
@@ -34,11 +34,13 @@ export const initLegend = (component, width, svgCatPadding) => {
     .style('font-size', '0.9em')
     .style('font-weight', 400)
     .style('fill', 'gray')
+    .style('dominant-baseline', 'hanging')
     .attr('x', 0)
+    .attr('y', 0)
     .attr('dy', '1.1em')
     .text('Sorted by correlation ↓');
 
-  let labelWidth = 60;
+  let labelWidth = 48;
   rightGroup.append('rect')
     .attr('width', labelWidth)
     .attr('height', 16)
@@ -62,7 +64,7 @@ export const initLegend = (component, width, svgCatPadding) => {
     .attr('class', 'legend-title')
     .attr('y', 22)
     .attr('x', labelWidth / 2)
-    .text('selected');
+    .text('select');
 };
 
 
