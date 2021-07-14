@@ -104,7 +104,7 @@ export const zoomed = (event, xScale, yScale, svg,
       .selectAll('rect.select-bbox')
       .attr('x', d => state.curXScale(d.x1) - curPadding)
       .attr('y', d => state.curYScale(d.y1) - curPadding)
-      .attr('width', d => state.curXScale(d.x2) - state.curXScale(d.x1) + 2 * curPadding)
+      .attr('width', d => state.curXScale(d.x2) - state.curXScale(d.x1))
       .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding);
 
     // Also transform the menu bar

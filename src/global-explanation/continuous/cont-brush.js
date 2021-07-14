@@ -57,24 +57,44 @@ export const brushDuring = (event, svg, multiMenu, ebm, footerStore) => {
 
     // Highlight the selected dots
     let selectedBinIndexes = [];
+    let selectedBinIDs = [];
+
     svgSelect.select('g.line-chart-node-group')
       .selectAll('circle.node')
       .classed('selected', d => {
         if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
           selectedBinIndexes.push(d.ebmID);
+          selectedBinIDs.push(d.id);
           return true;
+        } else if (d.rightPointID !== null){
+          let rd = state.pointData[d.rightPointID];
+          if (d.y >= yRange[0] && d.y <= yRange[1] && rd.x >= xRange[0] &&
+              rd.x <= xRange[1] && rd.y >= yRange[0] && rd.y <= yRange[1]) {
+            selectedBinIndexes.push(d.ebmID);
+            selectedBinIDs.push(d.id);
+            return true;
+          }
         } else {
           return false;
         }
       });
 
-    // Highlight the paths associated with the selected dots
+      
     svgSelect.select('g.line-chart-line-group.real')
       .selectAll('path.additive-line-segment')
-      .classed('selected', d =>
-        (d.sx >= xRange[0] && d.sx <= xRange[1] && d.sy >= yRange[0] && d.sy <= yRange[1]) ||
-        (d.x1 === d.x2 && d.x2 >= xRange[0] && d.x2 <= xRange[1] && d.y2 >= yRange[0] && d.y2 <= yRange[1])
-      );
+      .classed('selected', false);
+
+    selectedBinIDs.forEach((id, i) => {
+      svgSelect.select('g.line-chart-line-group.real')
+        .select(`#path-${id}-${state.pointData[id].rightPointID}-r`)
+        .classed('selected', true);
+
+      if (i !== selectedBinIDs.length - 1) {
+        svgSelect.select('g.line-chart-line-group.real')
+          .select(`#path-${id}-${state.pointData[id].rightPointID}-l`)
+          .classed('selected', true);
+      }
+    });
 
     // Update the footer message
     footerStore.update(value => {
@@ -203,15 +223,23 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
       .classed('selected', d => {
         if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
           selectedBinIndexes.push(d.ebmID);
-          state.selectedInfo.nodeData.push({x: d.x, y: d.y, id: d.id, ebmID: d.ebmID});
+          state.selectedInfo.nodeData.push({ x: d.x, y: d.y, id: d.id, ebmID: d.ebmID });
           return true;
+        } else if (d.rightPointID !== null) {
+          let rd = state.pointData[d.rightPointID];
+          if (d.y >= yRange[0] && d.y <= yRange[1] && rd.x >= xRange[0] &&
+            rd.x <= xRange[1] && rd.y >= yRange[0] && rd.y <= yRange[1]) {
+            selectedBinIndexes.push(d.ebmID);
+            state.selectedInfo.nodeData.push({ x: d.x, y: d.y, id: d.id, ebmID: d.ebmID });
+            return true;
+          }
         } else {
           return false;
         }
       });
 
     // Compute the bounding box
-    state.selectedInfo.computeBBox();
+    state.selectedInfo.computeBBox(state.pointData);
 
     let curPadding = (rScale(state.curTransform.k) + state.bboxPadding) * state.curTransform.k;
 
@@ -224,7 +252,7 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
       .attr('class', 'select-bbox original-bbox')
       .attr('x', d => state.curXScale(d.x1) - curPadding)
       .attr('y', d => state.curYScale(d.y1) - curPadding)
-      .attr('width', d => state.curXScale(d.x2) - state.curXScale(d.x1) + 2 * curPadding)
+      .attr('width', d => state.curXScale(d.x2) - state.curXScale(d.x1))
       .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding)
       .style('stroke-width', bboxStrokeWidth)
       .style('stroke', 'hsl(230, 100%, 10%)')

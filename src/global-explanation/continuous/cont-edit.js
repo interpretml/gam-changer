@@ -46,7 +46,7 @@ export const dragged = (e, svg, component, ebm, sidebarStore, footerStore, updat
 
   // Step 1.3: update the bbox info
   state.selectedInfo.updateNodeData(state.pointDataBuffer);
-  state.selectedInfo.computeBBox();
+  state.selectedInfo.computeBBox(state.pointDataBuffer);
 
   // Update the visualization with new data
   // Step 2: redraw the nodes that are changed
@@ -86,7 +86,7 @@ export const redrawOriginal = (svg, bounce=true, animationEndFunc=undefined) => 
 
   // Step 1: update the bbox info
   state.selectedInfo.updateNodeData(state.pointData);
-  state.selectedInfo.computeBBox();
+  state.selectedInfo.computeBBox(state.pointData);
 
   // Step 2: redraw the nodes with original data
   let nodes = svgSelect.select('g.line-chart-node-group')
@@ -192,7 +192,7 @@ export const redrawMonotone = (svg, isoYs) => {
 
   // Step 1.3: update the bbox info
   state.selectedInfo.updateNodeData(state.pointDataBuffer);
-  state.selectedInfo.computeBBox();
+  state.selectedInfo.computeBBox(state.pointDataBuffer);
 
   // Step 2 Update the visualization with new data
   drawBufferGraph(svg, true);
@@ -238,7 +238,7 @@ export const regressionInterpolate = (svg) => {
 
   // Step 3: update the bbox info
   state.selectedInfo.updateNodeData(state.pointDataBuffer);
-  state.selectedInfo.computeBBox();
+  state.selectedInfo.computeBBox(state.pointDataBuffer);
 
   // Step 4: Update the graph using new data
   drawBufferGraph(svg, true, 800);
@@ -281,7 +281,7 @@ export const inplaceInterpolate = (svg) => {
 
   // Step 3: update the bbox info
   state.selectedInfo.updateNodeData(state.pointDataBuffer);
-  state.selectedInfo.computeBBox();
+  state.selectedInfo.computeBBox(state.pointDataBuffer);
 
   // Step 4: Update the graph using new data
   drawBufferGraph(svg, true, 800);
@@ -378,7 +378,7 @@ export const stepInterpolate = (svg, steps) => {
     ebmID: curPoint.ebmID
   });
 
-  state.selectedInfo.computeBBoxBuffer();
+  state.selectedInfo.computeBBoxBuffer(state.pointDataBuffer);
 
   // Step 6: Update the graph using new data
   drawBufferGraph(svg, true, 800);
@@ -418,7 +418,7 @@ export const merge = (svg, value=undefined) => {
 
   // Step 4: update the bbox info
   state.selectedInfo.updateNodeData(state.pointDataBuffer);
-  state.selectedInfo.computeBBox();
+  state.selectedInfo.computeBBox(state.pointDataBuffer);
 
   // Step 5: Update the graph using new data
   drawBufferGraph(svg, true, 500);

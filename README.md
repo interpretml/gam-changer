@@ -1,5 +1,6 @@
-<img src='https://i.imgur.com/GJ4YonI.png' width='100%'>
+<h1>
+<img src='https://i.imgur.com/tbSoyLP.png' width='100%'>
+</h1>
 
-<br>
+An interactive visualization system designed to helps domain experts responsibly edit Generalized Additive Models (GAMs).
 
-> GAM-changing experience to align ML model behaviors with human users' knowledge

@@ -58,7 +58,7 @@ export const createAdditiveData = (featureData) => {
       y1: sy,
       x2: tx,
       y2: sy,
-      id: `${i}-${i+1}-r`,
+      id: `path-${i}-${i+1}-r`,
       pos: 'r',
       sx: sx,
       sy: sy,
@@ -71,7 +71,7 @@ export const createAdditiveData = (featureData) => {
       y1: sy,
       x2: tx,
       y2: ty,
-      id: `${i}-${i + 1}-l`,
+      id: `path-${i}-${i + 1}-l`,
       pos: 'l',
       sx: sx,
       sy: sy,
@@ -87,7 +87,7 @@ export const createAdditiveData = (featureData) => {
     y1: featureData.additive[featureData.additive.length - 1],
     x2: featureData.binEdge[featureData.additive.length],
     y2: featureData.additive[featureData.additive.length - 1],
-    id: `${featureData.additive.length - 1}-${featureData.additive.length - 1}-r`,
+    id: `path-${featureData.additive.length - 1}-${featureData.additive.length - 1}-r`,
     pos: 'r',
     sx: featureData.binEdge[featureData.additive.length - 1],
     sy: featureData.additive[featureData.additive.length - 1],
@@ -125,10 +125,10 @@ export const createPointData = (featureData) => {
 export const linkPointToAdditive = (pointData, additiveData) => {
   additiveData.forEach( (d, i) => {
     if (d.pos === 'r') {
-      let curID = d.id.replace(/(\d+)-(\d+)-[lr]/, '$1');
+      let curID = d.id.replace(/path-(\d+)-(\d+)-[lr]/, '$1');
       pointData[curID].rightLineIndex = i;
     } else {
-      let curID = d.id.replace(/(\d+)-(\d+)-[lr]/, '$2');
+      let curID = d.id.replace(/path-(\d+)-(\d+)-[lr]/, '$2');
       pointData[curID].leftLineIndex = i;
     }
   });
@@ -158,7 +158,7 @@ export const updateAdditiveDataBufferFromPointDataBuffer = () => {
       y1: curPoint.y,
       x2: nextPoint.x,
       y2: curPoint.y,
-      id: `${curPoint.id}-${nextPoint.id}-r`,
+      id: `path-${curPoint.id}-${nextPoint.id}-r`,
       pos: 'r',
       sx: curPoint.x,
       sy: curPoint.y,
@@ -174,7 +174,7 @@ export const updateAdditiveDataBufferFromPointDataBuffer = () => {
       y1: curPoint.y,
       x2: nextPoint.x,
       y2: nextPoint.y,
-      id: `${curPoint.id}-${nextPoint.id}-l`,
+      id: `path-${curPoint.id}-${nextPoint.id}-l`,
       pos: 'l',
       sx: curPoint.x,
       sy: curPoint.y,
@@ -196,7 +196,7 @@ export const updateAdditiveDataBufferFromPointDataBuffer = () => {
     y1: curPoint.y,
     x2: state.oriXScale.domain()[1],
     y2: curPoint.y,
-    id: `${curPoint.id}-${curPoint.id}-r`,
+    id: `path-${curPoint.id}-${curPoint.id}-r`,
     pos: 'r',
     sx: curPoint.x,
     sy: curPoint.y,

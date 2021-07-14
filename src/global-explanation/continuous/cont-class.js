@@ -8,12 +8,16 @@ export class SelectedInfo {
     this.nodeDataBuffer = null;
   }
 
-  computeBBox() {
+  computeBBox(pointData) {
     if (this.nodeData.length > 0) {
+      // Get the right x value
+      let rightPoint = pointData[this.nodeData.reduce((a, b) => a.x > b.x ? a : b).id];
+      let rightX = rightPoint.rightPointID === null ? rightPoint.x : pointData[rightPoint.rightPointID].x;
+
       this.boundingBox = [{
         x1: d3.min(this.nodeData.map(d => d.x)),
         y1: d3.max(this.nodeData.map(d => d.y)),
-        x2: d3.max(this.nodeData.map(d => d.x)),
+        x2: rightX,
         y2: d3.min(this.nodeData.map(d => d.y))
       }];
     } else {
