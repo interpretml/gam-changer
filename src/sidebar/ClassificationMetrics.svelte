@@ -57,15 +57,17 @@
   const tabClicked = (tab) => {
     let opt = sliceSelect.options[sliceSelect.selectedIndex];
 
-    if (sidebarInfo.effectScope !== 'slice') {
-      sidebarInfo.curGroup = `${tab}Clicked`;
-      sidebarInfo.effectScope = tab;
-      sidebarStore.set(sidebarInfo);
-    } else {
-      if (opt.value !== 'slice') {
+    if (sidebarInfo.effectScope !== tab) {
+      if (sidebarInfo.effectScope !== 'slice') {
         sidebarInfo.curGroup = `${tab}Clicked`;
         sidebarInfo.effectScope = tab;
         sidebarStore.set(sidebarInfo);
+      } else {
+        if (opt.value !== 'slice') {
+          sidebarInfo.curGroup = `${tab}Clicked`;
+          sidebarInfo.effectScope = tab;
+          sidebarStore.set(sidebarInfo);
+        }
       }
     }
   };
@@ -76,7 +78,6 @@
     sidebarInfo.effectScope = 'slice';
 
     // Get the selected variable info
-    console.log(sliceSelect.options[sliceSelect.selectedIndex]);
     let opt = sliceSelect.options[sliceSelect.selectedIndex];
 
     // User clicks the default 'slice' => jump back to global

@@ -1017,7 +1017,7 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
       }
 
       setSliceData(featureID, featureLevel) {
-        this.ebm.setSliceData(featureID, featureLevel);
+        return this.ebm.setSliceData(featureID, featureLevel);
       }
 
     }

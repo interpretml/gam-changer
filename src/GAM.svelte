@@ -38,6 +38,7 @@
 
   let footerStore = writable({
     sample: '',
+    slice: '',
     help: '',
     state: '',
     baselineInit: false,
@@ -359,6 +360,7 @@
       <div class='separator'></div>
 
       <span>{@html $footerStore.sample}</span>
+      <span>{@html $footerStore.slice}</span>
       <div class='separator'></div>
 
       <span>{@html $footerStore.state}</span>

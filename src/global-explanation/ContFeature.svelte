@@ -104,6 +104,11 @@
     case 'globalClicked':
       console.log('globalClicked');
 
+      footerStore.update(value => {
+        value.slice = '';
+        return value;
+      });
+
       // We keep track of the global metrics in history in any current scope
       // To restore the global tab, we just need to query the history stack
       sidebarInfo.curGroup = 'overwrite';
@@ -112,6 +117,11 @@
 
     case 'selectedClicked':
       console.log('selectedClicked');
+
+      footerStore.update(value => {
+        value.slice = '';
+        return value;
+      });
 
       // Step 1: If there is no selected nodes, then the metrics are all NAs
       if (!state.selectedInfo.hasSelected) {
@@ -152,7 +162,12 @@
       console.log('sliceClicked');
 
       // Step 1: set the slice feature ID and level ID to EBM
-      ebm.setSliceData(sidebarInfo.sliceInfo.featureID, sidebarInfo.sliceInfo.level);
+      let sliceSize = ebm.setSliceData(sidebarInfo.sliceInfo.featureID, sidebarInfo.sliceInfo.level);
+
+      footerStore.update(value => {
+        value.slice = `, <b>${sliceSize}</b> sliced`;
+        return value;
+      });
 
       // Step 2: Reset/Update EBM 3 times and compute three metrics on the selected nodes
 
@@ -1206,6 +1221,7 @@
 
     // Update the footer message
     footerStore.update(value => {
+      value.interpolateStyle = 'Interpolated';
       value.state = `<b>Interpolated</b> ${state.selectedInfo.nodeData.length} bins <b>in place</b>`;
       value.interpolateEqual = 'in place';
       if (multiMenuControlInfo.interpolationMode === 'equal') {
