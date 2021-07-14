@@ -327,6 +327,7 @@ export const stepInterpolate = (svg, steps) => {
       y: curY,
       count: totalCount / steps,
       id: `(${leftPoint.id}):(${rightPoint.id})-${s}`,
+      ebmID: leftPoint.id + s,
       leftPointID: s == 1 ? leftPoint.id : `(${leftPoint.id}):(${rightPoint.id})-${s - 1}`,
       rightPointID: s == steps ? rightPoint.id : `(${leftPoint.id}):(${rightPoint.id})-${s + 1}`,
       leftLineIndex: null,
@@ -341,6 +342,16 @@ export const stepInterpolate = (svg, steps) => {
   leftPoint.rightPointID = `(${leftPoint.id}):(${rightPoint.id})-${1}`;
   rightPoint.leftPointID = `(${leftPoint.id}):(${rightPoint.id})-${steps}`;
 
+  // Step 3.4: Update the ebmID of all points in the buffer
+  // The first point will always have ID 0
+  let curBufferPoint = state.pointDataBuffer[0];
+  let curEbmID = 0;
+  while(curBufferPoint.rightPointID !== null) {
+    state.pointDataBuffer[curBufferPoint.id].ebmID = curEbmID++;
+    curBufferPoint = state.pointDataBuffer[curBufferPoint.rightPointID];
+  }
+  state.pointDataBuffer[curBufferPoint.id].ebmID = curEbmID++;
+
   // Step 4: Recreate the path data using the updated point data  
   updateAdditiveDataBufferFromPointDataBuffer();
 
@@ -350,12 +361,22 @@ export const stepInterpolate = (svg, steps) => {
 
   while (curPoint.id !== rightPoint.id) {
     const nextID = curPoint.rightPointID;
-    state.selectedInfo.nodeDataBuffer.push({x: curPoint.x, y: curPoint.y, id: curPoint.id});
+    state.selectedInfo.nodeDataBuffer.push({
+      x: curPoint.x,
+      y: curPoint.y,
+      id: curPoint.id,
+      ebmID: curPoint.ebmID
+    });
     curPoint = state.pointDataBuffer[nextID];
   }
   
   // Add the right point too
-  state.selectedInfo.nodeDataBuffer.push({ x: curPoint.x, y: curPoint.y, id: curPoint.id });
+  state.selectedInfo.nodeDataBuffer.push({
+    x: curPoint.x,
+    y: curPoint.y,
+    id: curPoint.id,
+    ebmID: curPoint.ebmID
+  });
 
   state.selectedInfo.computeBBoxBuffer();
 

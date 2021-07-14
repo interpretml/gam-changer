@@ -105,6 +105,9 @@
       console.log('globalClicked');
 
       footerStore.update(value => {
+        if (value.sample.includes(',')) {
+          value.sample = value.sample.slice(0, -1);
+        }
         value.slice = '';
         return value;
       });
@@ -119,6 +122,9 @@
       console.log('selectedClicked');
 
       footerStore.update(value => {
+        if (value.sample.includes(',')) {
+          value.sample = value.sample.slice(0, -1);
+        }
         value.slice = '';
         return value;
       });
@@ -165,7 +171,8 @@
       let sliceSize = ebm.setSliceData(sidebarInfo.sliceInfo.featureID, sidebarInfo.sliceInfo.level);
 
       footerStore.update(value => {
-        value.slice = `, <b>${sliceSize}</b> sliced`;
+        value.sample += ',';
+        value.slice = `<b>${sliceSize}</b> sliced`;
         return value;
       });
 
@@ -637,7 +644,7 @@
     }
 
     nodeData.forEach(d => {
-      changedBinIndexes.push(d.id);
+      changedBinIndexes.push(d.ebmID);
       changedScores.push(d.y);
     });
 
@@ -1395,7 +1402,6 @@
    * Event handler when user clicks the check icon in the sub-menu
    */
   const multiMenuSubItemCheckClicked = () => {
-    console.log('sub item check clicked');
 
     if (multiMenuControlInfo.subItemMode === null) {
       console.error('No sub item is selected but check is clicked!');
