@@ -166,7 +166,7 @@
     </div>
 
     <div class='tab' class:hidden={sidebarInfo.selectedTab !== 'history'}>
-      <History />
+      <History sidebarStore={sidebarStore}/>
     </div>
     
   </div>

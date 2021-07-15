@@ -32,7 +32,7 @@
     prCurve: [],
     rocCurve: [],
     curGroup: '',
-    selectedTab: 'effect',
+    selectedTab: 'history',
     effectScope: 'global'
   });
 

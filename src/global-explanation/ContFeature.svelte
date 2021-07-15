@@ -251,6 +251,10 @@
    */
   const drawFeature = (featureData) => {
     console.log(featureData);
+
+    // Track the feature name
+    state.featureName = featureData.name;
+
     // Approximate the longest width of score (y-axis)
     yAxisWidth = 5 * d3.max(scoreRange.map(d => String(round(d, 1)).length));
     lineChartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;

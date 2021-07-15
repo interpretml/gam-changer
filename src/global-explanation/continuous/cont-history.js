@@ -240,7 +240,7 @@ export const pushCurStateToHistoryStack = (type, description, historyStore, side
         barData: JSON.parse(JSON.stringify(sidebarInfo.barData)),
         confusionMatrixData: JSON.parse(JSON.stringify(sidebarInfo.confusionMatrixData))
       },
-      featureId: 1,
+      featureName: state.featureName,
       type: type,
       description: description,
       time: time,
