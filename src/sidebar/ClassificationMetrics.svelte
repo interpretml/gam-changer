@@ -67,7 +67,7 @@
     let opt = sliceSelect.options[sliceSelect.selectedIndex];
 
     if (sidebarInfo.effectScope !== tab) {
-      if (sidebarInfo.effectScope !== 'slice') {
+      if (sidebarInfo.effectScope !== 'slice' && opt.value !== 'slice') {
         sidebarInfo.curGroup = `${tab}Clicked`;
         sidebarInfo.effectScope = tab;
         sidebarStore.set(sidebarInfo);

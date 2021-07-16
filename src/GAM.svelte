@@ -208,7 +208,6 @@
       } else {
         alert('You need to confirm all edits in the History panel (click 👍 icons) before saving the model.');
       }
-      
     }
   };
 
