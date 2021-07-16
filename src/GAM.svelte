@@ -10,7 +10,8 @@
   import * as d3 from 'd3';
   import { initEBM } from './ebm';
   import { onMount } from 'svelte';
-  import { writable, derived } from 'svelte/store';
+  import { writable, derived, get } from 'svelte/store';
+  import { downloadJSON } from './utils/utils';
 
   import redoIconSVG from './img/redo-icon.svg';
   import undoIconSVG from './img/undo-icon.svg';
@@ -196,6 +197,19 @@
 
   const footerActionTriggered = (message) => {
     footerActionStore.set(message);
+
+    if (message === 'save') {
+      let historyList = get(historyStore);
+      // Check if the user has confirmed all edits
+      let allReviewed = true;
+      historyList.forEach(d => allReviewed = allReviewed && d.reviewed);
+      if (allReviewed) {
+        downloadJSON(historyList, d3.select(component).select('#download-anchor'), 'history');
+      } else {
+        alert('You need to confirm all edits in the History panel (click 👍 icons) before saving the model.');
+      }
+      
+    }
   };
 
   const bindUndoKey = (undoCallback, redoCallback) => {
@@ -336,6 +350,7 @@
 </style>
 
 <div class='main-tool' bind:this={component}>
+  <a id="download-anchor" style="display:none"> </a>
 
   <div class='tool'>
     <div class='feature-window'>
