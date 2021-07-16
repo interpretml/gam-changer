@@ -249,7 +249,7 @@
    * Draw the plot in the SVG component
    * @param featureData
    */
-  const drawFeature = (featureData) => {
+  const drawFeature = async (featureData) => {
     console.log(featureData);
 
     // Track the feature name
@@ -584,7 +584,13 @@
 
     // Now the graph is drawn, update the height to sidebar
     sidebarInfo.height = component.getBoundingClientRect().height;
+    sidebarInfo.curGroup = 'setHeight';
     sidebarStore.set(sidebarInfo);
+
+    // Wait until the the effect sidebar is updated
+    while (sidebarInfo.curGroup !== 'setHeightCompleted') {
+      await new Promise(r => setTimeout(r, 500));
+    }
 
     // Update the footer for more instruction
     footerStore.update(value => {
@@ -593,7 +599,7 @@
     });
 
     // Push the initial state into the history stack
-    pushCurStateToHistoryStack('original', 'original graph', historyStore, sidebarInfo);
+    pushCurStateToHistoryStack('original', 'original graph', historyStore, sidebarStore);
   };
 
   const getEBMMetrics = async (scope='global') => {
@@ -1029,7 +1035,7 @@
     const binRange = binRight === undefined ? `${binLeft.x} <= x` : `${binLeft.x} <= x < ${binRight.x}`;
     const message = `${curEditBaseline >= 0 ? 'Increased' : 'Decreased'} scores of ${binNum} ` +
       `bins (${binRange}) by ${round(Math.abs(curEditBaseline), 2)}.`;
-    pushCurStateToHistoryStack('move', message, historyStore, sidebarInfo);
+    pushCurStateToHistoryStack('move', message, historyStore, sidebarStore);
 
     // Any new commit purges the redo stack
     redoStack = [];
@@ -1504,7 +1510,7 @@
       break;
     }
 
-    pushCurStateToHistoryStack(editType, description, historyStore, sidebarInfo);
+    pushCurStateToHistoryStack(editType, description, historyStore, sidebarStore);
 
     // Any new commit purges the redo stack
     redoStack = [];
@@ -1647,6 +1653,28 @@
     pointer-events: all;
   }
 
+  .context-menu-container {
+    pointer-events: fill;
+
+    &.hidden {
+      pointer-events: none;
+      cursor: none;
+    }
+  }
+
+  .header__history {
+    background: hsl(225, 53%, 93%);
+    border-radius: 5px;
+    padding: 1px 7px;
+    font-size: 0.9em;
+    color: $gray-900;
+    margin-left: 1em;
+
+    &.past {
+      background: hsl(35.3, 100%, 90%);
+    }
+  }
+
 </style>
 
 <div class='explain-panel' bind:this={component}>
@@ -1680,6 +1708,21 @@
         
         <div class='header__importance'>
           {featureData === null ? ' ': round(featureData.importance, 2)}
+        </div>
+
+        <div class='header__history' class:past={sidebarInfo.previewHistory}>
+          <span class='hash'>
+            {#if sidebarInfo.historyHead === 0}
+              Original
+            {:else}
+              {#if sidebarInfo.previewHistory}
+                Previous Edit:
+              {:else}
+                Latest Edit:
+              {/if}
+              {get(historyStore)[sidebarInfo.historyHead].hash.substring(0, 7)}
+            {/if}
+          </span>
         </div>
 
       </div>

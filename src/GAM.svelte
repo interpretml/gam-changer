@@ -33,7 +33,9 @@
     rocCurve: [],
     curGroup: '',
     selectedTab: 'history',
-    effectScope: 'global'
+    effectScope: 'global',
+    historyHead: 0,
+    previewHistory: false,
   });
 
   let footerStore = writable({
@@ -350,7 +352,7 @@
     </div>
 
     <div class='sidebar-wrapper'>
-      <Sidebar sidebarStore={sidebarStore}/>
+      <Sidebar sidebarStore={sidebarStore} historyStore={historyStore}/>
     </div>
   </div>
 

@@ -368,7 +368,6 @@
     justify-content: center;
     align-items: center;
     position: relative;
-    pointer-events: fill;
     flex-shrink: 0;
 
     color: $indigo-dark;

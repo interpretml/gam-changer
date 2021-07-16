@@ -8,6 +8,7 @@
   import { bindInlineSVG } from '../utils/svg-icon-binding';
   
   export let sidebarStore;
+  export let historyStore;
 
   let component = null;
   let historyList = [];
@@ -29,16 +30,29 @@
   sidebarStore.subscribe(value => {
     sidebarInfo = value;
   });
+
+  historyStore.subscribe(value => {
+    historyList = value;
+    needToBindSVGs = true;
+  });
   
   const initData = async() => {
-    historyList = await d3.json('/data/history.json');
+    let fakeHistoryList = await d3.json('/data/history.json');
 
     // Flag historyList changed, so we need to bind svgs after the divs are created
     needToBindSVGs = true;
-    historyList.forEach(d => d.reviewed = false);
-    historyList.forEach(d => d.preview = false);
-    historyList[0].reviewed = true;
-    console.log(historyList);
+    fakeHistoryList.forEach(d => d.reviewed = false);
+    fakeHistoryList[0].reviewed = true;
+    console.log(fakeHistoryList);
+
+    d3.timeout(() => {
+      sidebarStore.update(value => {
+        value.historyHead = 5;
+        return value;
+      });
+
+      historyStore.set(fakeHistoryList);
+    }, 1000);
   };
 
   /**
@@ -64,14 +78,16 @@
   };
 
   const previewClicked = (i) => {
-    if (historyList[i].preview) {
-      historyList[i].preview = false;
-    } else  {
-      // Only allow previewing one commit
-      historyList.forEach(d => d.preview = false);
-      historyList[i].preview = true;
-    }
-    historyList = historyList; 
+    sidebarStore.update(value => {
+      if (value.historyHead !== i) {
+        value.curGroup = 'headChanged';
+      }
+
+      value.previewHistory = i !== historyList.length - 1;
+
+      value.historyHead = i;
+      return value;
+    });
   };
 
   const deleteClicked = (i) => {
@@ -253,8 +269,8 @@
       }
 
       &.selected {
-        color: $orange-400;
-        fill: $orange-400;
+        color: $blue-reg;
+        fill: $blue-reg;
       }
     }
 
@@ -275,8 +291,8 @@
       }
 
       .svg-icon {
-        color: $blue-600;
-        fill: $blue-600;
+        color: $blue-reg;
+        fill: $blue-reg;
       }
     }
   }
@@ -341,6 +357,9 @@
             on:click={() => navigator.clipboard.writeText(history.hash)}
           >
             {history.hash.substring(0, 7)}
+            {#if sidebarInfo.historyHead === i}
+              {' (HEAD)'}
+            {/if}
           </div>
 
           <div class='commit-checkbox' title='confirm the edit'
@@ -355,7 +374,7 @@
             </div>
           </div>
 
-          <div class='svg-icon icon-eye' class:selected={history.preview} title='preview'
+          <div class='svg-icon icon-eye' class:selected={sidebarInfo.historyHead === i} title='preview'
             on:click={() => previewClicked(i)}
           ></div>
 

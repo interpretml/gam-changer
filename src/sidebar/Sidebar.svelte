@@ -8,6 +8,7 @@
   import History from './History.svelte';
 
   export let sidebarStore;
+  export let historyStore;
 
   let sidebarInfo = {};
   let component = null;
@@ -15,10 +16,12 @@
   sidebarStore.subscribe(value => {
     sidebarInfo = value;
 
-    if (value.height !== undefined) {
-      component.style.height = `${value.height}px`;
-      sidebarInfo.setHeight = sidebarInfo.height;
-      delete sidebarInfo.height;
+    if (sidebarInfo.curGroup === 'setHeight') {
+      if (sidebarInfo.setHeight === undefined) {
+        component.style.height = `${value.height}px`;
+        sidebarInfo.setHeight = sidebarInfo.height;
+      }
+      sidebarInfo.curGroup = 'setHeightCompleted';
       sidebarStore.set(sidebarInfo);
     }
   });
@@ -166,7 +169,7 @@
     </div>
 
     <div class='tab' class:hidden={sidebarInfo.selectedTab !== 'history'}>
-      <History sidebarStore={sidebarStore}/>
+      <History sidebarStore={sidebarStore} historyStore={historyStore}/>
     </div>
     
   </div>

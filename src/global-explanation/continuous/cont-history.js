@@ -12,6 +12,13 @@ export const undoHandler = async (svg, multiMenu, resetContextMenu, resetFeature
   // Step 1: If the user has selected some nodes, discard the selections
   quitSelection(svg, multiMenu, resetContextMenu, resetFeatureSidebar);
 
+  // Step 1.5: Update the HEAD
+  // This step must be done before updating the historyStore!
+  sidebarStore.update(value => {
+    value.historyHead = get(historyStore).length - 2;
+    return value;
+  });
+
   // Step 2: Remove the current commit from history
   historyStore.update(value => {
     curCommit = value.pop();
@@ -41,8 +48,10 @@ export const undoHandler = async (svg, multiMenu, resetContextMenu, resetFeature
   }
 
   // Step 6: Update the last last edit state
-  if (curHistoryStoreValue.length > 2) {
-    state.additiveDataLastLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 3].state.additiveData;
+  // Note lastLastEdit is *only* used to restore lastEdit after user enters editing mode then cancel
+  // So when we restore it, it is the same as lastEdit
+  if (curHistoryStoreValue.length > 1) {
+    state.additiveDataLastLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 2].state.additiveData;
   } else {
     // If there is no last last edit, then it is the origin or the first edit
     state.additiveDataLastLastEdit = undefined;
@@ -123,6 +132,13 @@ export const redoHandler = async (svg, multiMenu, resetContextMenu, resetFeature
   // Step 1: If the user has selected some nodes, discard the selections
   quitSelection(svg, multiMenu, resetContextMenu, resetFeatureSidebar);
 
+  // Step 1.5: Update the HEAD
+  // This step must be done before updating the historyStore!
+  sidebarStore.update(value => {
+    value.historyHead = get(historyStore).length;
+    return value;
+  });
+
   // Step 2: Pop the redo stack and add it to the history stack
   let newCommit = redoStack.pop();
 
@@ -150,8 +166,10 @@ export const redoHandler = async (svg, multiMenu, resetContextMenu, resetFeature
   }
 
   // Update the last last edit state
-  if (curHistoryStoreValue.length > 2) {
-    state.additiveDataLastLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 3].state.additiveData;
+  // Note lastLastEdit is *only* used to restore lastEdit after user enters editing mode then cancel
+  // So when we restore it, it is the same as lastEdit
+  if (curHistoryStoreValue.length > 1) {
+    state.additiveDataLastLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 2].state.additiveData;
   } else {
     // If there is no last last edit, then it is the origin or the first edit
     state.additiveDataLastLastEdit = undefined;
@@ -227,7 +245,11 @@ export const redoHandler = async (svg, multiMenu, resetContextMenu, resetFeature
   redrawOriginal(svg);
 };
 
-export const pushCurStateToHistoryStack = (type, description, historyStore, sidebarInfo) => {
+export const pushCurStateToHistoryStack = (type, description, historyStore, sidebarStore) => {
+  // Push the new commit to the history stack
+  let historyLength = 0;
+  let sidebarInfo = get(sidebarStore);
+
   historyStore.update(value => {
     const time = Date.now();
 
@@ -244,10 +266,17 @@ export const pushCurStateToHistoryStack = (type, description, historyStore, side
       type: type,
       description: description,
       time: time,
-      hash: MD5(`${type}${description}${time}`)
+      hash: MD5(`${type}${description}${time}`),
+      reviewed: type === 'original'
     });
 
-    console.log(value.map(d => d.metrics.barData));
+    historyLength = value.length;
+    return value;
+  });
+
+  // Change the HEAD pointer to new commit
+  sidebarStore.update(value => {
+    value.historyHead = historyLength - 1;
     return value;
   });
 };

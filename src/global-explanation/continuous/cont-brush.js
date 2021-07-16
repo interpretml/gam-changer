@@ -174,11 +174,14 @@ export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
       redrawOriginal(svg);
 
       // Redraw the last edit if possible
-      if (state.additiveDataLastLastEdit !== undefined) {
-        state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
-        drawLastEdit(svg);
-        // Prepare for next redrawing after recovering the last last edit graph
-        state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+      if (modeInfo.moveMode || modeInfo.subItemMode !== null) {
+        if (state.additiveDataLastLastEdit !== undefined) {
+          console.log(modeInfo);
+          state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
+          drawLastEdit(svg);
+          // Prepare for next redrawing after recovering the last last edit graph
+          state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+        }
       }
 
       // If the current edit is interpolation, we need to recover the bin definition
