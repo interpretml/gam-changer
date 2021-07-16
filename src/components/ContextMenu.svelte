@@ -6,21 +6,7 @@
   import { tooltipConfigStore } from '../store';
 
   // SVGs
-  import mergeIconSVG from '../img/merge-icon.svg';
-  import increasingIconSVG from '../img/increasing-icon.svg';
-  import decreasingIconSVG from '../img/decreasing-icon.svg';
-  import upDownIconSVG from '../img/updown-icon.svg';
-  import trashIconSVG from '../img/trash-icon.svg';
-  import upIconSVG from '../img/up-icon.svg';
-  import downIconSVG from '../img/down-icon.svg';
-  import interpolateIconSVG from '../img/interpolate-icon.svg';
-  import checkIconSVG from '../img/check-icon.svg';
-  import refreshIconSVG from '../img/refresh-icon.svg';
-  import minusIconSVG from '../img/minus-icon.svg';
-  import plusIconSVG from '../img/plus-icon.svg';
-  import inplaceIconSVG from '../img/inplace-icon.svg';
-  import interpolationIconSVG from '../img/interpolation-icon.svg';
-  import regressionIconSVG from '../img/regression-icon.svg';
+  import { bindInlineSVG } from '../utils/svg-icon-binding';
 
   export let controlInfo = undefined;
   /**
@@ -49,78 +35,6 @@
   tooltipConfigStore.subscribe(value => {tooltipConfig = value;});
 
   const dispatch = createEventDispatcher();
-
-  const preProcessSVG = (svgString) => {
-    return svgString.replaceAll('black', 'currentcolor')
-      .replaceAll('fill:none', 'fill:currentcolor')
-      .replaceAll('stroke:none', 'fill:currentcolor');
-  };
-
-  /**
-   * Dynamically bind SVG files as inline SVG strings in this component
-   */
-  const bindInlineSVG = () => {
-    d3.select(component)
-      .select('.svg-icon#icon-merge')
-      .html(preProcessSVG(mergeIconSVG));
-
-    d3.select(component)
-      .select('.svg-icon#icon-increasing')
-      .html(increasingIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .select('.svg-icon#icon-decreasing')
-      .html(decreasingIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .select('.svg-icon#icon-updown')
-      .html(preProcessSVG(upDownIconSVG));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-input-up')
-      .html(upIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-input-down')
-      .html(downIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .select('.svg-icon#icon-delete')
-      .html(trashIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .select('.svg-icon#icon-interpolate')
-      .html(interpolateIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-check')
-      .html(checkIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-refresh')
-      .html(refreshIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-minus')
-      .html(minusIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-plus')
-      .html(plusIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-inplace')
-      .html(inplaceIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-interpolation')
-      .html(interpolationIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-regression')
-      .html(regressionIconSVG.replaceAll('black', 'currentcolor'));
-
-  };
 
   const prepareSubMenu = (newMode) => {
     if (controlInfo.subItemMode !== null && controlInfo.subItemMode !== newMode) {
@@ -396,7 +310,7 @@
   };
 
   onMount(() => {
-    bindInlineSVG();
+    bindInlineSVG(component);
     // Get the width of this bar
     let bbox = component.getBoundingClientRect();
     width = bbox.width;
@@ -705,7 +619,7 @@
       on:mouseenter={(e) => mouseoverHandler(e, 'move', 55, 30)}
       on:mouseleave={mouseleaveHandler}
     >
-      <div class='svg-icon' id='icon-updown'></div>
+      <div class='svg-icon icon-updown'></div>
     </div>
 
     <div class='separator'></div>
@@ -738,7 +652,7 @@
       on:mouseenter={(e) => mouseoverHandler(e, 'monotonically increasing', 120, 52)}
       on:mouseleave={mouseleaveHandler}
     >
-      <div class='svg-icon' id='icon-increasing'></div>
+      <div class='svg-icon icon-increasing'></div>
       
       <div class='sub-item sub-item-increasing hidden'>
         <!-- Check button -->
@@ -767,7 +681,7 @@
       on:mouseenter={(e) => mouseoverHandler(e, 'monotonically decreasing', 120, 52)}
       on:mouseleave={mouseleaveHandler}
     >
-      <div class='svg-icon' id='icon-decreasing'></div>
+      <div class='svg-icon icon-decreasing'></div>
 
       <div class='sub-item sub-item-decreasing hidden'>
         <!-- Check button -->
@@ -798,7 +712,7 @@
       on:mouseenter={(e) => mouseoverHandler(e, 'interpolate', 85, 30)}
       on:mouseleave={mouseleaveHandler}
     >
-      <div class='svg-icon' id='icon-interpolate'></div>
+      <div class='svg-icon icon-interpolate'></div>
 
       <div class='sub-item sub-item-interpolation hidden'>
 
@@ -887,7 +801,7 @@
       on:mouseenter={(e) => mouseoverHandler(e, 'merge', 60, 30)}
       on:mouseleave={mouseleaveHandler}
     >
-      <div class='svg-icon' id='icon-merge'></div>
+      <div class='svg-icon icon-merge'></div>
 
       <div class='sub-item sub-item-merge hidden'>
         <!-- Check button -->
@@ -958,7 +872,7 @@
       on:mouseenter={(e) => mouseoverHandler(e, 'delete', 60, 30)}
       on:mouseleave={mouseleaveHandler}
     >
-      <div class='svg-icon' id='icon-delete'></div>
+      <div class='svg-icon icon-delete'></div>
 
       <div class='sub-item sub-item-delete hidden'>
         <!-- Check button -->

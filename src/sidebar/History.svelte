@@ -5,24 +5,8 @@
   import { flip } from 'svelte/animate';
   import { quadInOut, expoInOut, cubicInOut } from 'svelte/easing';
   import { round, shuffle } from '../utils/utils';
-
-  // SVGs
-  import mergeIconSVG from '../img/merge-icon.svg';
-  import increasingIconSVG from '../img/increasing-icon.svg';
-  import decreasingIconSVG from '../img/decreasing-icon.svg';
-  import upDownIconSVG from '../img/updown-icon.svg';
-  import trashIconSVG from '../img/trash-icon.svg';
-  import trashCommitIconSVG from '../img/trash-commit-icon.svg';
-  import eyeIconSVG from '../img/eye-icon.svg';
-  import upIconSVG from '../img/up-icon.svg';
-  import downIconSVG from '../img/down-icon.svg';
-  import interpolateIconSVG from '../img/interpolate-icon.svg';
-  import inplaceIconSVG from '../img/inplace-icon.svg';
-  import interpolationIconSVG from '../img/interpolation-icon.svg';
-  import regressionIconSVG from '../img/regression-icon.svg';
-  import thumbupIconSVG from '../img/thumbup-icon.svg';
-  import boxIconSVG from '../img/box-icon.svg';
-
+  import { bindInlineSVG } from '../utils/svg-icon-binding';
+  
   export let sidebarStore;
 
   let component = null;
@@ -45,77 +29,6 @@
   sidebarStore.subscribe(value => {
     sidebarInfo = value;
   });
-
-  const preProcessSVG = (svgString) => {
-    return svgString.replaceAll('black', 'currentcolor')
-      .replaceAll('fill:none', 'fill:currentcolor')
-      .replaceAll('stroke:none', 'fill:currentcolor');
-  };
-
-  /**
-   * Dynamically bind SVG files as inline SVG strings in this component
-   */
-  const bindInlineSVG = () => {
-    d3.select(component)
-      .selectAll('.svg-icon.icon-merge')
-      .html(preProcessSVG(mergeIconSVG));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-increasing')
-      .html(increasingIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-decreasing')
-      .html(decreasingIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-updown')
-      .html(preProcessSVG(upDownIconSVG));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-input-up')
-      .html(preProcessSVG(upIconSVG));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-input-down')
-      .html(preProcessSVG(downIconSVG));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-delete')
-      .html(trashIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-commit-delete')
-      .html(preProcessSVG(trashCommitIconSVG));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-eye')
-      .html(preProcessSVG(eyeIconSVG));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-interpolate')
-      .html(interpolateIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-inplace')
-      .html(inplaceIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-interpolation')
-      .html(interpolationIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-regression')
-      .html(regressionIconSVG.replaceAll('black', 'currentcolor'));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-thumbup')
-      .html(preProcessSVG(thumbupIconSVG));
-
-    d3.select(component)
-      .selectAll('.svg-icon.icon-box')
-      .html(preProcessSVG(boxIconSVG));
-  };
   
   const initData = async() => {
     historyList = await d3.json('/data/history.json');
@@ -161,17 +74,28 @@
     historyList = historyList; 
   };
 
+  const deleteClicked = (i) => {
+    // Need user to confirm the delete action
+    let result = confirm('Delete this commit will also remove all commits after it.');
+
+    if (result) {
+      historyList = historyList.slice(0, i);
+    }
+
+    console.log(historyList);
+  };
+
   initData();
 
   afterUpdate(() => {
     if (needToBindSVGs) {
-      bindInlineSVG();
+      bindInlineSVG(component);
       needToBindSVGs = false;
     }
   });
 
   onMount(() => {
-    bindInlineSVG();
+    bindInlineSVG(component);
   });
 
 </script>
@@ -262,9 +186,18 @@
 
   .commit-message {
     width: 100%;
-    background: $pastel1-gray;
+    background: $gray-100;
     padding: 5px 10px;
+    border: 1px solid $gray-border;
     border-radius: 2px;
+
+    .commit-message-text {
+      margin-right: 0.2em;
+    }
+
+    &:focus {
+      background: none;
+    }
   }
 
   .commit-checkbox {
@@ -272,20 +205,6 @@
     cursor: pointer;
     width: 1em;
     height: 1em;
-  }
-  
-
-  .checkbox-box {
-    &.hidden {
-      display: none;
-    }
-  }
-
-  .checkbox-check {
-    animation: thumbup 150ms ease-in;
-    &.hidden {
-      display: none;
-    }
   }
 
   @keyframes thumbup {
@@ -334,8 +253,30 @@
       }
 
       &.selected {
-        color: $orange-300;
-        fill: $orange-300;
+        color: $orange-400;
+        fill: $orange-400;
+      }
+    }
+
+    .checkbox-box {
+      &.hidden {
+        display: none;
+      }
+
+      .svg-icon {
+        opacity: 0.3;
+      }
+    }
+
+    .checkbox-check {
+      animation: thumbup 150ms ease-in;
+      &.hidden {
+        display: none;
+      }
+
+      .svg-icon {
+        color: $blue-600;
+        fill: $blue-600;
       }
     }
   }
@@ -345,6 +286,11 @@
     font-size: 0.9em;
     color: $gray-700;
     margin-right: auto;
+    cursor: copy;
+
+    &:hover {
+      color: $blue-600;
+    }
   }
 
 </style>
@@ -384,19 +330,20 @@
             </div>
           {/if}
 
-          <div class='commit-message' contenteditable>
-            {history.description}
-          </div>
+          <span class='commit-message' contenteditable bind:innerHTML={history.description}>
+          </span>
 
         </div>
 
         <!-- Footer -->
         <div class='commit-bar'>
-          <div class='commit-hash' title={'hash: ' + history.hash}>
+          <div class='commit-hash' title={'copy hash: ' + history.hash}
+            on:click={() => navigator.clipboard.writeText(history.hash)}
+          >
             {history.hash.substring(0, 7)}
           </div>
 
-          <div class='commit-checkbox' title='check to confirm'
+          <div class='commit-checkbox' title='confirm the edit'
             on:click={() => checkboxClicked(i)}
           >
             <div class='checkbox-box' class:hidden={history.reviewed}>
@@ -412,7 +359,12 @@
             on:click={() => previewClicked(i)}
           ></div>
 
-           <div class='svg-icon icon-commit-delete' title='delete'></div>
+          {#if history.type !== 'original'}
+            <div class='svg-icon icon-commit-delete' title='delete'
+              on:click={() => deleteClicked(i)}
+            ></div>
+          {/if}
+
         </div>
 
       </div>
