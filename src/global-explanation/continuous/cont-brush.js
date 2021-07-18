@@ -94,6 +94,11 @@ export const brushDuring = (event, state, svg, multiMenu, ebm, footerStore) => {
         svgSelect.select('g.line-chart-line-group.real')
           .select(`#path-${id}-${state.pointData[id].rightPointID}-l`)
           .classed('selected', true);
+      } else {
+        // Last path is named as something like path-99-99-r
+        svgSelect.select('g.line-chart-line-group.real')
+          .select(`#path-${id}-${id}-r`)
+          .classed('selected', true);
       }
     });
 

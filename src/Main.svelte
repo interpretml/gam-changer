@@ -61,6 +61,7 @@
   <div class='content'>
 
     <GAM />
+
     <!-- <div class='feature-window'>
       <CatGlobalExplain
         featureData = {data === null ? null : data.features[26]}

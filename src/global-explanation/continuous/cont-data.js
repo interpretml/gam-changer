@@ -118,6 +118,11 @@ export const createPointData = (featureData) => {
     };
   }
 
+  // Since the last point has no additive value, it is not included in the
+  // point data array, we need to separately record its x value
+  // We register it to the last point
+  pointData[featureData.additive.length - 1].maxX = featureData.binEdge[featureData.additive.length];
+
   return pointData;
 };
 
