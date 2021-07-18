@@ -10,7 +10,7 @@ export const undoHandler = async (svg, multiMenu, resetContextMenu, resetFeature
   let lastCommit;
 
   // Step 1: If the user has selected some nodes, discard the selections
-  quitSelection(svg, multiMenu, resetContextMenu, resetFeatureSidebar);
+  quitSelection(svg, state, multiMenu, resetContextMenu, resetFeatureSidebar);
 
   // Step 1.5: Update the HEAD
   // This step must be done before updating the historyStore!
@@ -130,7 +130,7 @@ export const undoHandler = async (svg, multiMenu, resetContextMenu, resetFeature
 export const redoHandler = async (svg, multiMenu, resetContextMenu, resetFeatureSidebar,
   historyStore, redoStack, setEBM, sidebarStore) => {
   // Step 1: If the user has selected some nodes, discard the selections
-  quitSelection(svg, multiMenu, resetContextMenu, resetFeatureSidebar);
+  quitSelection(svg, state, multiMenu, resetContextMenu, resetFeatureSidebar);
 
   // Step 1.5: Update the HEAD
   // This step must be done before updating the historyStore!

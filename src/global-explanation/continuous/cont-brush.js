@@ -2,7 +2,6 @@ import * as d3 from 'd3';
 import { SelectedInfo } from './cont-class';
 import { moveMenubar } from './cont-bbox';
 import { rScale } from './cont-zoom';
-import { state } from './cont-state';
 import { redrawOriginal, drawLastEdit } from './cont-edit';
 import { config } from '../../config';
 
@@ -32,7 +31,7 @@ const stopAnimateLine = (svg) => {
     .classed('flow-line', false);
 };
 
-export const brushDuring = (event, svg, multiMenu, ebm, footerStore) => {
+export const brushDuring = (event, state, svg, multiMenu, ebm, footerStore) => {
   // Get the selection boundary
   let selection = event.selection;
   let svgSelect = d3.select(svg);
@@ -115,7 +114,7 @@ export const brushDuring = (event, svg, multiMenu, ebm, footerStore) => {
  * @param {func} resetContextMenu Function to reset the context menu
  * @param {func} resetFeatureSidebar Function to reset the feature sidebar
  */
-export const quitSelection = (svg, multiMenu, resetContextMenu, resetFeatureSidebar) => {
+export const quitSelection = (svg, state, multiMenu, resetContextMenu, resetFeatureSidebar) => {
   let svgSelect = d3.select(svg);
 
   stopAnimateLine();
@@ -146,7 +145,7 @@ export const quitSelection = (svg, multiMenu, resetContextMenu, resetFeatureSide
   resetFeatureSidebar();
 };
 
-export const brushEndSelect = (event, svg, multiMenu, bboxStrokeWidth,
+export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
   brush, component, resetContextMenu, sidebarStore, setEBM, updateFeatureSidebar,
   resetFeatureSidebar, nullifyMetrics, computeSelectedEffects
 ) => {

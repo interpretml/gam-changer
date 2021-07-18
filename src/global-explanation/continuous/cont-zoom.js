@@ -1,18 +1,17 @@
 import * as d3 from 'd3';
 import { moveMenubar } from './cont-bbox';
-import { state } from './cont-state';
 
 export const rExtent = [2, 16];
 export const zoomScaleExtent = [1, 30];
 
-export const zoomStart = (multiMenu) => {
+export const zoomStart = (state, multiMenu) => {
   if (state.selectedInfo.hasSelected) {
     d3.select(multiMenu)
       .classed('hidden', true);
   }
 };
 
-export const zoomEnd = (multiMenu) => {
+export const zoomEnd = (state, multiMenu) => {
   if (state.selectedInfo.hasSelected) {
     d3.select(multiMenu)
       .classed('hidden', false);
@@ -25,7 +24,7 @@ export const zoomEnd = (multiMenu) => {
  * @param xScale Scale for the x-axis
  * @param yScale Scale for the y-axis
  */
-export const zoomed = (event, xScale, yScale, svg,
+export const zoomed = (event, state, xScale, yScale, svg,
   linePathWidth, nodeStrokeWidth, yAxisWidth, lineChartWidth, lineChartHeight,
   multiMenu, component
 ) => {

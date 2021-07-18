@@ -531,11 +531,11 @@
     // Add brush
     brush = d3.brush()
       .on('end', e => brushEndSelect(
-        e, svg, multiMenu, bboxStrokeWidth, brush, component, resetContextMenu,
+        e, state, svg, multiMenu, bboxStrokeWidth, brush, component, resetContextMenu,
         sidebarStore, setEBM, updateFeatureSidebar, resetFeatureSidebar,
         nullifyMetrics, computeSelectedEffects
       ))
-      .on('start brush', e => brushDuring(e, svg, multiMenu, ebm, footerStore))
+      .on('start brush', e => brushDuring(e, state, svg, multiMenu, ebm, footerStore))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]])
       .filter((e) => {
         if (selectMode) {
@@ -556,11 +556,11 @@
     // Add panning and zooming
     zoom = d3.zoom()
       .scaleExtent(zoomScaleExtent)
-      .on('zoom', e => zoomed(e, xScale, yScale, svg, linePathWidth,
+      .on('zoom', e => zoomed(e, state, xScale, yScale, svg, linePathWidth,
         nodeStrokeWidth, yAxisWidth, lineChartWidth, lineChartHeight,
         multiMenu, component))
-      .on('start', () => zoomStart(multiMenu))
-      .on('end', () => zoomEnd(multiMenu))
+      .on('start', () => zoomStart(state, multiMenu))
+      .on('end', () => zoomEnd(state, multiMenu))
       .filter(e => {
         if (selectMode) {
           return (e.type === 'wheel' || e.button === 2);
