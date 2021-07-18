@@ -315,6 +315,10 @@
     let bbox = component.getBoundingClientRect();
     width = bbox.width;
     height = bbox.height;
+
+    // Register the width as html data, so we can access it later (the computed
+    // width can shrink during move mode)
+    component.setAttribute('data-max-width', width);
   });
 
 </script>

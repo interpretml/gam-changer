@@ -13,7 +13,7 @@ export const moveMenubar = (menubar, svg, component) => {
   const panelBboxPosition = component.getBoundingClientRect();
 
   const menuBarBbox = menubar.node().getBoundingClientRect();
-  const menuWidth = menuBarBbox.width;
+  const menuWidth = +menubar.select('.menu-wrapper').attr('data-max-width');
   const menuHeight = menuBarBbox.height;
 
   let left = bboxPosition.x - panelBboxPosition.x + bboxPosition.width / 2 - menuWidth / 2;
