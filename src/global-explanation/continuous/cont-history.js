@@ -1,10 +1,9 @@
 import { quitSelection } from './cont-brush';
 import { get } from 'svelte/store';
-import { state } from './cont-state';
 import { drawLastEdit, redrawOriginal } from './cont-edit';
 import { MD5 } from '../../utils/md5';
 
-export const undoHandler = async (svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+export const undoHandler = async (state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
   historyStore, redoStack, setEBM, sidebarStore) => {
   let curCommit;
   let lastCommit;
@@ -127,7 +126,7 @@ export const undoHandler = async (svg, multiMenu, resetContextMenu, resetFeature
   redrawOriginal(svg);
 };
 
-export const redoHandler = async (svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+export const redoHandler = async (state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
   historyStore, redoStack, setEBM, sidebarStore) => {
   // Step 1: If the user has selected some nodes, discard the selections
   quitSelection(svg, state, multiMenu, resetContextMenu, resetFeatureSidebar);
@@ -245,7 +244,7 @@ export const redoHandler = async (svg, multiMenu, resetContextMenu, resetFeature
   redrawOriginal(svg);
 };
 
-export const pushCurStateToHistoryStack = (type, description, historyStore, sidebarStore) => {
+export const pushCurStateToHistoryStack = (state, type, description, historyStore, sidebarStore) => {
   // Push the new commit to the history stack
   let historyLength = 0;
   let sidebarInfo = get(sidebarStore);

@@ -218,7 +218,7 @@
       console.log('undo clicked');
 
       if (get(historyStore).length > 1) {
-        undoHandler(svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+        undoHandler(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
           historyStore, redoStack, setEBM, sidebarStore);
       }
       break;
@@ -228,7 +228,7 @@
       console.log('redo clicked');
 
       if (redoStack.length > 0) {
-        redoHandler(svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+        redoHandler(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
           historyStore, redoStack, setEBM, sidebarStore);
       }
       break;
@@ -599,7 +599,7 @@
     });
 
     // Push the initial state into the history stack
-    pushCurStateToHistoryStack('original', 'original graph', historyStore, sidebarStore);
+    pushCurStateToHistoryStack(state, 'original', 'original graph', historyStore, sidebarStore);
   };
 
   const getEBMMetrics = async (scope='global') => {
@@ -1035,7 +1035,7 @@
     const binRange = binRight === undefined ? `${binLeft.x} <= x` : `${binLeft.x} <= x < ${binRight.x}`;
     const message = `${curEditBaseline >= 0 ? 'Increased' : 'Decreased'} scores of ${binNum} ` +
       `bins (${binRange}) by ${round(Math.abs(curEditBaseline), 2)}.`;
-    pushCurStateToHistoryStack('move', message, historyStore, sidebarStore);
+    pushCurStateToHistoryStack(state, 'move', message, historyStore, sidebarStore);
 
     // Any new commit purges the redo stack
     redoStack = [];
@@ -1510,7 +1510,7 @@
       break;
     }
 
-    pushCurStateToHistoryStack(editType, description, historyStore, sidebarStore);
+    pushCurStateToHistoryStack(state, editType, description, historyStore, sidebarStore);
 
     // Any new commit purges the redo stack
     redoStack = [];
