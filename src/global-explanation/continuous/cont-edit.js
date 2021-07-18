@@ -1,7 +1,6 @@
 import * as d3 from 'd3';
 import { get } from 'svelte/store';
 import { round } from '../../utils/utils';
-import { state } from './cont-state';
 import { rScale, rExtent } from './cont-zoom';
 import { updateAdditiveDataBufferFromPointDataBuffer } from './cont-data';
 import { SimpleLinearRegression } from '../../simple-linear-regression';
@@ -9,7 +8,7 @@ import { SimpleLinearRegression } from '../../simple-linear-regression';
 // TODO: Uniform this variable across all files (use config file)
 const nodeStrokeWidth = 1;
 
-export const dragged = (e, svg, component, ebm, sidebarStore, footerStore, updateEBM) => {
+export const dragged = (e, state, svg, component, ebm, sidebarStore, footerStore, updateEBM) => {
 
   const dataYChange = state.curYScale.invert(e.y) - state.curYScale.invert(e.y - e.dy);
 
@@ -50,7 +49,7 @@ export const dragged = (e, svg, component, ebm, sidebarStore, footerStore, updat
 
   // Update the visualization with new data
   // Step 2: redraw the nodes that are changed
-  drawBufferGraph(svg, false);
+  drawBufferGraph(state, svg, false);
 
   // Update the sidebar info
   updateEBM('current');
@@ -63,7 +62,7 @@ export const dragged = (e, svg, component, ebm, sidebarStore, footerStore, updat
   });
 };
 
-export const redrawOriginal = (svg, bounce=true, animationEndFunc=undefined) => {
+export const redrawOriginal = (state, svg, bounce=true, animationEndFunc=undefined) => {
   const svgSelect = d3.select(svg);
 
   let trans = d3.transition('restore')
@@ -158,7 +157,7 @@ export const redrawOriginal = (svg, bounce=true, animationEndFunc=undefined) => 
     .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding);
 };
 
-export const redrawMonotone = (svg, isoYs) => {
+export const redrawMonotone = (state, svg, isoYs) => {
 
   // Change the data based on the y-value changes, then redraw nodes (preferred method)
   state.selectedInfo.nodeData.forEach((d, j) => {
@@ -195,11 +194,11 @@ export const redrawMonotone = (svg, isoYs) => {
   state.selectedInfo.computeBBox(state.pointDataBuffer);
 
   // Step 2 Update the visualization with new data
-  drawBufferGraph(svg, true);
+  drawBufferGraph(state, svg, true);
 
 };
 
-export const regressionInterpolate = (svg) => {
+export const regressionInterpolate = (state, svg) => {
   // Regression interpolation
   // Create x and y arrays
   let xs = [];
@@ -241,10 +240,10 @@ export const regressionInterpolate = (svg) => {
   state.selectedInfo.computeBBox(state.pointDataBuffer);
 
   // Step 4: Update the graph using new data
-  drawBufferGraph(svg, true, 800);
+  drawBufferGraph(state, svg, true, 800);
 };
 
-export const inplaceInterpolate = (svg) => {
+export const inplaceInterpolate = (state, svg) => {
   // Regional interpolation
   // We use the points in between as interpolation steps
   let leftPoint = { x: Infinity, y: null, id: null };
@@ -284,10 +283,10 @@ export const inplaceInterpolate = (svg) => {
   state.selectedInfo.computeBBox(state.pointDataBuffer);
 
   // Step 4: Update the graph using new data
-  drawBufferGraph(svg, true, 800);
+  drawBufferGraph(state, svg, true, 800);
 };
 
-export const stepInterpolate = (svg, steps) => {
+export const stepInterpolate = (state, svg, steps) => {
   // Step 1: Find the left and right point in the selected region
   let leftPoint = { x: Infinity, y: null, id: null };
   let rightPoint = { x: -Infinity, y: null, id: null };
@@ -381,11 +380,11 @@ export const stepInterpolate = (svg, steps) => {
   state.selectedInfo.computeBBoxBuffer(state.pointDataBuffer);
 
   // Step 6: Update the graph using new data
-  drawBufferGraph(svg, true, 800);
+  drawBufferGraph(state, svg, true, 800);
 
 };
 
-export const merge = (svg, value=undefined) => {
+export const merge = (state, svg, value=undefined) => {
   // Step 1: Find the left and right point in the selected region
   let leftPoint = { x: Infinity, y: null, id: null };
   let rightPoint = { x: -Infinity, y: null, id: null };
@@ -421,10 +420,10 @@ export const merge = (svg, value=undefined) => {
   state.selectedInfo.computeBBox(state.pointDataBuffer);
 
   // Step 5: Update the graph using new data
-  drawBufferGraph(svg, true, 500);
+  drawBufferGraph(state, svg, true, 500);
 };
 
-export const drawBufferGraph = (svg, animated=true, duration=400) => {
+export const drawBufferGraph = (state, svg, animated=true, duration=400) => {
 
   const svgSelect = d3.select(svg);
 
@@ -557,7 +556,7 @@ export const drawBufferGraph = (svg, animated=true, duration=400) => {
 
 };
 
-export const drawLastEdit = (svg) => {
+export const drawLastEdit = (state, svg) => {
 
   if (state.additiveDataLastEdit === undefined) {
     return;

@@ -948,7 +948,8 @@
             return value;
           });
         })
-        .on('drag', (e) => dragged(e, svg, component, ebm, sidebarStore, footerStore, updateEBM))
+        .on('drag', (e) => dragged(e, state, svg, component, ebm, sidebarStore,
+          footerStore, updateEBM))
       );
     
     bboxGroup.select('rect.original-bbox')
@@ -956,7 +957,7 @@
     
     // Show the last edit
     if (state.additiveDataLastEdit !== undefined) {
-      drawLastEdit(svg);
+      drawLastEdit(state, svg);
     }
 
     // Copy current metrics as last metrics
@@ -1050,7 +1051,7 @@
     state.additiveDataBuffer = null;
     
     // Recover the original graph
-    redrawOriginal(svg, true, () => {
+    redrawOriginal(state, svg, true, () => {
       // Move the menu bar after animation
       d3.select(multiMenu)
         .call(moveMenubar, svg, component);
@@ -1069,7 +1070,7 @@
     // Redraw the last edit if possible
     if (state.additiveDataLastLastEdit !== undefined){
       state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
-      drawLastEdit(svg);
+      drawLastEdit(state, svg);
       // Prepare for next redrawing after recovering the last last edit graph
       state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
     }
@@ -1124,9 +1125,9 @@
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
 
     // Update the last edit graph
-    drawLastEdit(svg);
+    drawLastEdit(state, svg);
 
-    redrawMonotone(svg, isoYs);
+    redrawMonotone(state, svg, isoYs);
     myContextMenu.showConfirmation('increasing', 600);
 
     // Update EBM
@@ -1176,9 +1177,9 @@
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
 
     // Update the last edit graph
-    drawLastEdit(svg);
+    drawLastEdit(state, svg);
 
-    redrawMonotone(svg, isoYs);
+    redrawMonotone(state, svg, isoYs);
     myContextMenu.showConfirmation('decreasing', 600);
 
     // Update EBM
@@ -1214,17 +1215,17 @@
     state.selectedInfo.nodeDataBuffer = JSON.parse(JSON.stringify(state.selectedInfo.nodeData));
 
     // Update the last edit graph
-    drawLastEdit(svg);
+    drawLastEdit(state, svg);
 
     // Determine whether to use in-place interpolation
     if (state.selectedInfo.nodeData.length == 1) {
       return;
     } else if (state.selectedInfo.nodeData.length == 2) {
       multiMenuControlInfo.interpolationMode = 'equal';
-      stepInterpolate(svg, multiMenuControlInfo.step);
+      stepInterpolate(state, svg, multiMenuControlInfo.step);
     } else {
       multiMenuControlInfo.interpolationMode = 'inplace';
-      inplaceInterpolate(svg);
+      inplaceInterpolate(state, svg);
     }
 
     myContextMenu.showConfirmation('interpolation', 600);
@@ -1263,7 +1264,7 @@
       state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
       state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
       state.selectedInfo.nodeDataBuffer = JSON.parse(JSON.stringify(state.selectedInfo.nodeData));
-      inplaceInterpolate(svg);
+      inplaceInterpolate(state, svg);
 
       footerValue.interpolateStyle = 'Interpolated';
       footerValue.interpolateEqual = 'in place';
@@ -1272,7 +1273,7 @@
       // Here we don't reset the pointDataBuffer
       // If user clicks here direction => step interpolate between start & end
       // If user has clicked regression => regression with equal bins
-      stepInterpolate(svg, multiMenuControlInfo.step);
+      stepInterpolate(state, svg, multiMenuControlInfo.step);
 
       footerValue.interpolateEqual = `with ${multiMenuControlInfo.step} equal-size bins`;
 
@@ -1282,7 +1283,7 @@
       state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
       state.selectedInfo.nodeDataBuffer = JSON.parse(JSON.stringify(state.selectedInfo.nodeData));
 
-      regressionInterpolate(svg);
+      regressionInterpolate(state, svg);
 
       footerValue.interpolateStyle = 'Regression transformed';
       footerValue.interpolateEqual = 'in place';
@@ -1327,9 +1328,9 @@
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
 
     // Update the last edit graph
-    drawLastEdit(svg);
+    drawLastEdit(state, svg);
 
-    merge(svg);
+    merge(state, svg);
 
     myContextMenu.showConfirmation('merge', 600);
 
@@ -1359,7 +1360,7 @@
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
 
-    merge(svg, multiMenuControlInfo.setValue);
+    merge(state, svg, multiMenuControlInfo.setValue);
 
     myContextMenu.showConfirmation('change', 600);
 
@@ -1389,9 +1390,9 @@
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
 
     // Update the last edit graph
-    drawLastEdit(svg);
+    drawLastEdit(state, svg);
 
-    merge(svg, 0);
+    merge(state, svg, 0);
 
     myContextMenu.showConfirmation('delete', 600);
 
@@ -1543,7 +1544,7 @@
     // Recover the last edit graph
     if (state.additiveDataLastLastEdit !== undefined){
       state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
-      drawLastEdit(svg);
+      drawLastEdit(state, svg);
       // Prepare for next redrawing after recovering the last last edit graph
       state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
     }
@@ -1561,7 +1562,7 @@
     }
 
     // Recover the original graph
-    redrawOriginal(svg, true, () => {
+    redrawOriginal(state, svg, true, () => {
       // Move the menu bar after the animation
       d3.select(multiMenu)
         .call(moveMenubar, svg, component);

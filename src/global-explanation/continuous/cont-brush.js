@@ -170,14 +170,13 @@ export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
 
       // Do not save the user's change (same as clicking the cancel button)
       // Redraw the graph with original data
-      redrawOriginal(svg);
+      redrawOriginal(state, svg);
 
       // Redraw the last edit if possible
       if (modeInfo.moveMode || modeInfo.subItemMode !== null) {
         if (state.additiveDataLastLastEdit !== undefined) {
-          console.log(modeInfo);
           state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
-          drawLastEdit(svg);
+          drawLastEdit(state, svg);
           // Prepare for next redrawing after recovering the last last edit graph
           state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
         }

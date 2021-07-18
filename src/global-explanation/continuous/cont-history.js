@@ -40,7 +40,7 @@ export const undoHandler = async (state, svg, multiMenu, resetContextMenu, reset
   // Step 5: Update the last edit state, redraw the last edit graphs
   if (curHistoryStoreValue.length > 1) {
     state.additiveDataLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 2].state.additiveData;
-    drawLastEdit(svg);
+    drawLastEdit(state, svg);
   } else {
     // If there is no last edit, then it is the origin
     state.additiveDataLastEdit = undefined;
@@ -123,7 +123,7 @@ export const undoHandler = async (state, svg, multiMenu, resetContextMenu, reset
   }
 
   // Redraw the graph
-  redrawOriginal(svg);
+  redrawOriginal(state, svg);
 };
 
 export const redoHandler = async (state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
@@ -158,7 +158,7 @@ export const redoHandler = async (state, svg, multiMenu, resetContextMenu, reset
   // Update the last edit state, redraw the last edit graphs
   if (curHistoryStoreValue.length > 1) {
     state.additiveDataLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 2].state.additiveData;
-    drawLastEdit(svg);
+    drawLastEdit(state, svg);
   } else {
     // If there is no last edit, then it is the origin
     state.additiveDataLastEdit = undefined;
@@ -241,7 +241,7 @@ export const redoHandler = async (state, svg, multiMenu, resetContextMenu, reset
   }
 
   // Redraw the graph
-  redrawOriginal(svg);
+  redrawOriginal(state, svg);
 };
 
 export const pushCurStateToHistoryStack = (state, type, description, historyStore, sidebarStore) => {
