@@ -20,7 +20,6 @@
   let data = null;
   let ebm = null;
   let component = null;
-  let keyCodes = [];
 
   let sidebarInfo = {};
   let sidebarStore = writable({
@@ -33,7 +32,7 @@
     prCurve: [],
     rocCurve: [],
     curGroup: '',
-    selectedTab: 'history',
+    selectedTab: 'effect',
     effectScope: 'global',
     historyHead: 0,
     previewHistory: false,

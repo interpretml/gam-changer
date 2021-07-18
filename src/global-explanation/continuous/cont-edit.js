@@ -234,7 +234,7 @@ export const regressionInterpolate = (svg) => {
   });
 
   // Step 2: Recreate the path data using the updated point data  
-  updateAdditiveDataBufferFromPointDataBuffer();
+  updateAdditiveDataBufferFromPointDataBuffer(state);
 
   // Step 3: update the bbox info
   state.selectedInfo.updateNodeData(state.pointDataBuffer);
@@ -277,7 +277,7 @@ export const inplaceInterpolate = (svg) => {
   }
 
   // Step 2: Recreate the path data using the updated point data  
-  updateAdditiveDataBufferFromPointDataBuffer();
+  updateAdditiveDataBufferFromPointDataBuffer(state);
 
   // Step 3: update the bbox info
   state.selectedInfo.updateNodeData(state.pointDataBuffer);
@@ -353,7 +353,7 @@ export const stepInterpolate = (svg, steps) => {
   state.pointDataBuffer[curBufferPoint.id].ebmID = curEbmID++;
 
   // Step 4: Recreate the path data using the updated point data  
-  updateAdditiveDataBufferFromPointDataBuffer();
+  updateAdditiveDataBufferFromPointDataBuffer(state);
 
   // Step 5: Update the selectedInfo to reflect new middle nodes
   curPoint = leftPoint;
@@ -414,7 +414,7 @@ export const merge = (svg, value=undefined) => {
   }
 
   // Step 3: Recreate the path data using the updated point data  
-  updateAdditiveDataBufferFromPointDataBuffer();
+  updateAdditiveDataBufferFromPointDataBuffer(state);
 
   // Step 4: update the bbox info
   state.selectedInfo.updateNodeData(state.pointDataBuffer);

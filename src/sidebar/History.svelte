@@ -45,14 +45,14 @@
     fakeHistoryList[0].reviewed = true;
     console.log(fakeHistoryList);
 
-    d3.timeout(() => {
-      sidebarStore.update(value => {
-        value.historyHead = 5;
-        return value;
-      });
+    // d3.timeout(() => {
+    //   sidebarStore.update(value => {
+    //     value.historyHead = 5;
+    //     return value;
+    //   });
 
-      historyStore.set(fakeHistoryList);
-    }, 1000);
+    //   historyStore.set(fakeHistoryList);
+    // }, 1000);
   };
 
   /**

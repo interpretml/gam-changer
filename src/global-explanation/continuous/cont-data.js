@@ -1,4 +1,3 @@
-import { state } from './cont-state';
 
 /**
  * Create rectangles in SVG path format tracing the standard deviations at each
@@ -139,7 +138,7 @@ export const linkPointToAdditive = (pointData, additiveData) => {
  * This function modifies the state in-place
  * This function also update the leftLineIndex/rightLineIndex in the pointDataBuffer
  */
-export const updateAdditiveDataBufferFromPointDataBuffer = () => {
+export const updateAdditiveDataBufferFromPointDataBuffer = (state) => {
   let newAdditiveData = [];
 
   // Find the start point of all graph
