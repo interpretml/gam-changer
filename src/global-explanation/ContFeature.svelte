@@ -13,7 +13,6 @@
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './continuous/cont-zoom';
   import { dragged, redrawOriginal, redrawMonotone, inplaceInterpolate,
     stepInterpolate, merge, drawLastEdit, regressionInterpolate } from './continuous/cont-edit';
-  import { state } from './continuous/cont-state';
   import { moveMenubar } from './continuous/cont-bbox';
   import { undoHandler, redoHandler, pushCurStateToHistoryStack } from './continuous/cont-history';
 
@@ -74,6 +73,19 @@
   let zoom = null;
 
   // Select mode
+  let state = {
+    curXScale: null,
+    curYScale: null,
+    curTransform: null,
+    selectedInfo: null,
+    pointData: null,
+    additiveData: null,
+    pointDataBuffer: null,
+    additiveDataBuffer: null,
+    oriXScale: null,
+    oriYScale: null,
+    bboxPadding: 1,
+  };
   let selectMode = false;
   state.selectedInfo = new SelectedInfo();
 
