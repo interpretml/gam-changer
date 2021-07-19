@@ -15,7 +15,7 @@
   import { dragged, redrawOriginal, redrawMonotone, inplaceInterpolate,
     stepInterpolate, merge, drawLastEdit, regressionInterpolate } from './continuous/cont-edit';
   import { moveMenubar } from './continuous/cont-bbox';
-  import { undoHandler, redoHandler, pushCurStateToHistoryStack } from './continuous/cont-history';
+  import { undoHandler, redoHandler, tryRestoreLastEdit, pushCurStateToHistoryStack } from './continuous/cont-history';
 
   import selectIconSVG from '../img/select-icon.svg';
   import dragIconSVG from '../img/drag-icon.svg';
@@ -268,7 +268,6 @@
    * @param featureData
    */
   const drawFeature = async (featureData) => {
-    console.log(mounted, initialized);
     console.log(featureData);
 
     // Track the feature name
@@ -279,9 +278,6 @@
     lineChartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
 
     let svgSelect = d3.select(svg);
-
-    // Bind inline SVG elements in the header
-    bindInlineSVG();
 
     // Initialize the isotonic regression model
     initIsoModel(featureData);
@@ -607,8 +603,14 @@
       return value;
     });
 
-    // Push the initial state into the history stack
-    pushCurStateToHistoryStack(state, 'original', 'original graph', historyStore, sidebarStore);
+    // Try to restore the last edit if possible
+    let hasBeenCreated = await tryRestoreLastEdit(state, svg, multiMenu, resetContextMenu,
+      resetFeatureSidebar, historyStore, redoStack, setEBM, sidebarStore);
+
+    if (!hasBeenCreated) {
+      // Push the initial state into the history stack
+      pushCurStateToHistoryStack(state, 'original', 'original graph', historyStore, sidebarStore);
+    }
 
     initialized = true;
   };
@@ -914,18 +916,7 @@
       });
   };
 
-  /**
-   * Dynamically bind SVG files as inline SVG strings in this component
-   */
-  const bindInlineSVG = () => {
-    d3.select(component)
-      .select('.svg-icon#toggle-button-move')
-      .html(dragIconSVG.replaceAll('black', 'currentcolor'));
 
-    d3.select(component)
-      .select('.svg-icon#toggle-button-select')
-      .html(selectIconSVG.replaceAll('black', 'currentcolor'));
-  };
 
   const initIsoModel = async () => {
     increasingISO = await initIsotonicRegression(true);

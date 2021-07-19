@@ -3,6 +3,18 @@ import { get } from 'svelte/store';
 import { drawLastEdit, redrawOriginal } from './cont-edit';
 import { MD5 } from '../../utils/md5';
 
+/**
+ * Undo the last commit
+ * @param {object} state Global state
+ * @param {element} svg SVG element
+ * @param {element} multiMenu multiMenu element
+ * @param {func} resetContextMenu function to reset context menu bar
+ * @param {func} resetFeatureSidebar function to reset the feature side bar
+ * @param {object} historyStore History store
+ * @param {list} redoStack List of commits to redo
+ * @param {func} setEBM function to set EBM bin definitions
+ * @param {object} sidebarStore sidebar store object
+ */
 export const undoHandler = async (state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
   historyStore, redoStack, setEBM, sidebarStore) => {
   let curCommit;
@@ -126,6 +138,18 @@ export const undoHandler = async (state, svg, multiMenu, resetContextMenu, reset
   redrawOriginal(state, svg);
 };
 
+/**
+ * Redo the last undo.
+ * @param {object} state Global state
+ * @param {element} svg SVG element
+ * @param {element} multiMenu multiMenu element
+ * @param {func} resetContextMenu function to reset context menu bar
+ * @param {func} resetFeatureSidebar function to reset the feature side bar
+ * @param {object} historyStore History store
+ * @param {list} redoStack List of commits to redo
+ * @param {func} setEBM function to set EBM bin definitions
+ * @param {object} sidebarStore sidebar store object
+ */
 export const redoHandler = async (state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
   historyStore, redoStack, setEBM, sidebarStore) => {
   // Step 1: If the user has selected some nodes, discard the selections
@@ -244,6 +268,14 @@ export const redoHandler = async (state, svg, multiMenu, resetContextMenu, reset
   redrawOriginal(state, svg);
 };
 
+/**
+ * Add a new commit to the history stack
+ * @param {object} state Global state
+ * @param {str} type Commit type
+ * @param {str} description Commit description
+ * @param {object} historyStore Store object of the history stack
+ * @param {object} sidebarStore sidebar store object
+ */
 export const pushCurStateToHistoryStack = (state, type, description, historyStore, sidebarStore) => {
   // Push the new commit to the history stack
   let historyLength = 0;
@@ -278,4 +310,96 @@ export const pushCurStateToHistoryStack = (state, type, description, historyStor
     value.historyHead = historyLength - 1;
     return value;
   });
+};
+
+/**
+ * Try to restore the graph to last edit (if possible)
+ * @param {object} state Global state
+ * @param {element} svg SVG element
+ * @param {element} multiMenu multiMenu element
+ * @param {func} resetContextMenu function to reset context menu bar
+ * @param {func} resetFeatureSidebar function to reset the feature side bar
+ * @param {object} historyStore History store
+ * @param {list} redoStack List of commits to redo
+ * @param {func} setEBM function to set EBM bin definitions
+ * @param {object} sidebarStore sidebar store object
+ * @returns true if found a last edit, false otherwise
+ */
+export const tryRestoreLastEdit = async (state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+  historyStore, redoStack, setEBM, sidebarStore) => {
+
+  let lastCommit = null;
+  let lastCommitID = -1;
+  let lastLastCommit = null;
+  let curHistoryStoreValue = get(historyStore);
+
+  // Try to find the last edit
+  for (let i = curHistoryStoreValue.length - 1; i >= 0; i--) {
+    if (curHistoryStoreValue[i].featureName === state.featureName) {
+      lastCommit = curHistoryStoreValue[i];
+      lastCommitID = i;
+      break;
+    }
+  }
+
+  if (lastCommit === null) {
+    return false;
+  }
+
+  // If we have found an edit, try to find the edit before it (to restore last
+  // edit info)
+  for (let i = lastCommitID - 1; i >= 0; i--) {
+    if (curHistoryStoreValue[i].featureName === state.featureName) {
+      lastLastCommit = curHistoryStoreValue[i];
+      break;
+    }
+  }
+
+  // Replace the current state with last edit
+  state.additiveData = lastCommit.state.additiveData;
+  state.pointData = lastCommit.state.pointData;
+
+  state.additiveDataBuffer = null;
+  state.pointDataBuffer = null;
+
+  // Update the last edit state, redraw the last edit graphs
+  if (lastLastCommit !== null) {
+    state.additiveDataLastEdit = lastLastCommit.state.additiveData;
+    drawLastEdit(state, svg);
+  } else {
+    // If there is no last edit, then it is the origin
+    state.additiveDataLastEdit = undefined;
+  }
+
+  // Update the last last edit state
+  // Note lastLastEdit is *only* used to restore lastEdit after user enters editing mode then cancel
+  // So when we restore it, it is the same as lastEdit
+  if (lastLastCommit !== null) {
+    state.additiveDataLastLastEdit = lastLastCommit.state.additiveData;
+  } else {
+    // If there is no last last edit, then it is the origin or the first edit
+    state.additiveDataLastLastEdit = undefined;
+  }
+
+  // If the current edit has changed the EBM bin definition, then we need
+  // to reset the definition in WASM
+  await setEBM('current', state.pointData);
+
+  // We force the effect scope to be global when switching features
+  sidebarStore.update(value => {
+    value.curGroup = 'no action';
+    value.barData = JSON.parse(JSON.stringify(lastCommit.metrics.barData));
+    value.confusionMatrixData = JSON.parse(JSON.stringify(lastCommit.metrics.confusionMatrixData));
+    return value;
+  });
+
+  sidebarStore.update(value => {
+    value.curGroup = 'overwrite';
+    return value;
+  });
+
+  // Redraw the graph
+  redrawOriginal(state, svg);
+
+  return true;
 };

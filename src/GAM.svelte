@@ -329,6 +329,10 @@
     }
 
     sidebarInfo.curGroup = 'new-feature-original';
+
+    // Force the effect scope to be 'global'
+    sidebarInfo.effectScope = 'global';
+
     sidebarStore.set(sidebarInfo);
 
     // Make sure all the updates are done before calling the following code
