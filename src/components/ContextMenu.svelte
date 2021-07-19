@@ -382,10 +382,10 @@
     }
 
     &.selected {
-      color: $blue-600;
+      color: $blue-reg;
 
       &:hover {
-        color: $blue-600;
+        color: $blue-reg;
       }
     }
 
@@ -508,7 +508,7 @@
 
   .sub-item-child.selected {
     .svg-icon {
-      color: $blue-600;
+      color: $blue-reg;
     }
   }
 
@@ -530,13 +530,13 @@
     margin: 0 5px;
 
     &.selected {
-      border: 2px solid change-color($blue-600, $lightness: 70%);
+      border: 2px solid change-color($blue-reg, $lightness: 70%);
       
       .sub-item-child .svg-icon {
-        color: $blue-600;
+        color: $blue-reg;
 
         &:hover {
-          color: $blue-600;
+          color: $blue-reg;
         }
       }
     }
@@ -563,9 +563,9 @@
     }
 
     &.selected {
-      color: $blue-600;
-      border-right: 2px solid change-color($blue-600, $lightness: 70%);
-      border-left: 2px solid change-color($blue-600, $lightness: 70%);
+      color: $blue-reg;
+      border-right: 2px solid change-color($blue-reg, $lightness: 70%);
+      border-left: 2px solid change-color($blue-reg, $lightness: 70%);
     }
   }
 

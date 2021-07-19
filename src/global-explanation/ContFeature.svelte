@@ -1,5 +1,6 @@
 <script>
   import * as d3 from 'd3';
+  import { onMount } from 'svelte';
   import { get } from 'svelte/store';
 
   import { initIsotonicRegression } from '../isotonic-regression';
@@ -36,6 +37,9 @@
   let multiMenu = null;
   let myContextMenu = null;
   let redoStack = [];
+
+  let mounted = false;
+  let initialized = false;
 
   // Visualization constants
   const svgPadding = config.svgPadding;
@@ -257,11 +261,14 @@
     footerActionStore.set('');
   });
 
+  onMount(() => {mounted = true;});
+
   /**
    * Draw the plot in the SVG component
    * @param featureData
    */
   const drawFeature = async (featureData) => {
+    console.log(mounted, initialized);
     console.log(featureData);
 
     // Track the feature name
@@ -602,6 +609,8 @@
 
     // Push the initial state into the history stack
     pushCurStateToHistoryStack(state, 'original', 'original graph', historyStore, sidebarStore);
+
+    initialized = true;
   };
 
   const getEBMMetrics = async (scope='global') => {
@@ -1259,6 +1268,7 @@
   const multiMenuInterpolateUpdated = () => {
     console.log('interpolation updated');
     let footerValue = get(footerStore);
+    let beforeBinNum = 0;
 
     if (multiMenuControlInfo.interpolationMode === 'inplace') {
       // Special case: we want to do inplace interpolation from the original data
@@ -1266,6 +1276,7 @@
       state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
       state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
       state.selectedInfo.nodeDataBuffer = JSON.parse(JSON.stringify(state.selectedInfo.nodeData));
+      beforeBinNum = state.selectedInfo.nodeDataBuffer.length;
       inplaceInterpolate(state, svg);
 
       footerValue.interpolateStyle = 'Interpolated';
@@ -1275,6 +1286,7 @@
       // Here we don't reset the pointDataBuffer
       // If user clicks here direction => step interpolate between start & end
       // If user has clicked regression => regression with equal bins
+      beforeBinNum = state.selectedInfo.nodeDataBuffer.length;
       stepInterpolate(state, svg, multiMenuControlInfo.step);
 
       footerValue.interpolateEqual = `with ${multiMenuControlInfo.step} equal-size bins`;
@@ -1284,6 +1296,7 @@
       state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
       state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
       state.selectedInfo.nodeDataBuffer = JSON.parse(JSON.stringify(state.selectedInfo.nodeData));
+      beforeBinNum = state.selectedInfo.nodeDataBuffer.length;
 
       regressionInterpolate(state, svg);
 
@@ -1297,7 +1310,7 @@
     setEBM('current', state.pointDataBuffer);
 
     // Update the footer message
-    footerValue.state = `<b>${footerValue.interpolateStyle}</b> ${state.selectedInfo.nodeData.length}
+    footerValue.state = `<b>${footerValue.interpolateStyle}</b> ${beforeBinNum}
       bins <b>${footerValue.interpolateEqual}</b>`;
 
     if (footerValue.interpolateEqual !== 'in place') {
@@ -1431,6 +1444,8 @@
       .select('rect.original-bbox')
       .interrupt();
 
+    const binNum = state.selectedInfo.nodeData.length;
+
     // Save the changes
     state.pointData = JSON.parse(JSON.stringify(state.pointDataBuffer));
     state.additiveData = JSON.parse(JSON.stringify(state.additiveDataBuffer));
@@ -1478,9 +1493,9 @@
     // Push the commit to history
 
     // Get the info of edited bins
-    const binNum = state.selectedInfo.nodeData.length;
     const binLeft = state.selectedInfo.nodeData[0];
-    const binRight = state.pointData[state.pointData[state.selectedInfo.nodeData[binNum - 1].id].rightPointID];
+    const binRight = state.pointData[state.pointData[
+      state.selectedInfo.nodeData[state.selectedInfo.nodeData.length - 1].id].rightPointID];
     const binRange = binRight === undefined ? `${binLeft.x} <= x` : `${binLeft.x} <= x < ${binRight.x}`;
     let description = '';
 
@@ -1588,7 +1603,7 @@
     });
   };
 
-  $: featureData && ebm && drawFeature(featureData);
+  $: featureData && ebm && mounted && !initialized && drawFeature(featureData);
 
 </script>
 
@@ -1598,7 +1613,7 @@
 
   :global(.explain-panel circle.node) {
     fill: $blue-icon;
-    stroke: white;
+    stroke: change-color($blue-icon, $lightness: 95%) ;
   }
 
   :global(.explain-panel circle.node.selected) {

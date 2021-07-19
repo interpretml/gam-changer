@@ -19,10 +19,14 @@
   import exportIconSVG from './img/export-icon.svg';
 
   let data = null;
+  let sampleData = null;
+  let isClassification = null;
   let ebm = null;
   let component = null;
   let changer = null;
   let featureSelect = null;
+  let selectedFeature = null;
+  let updateChanger = true;
 
   // Create stores to pass to child components
   let sidebarInfo = {};
@@ -85,22 +89,15 @@
 
   const initData = async () => {
     console.log('loading data');
-    let isClassification = true;
-    let loadedData = await d3.json('/data/iow-house-ebm-binary.json');
+    isClassification = true;
+    data = await d3.json('/data/iow-house-ebm-binary.json');
     // let loadedData = await d3.json('/data/iow-house-ebm.json');
     // let loadedData = await d3.json('/data/medical-ebm.json');
 
-    data = loadedData;
-    console.log('loaded data');
     console.log(data);
 
-    // Initialize an EBM object
-    let sampleData = await d3.json('/data/iow-house-sample-binary.json');
-
-    ebm = await initEBM(data, sampleData, 'LotFrontage', isClassification);
-
-    // Get the distribution of test data on each variable
-    const testDataHistCount = ebm.getHistBinCounts();
+    sampleData = await d3.json('/data/iow-house-sample-binary.json');
+    console.log('loaded data');
 
     // Create the sidebar feature data
     let featurePlotData = {cont: [], cat: []};
@@ -109,6 +106,59 @@
 
     let sampleDataNameMap = new Map();
     sampleData.featureNames.forEach((d, i) => sampleDataNameMap.set(d, i));
+
+    // Create a list of feature select options (grouped by types, sorted by importance)
+    let featureSelectList = {
+      continuous: [],
+      categorical: [],
+      interaction: []
+    };
+
+    data.features.forEach((f, i) => {
+      featureSelectList[f.type].push({
+        name: f.name,
+        featureID: i,
+        sampleFeatureID: f.type !== 'interaction' ? sampleDataNameMap.get(f.name) : null,
+        importance: f.importance
+      });
+    });
+
+    // Sort each feature type by importance score
+    Object.keys(featureSelectList).forEach(k => featureSelectList[k].sort((a, b) => b.importance - a.importance));
+
+    // Popularize the slice option list
+    let selectElement = d3.select(component).select('#feature-select');
+    let featureGroups = ['continuous', 'categorical', 'interaction'];
+
+    featureGroups.forEach(type => {
+      let groupName = type.charAt(0).toUpperCase() + type.slice(1);
+      let optGroup = selectElement.append('optgroup')
+        .attr('label', groupName + ' (name - importance)');
+      
+      featureSelectList[type].forEach(opt => {
+        optGroup.append('option')
+          .attr('value', opt.featureID)
+          .attr('data-level', opt.level)
+          .text(`${opt.name} - ${round(opt.importance, 3)}`);
+      });
+    });
+
+    resizeFeatureSelect();
+
+    // Initialize GAM Changer using the continuous variable with the highest importance
+    let tempSelectedFeature = {};
+    tempSelectedFeature.type = 'continuous';
+    tempSelectedFeature.data = data.features[featureSelectList.continuous[0].featureID];
+    tempSelectedFeature.id = featureSelectList.continuous[0].featureID;
+    tempSelectedFeature.name = featureSelectList.continuous[0].name;
+    selectedFeature = tempSelectedFeature;
+    updateChanger = !updateChanger;
+
+    // Initialize an EBM object
+    ebm = await initEBM(data, sampleData, selectedFeature.name, isClassification);
+
+    // Get the distribution of test data on each variable
+    const testDataHistCount = ebm.getHistBinCounts();
 
     for (let j = 0; j < testDataHistCount.length; j++) {
       let curName = sampleData.featureNames[j];
@@ -138,11 +188,10 @@
     sidebarInfo.featurePlotData = featurePlotData;
 
     // Remember the number of total samples
-    ebm.totalSampleNum = sampleData.samples.length;
-    sidebarInfo.totalSampleNum = ebm.totalSampleNum;
+    sidebarInfo.totalSampleNum = sampleData.samples.length;
     footerStore.update(value => {
-      value.totalSampleNum = ebm.totalSampleNum;
-      value.sample = `<b>0/${ebm.totalSampleNum }</b> test samples selected`;
+      value.totalSampleNum = sidebarInfo.totalSampleNum;
+      value.sample = `<b>0/${sidebarInfo.totalSampleNum }</b> test samples selected`;
       return value;
     });
 
@@ -184,43 +233,6 @@
     
     sidebarStore.set(sidebarInfo);
 
-    // Create a list of feature select options (grouped by types, sorted by importance)
-    let featureSelectList = {
-      continuous: [],
-      categorical: [],
-      interaction: []
-    };
-
-    data.features.forEach((f, i) => {
-      featureSelectList[f.type].push({
-        name: f.name,
-        featureID: i,
-        sampleFeatureID: f.type !== 'interaction' ? sampleDataNameMap.get(f.name) : null,
-        importance: f.importance
-      });
-    });
-
-    // Sort each feature type by importance score
-    Object.keys(featureSelectList).forEach(k => featureSelectList[k].sort((a, b) => b.importance - a.importance));
-
-    // Popularize the slice option list
-    let selectElement = d3.select(component).select('#feature-select');
-    let featureGroups = ['continuous', 'categorical', 'interaction'];
-
-    featureGroups.forEach(type => {
-      let groupName = type.charAt(0).toUpperCase() + type.slice(1);
-      let optGroup = selectElement.append('optgroup')
-        .attr('label', groupName + ' (name - importance)');
-      
-      featureSelectList[type].forEach(opt => {
-        optGroup.append('option')
-          .attr('value', opt.featureID)
-          .attr('data-level', opt.level)
-          .text(`${opt.name} - ${round(opt.importance, 3)}`);
-      });
-    });
-
-    resizeFeatureSelect();
   };
 
   /**
@@ -267,9 +279,61 @@
       .style('width', selectWidth);
   };
 
-  const featureChanged = () => {
+  const featureChanged = async () => {
     console.log('feature select changed');
     resizeFeatureSelect();
+
+    // Get the selected feature
+    let opt = featureSelect.options[featureSelect.selectedIndex];
+
+    let selectedFeatureID = opt.value;
+
+    // Update the selected feature object
+    const curFeatureData = data.features[selectedFeatureID];
+
+    // If the selected feature is interaction, figure out which two types
+    if (curFeatureData.type === 'interaction') {
+      let twoTypes = curFeatureData.id.map(i => data.features[i].type);
+
+      if (twoTypes.includes('continuous') &&  twoTypes.includes('categorical')) {
+        selectedFeature.type = 'cont-cat';
+      } else if (twoTypes.includes('continuous')) {
+        selectedFeature.type = 'cont-cont';
+      } else {
+        selectedFeature.type = 'cat-cat';
+      }
+    } else {
+      selectedFeature.type = curFeatureData.type;
+    }
+
+    selectedFeature.name = curFeatureData.name;
+    selectedFeature.data = curFeatureData;
+    selectedFeature.id = selectedFeatureID;
+
+    // Update the ebm model
+    ebm.destroy();
+    ebm = null;
+    ebm = await initEBM(data, sampleData, selectedFeature.name, isClassification);
+
+    // Update the metrics
+    let metrics = ebm.getMetrics();
+
+    if (ebm.isClassification) {
+      sidebarInfo.accuracy = metrics.accuracy;
+      sidebarInfo.rocAuc = metrics.rocAuc;
+      sidebarInfo.balancedAccuracy = metrics.balancedAccuracy;
+      sidebarInfo.confusionMatrix = metrics.confusionMatrix;
+    } else {
+      sidebarInfo.rmse = metrics.rmse;
+      sidebarInfo.mae = metrics.mae;
+    }
+
+    sidebarInfo.curGroup = 'new-feature-original';
+    sidebarStore.set(sidebarInfo);
+
+    // Make sure all the updates are done before calling the following code
+    // (It would trigger a view update)
+    updateChanger = !updateChanger;
   };
 
   const bindUndoKey = (undoCallback, redoCallback) => {
@@ -536,17 +600,29 @@
 
       </div>
 
-      <ContGlobalExplain
-        featureData = {data === null ? null : data.features[2]}
-        scoreRange = {data === null ? null : data.scoreRange}
-        bind:ebm = {ebm}
-        bind:this = {changer}
-        sidebarStore = {sidebarStore}
-        footerStore = {footerStore}
-        footerActionStore = {footerActionStore}
-        historyStore = {historyStore}
-        svgHeight = 500
-      />
+
+      {#key updateChanger}
+
+        {#if selectedFeature!== null}
+        
+          {#if selectedFeature.type === 'continuous'}
+            <ContGlobalExplain
+              featureData = {selectedFeature === null ? null : selectedFeature.data}
+              scoreRange = {data === null ? null : data.scoreRange}
+              bind:ebm = {ebm}
+              bind:this = {changer}
+              sidebarStore = {sidebarStore}
+              footerStore = {footerStore}
+              footerActionStore = {footerActionStore}
+              historyStore = {historyStore}
+              svgHeight = 500
+            />
+          {/if}
+
+        {/if}
+
+      {/key}
+
     </div>
 
     <div class='sidebar-wrapper'>

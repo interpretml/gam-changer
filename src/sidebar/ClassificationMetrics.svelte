@@ -146,6 +146,24 @@
       break;
     }
 
+    case 'new-feature-original': {
+      updateData(0, barData, confusionMatrixData, sidebarInfo);
+
+      copyMetricData(barData, confusionMatrixData, 0, 2);
+
+      // Nullify the last metric
+      Object.keys(barData).forEach(k => barData[k][1] = null);
+      Object.keys(confusionMatrixData).forEach(k => confusionMatrixData[k][1] = null);
+
+      sidebarInfo.barData = JSON.parse(JSON.stringify(barData));
+      sidebarInfo.confusionMatrixData = JSON.parse(JSON.stringify(confusionMatrixData));
+      sidebarInfo.curGroup = 'originalCompleted';
+
+      sidebarStore.set(sidebarInfo);
+
+      break;
+    }
+
     case 'current':
       updateData(2, barData, confusionMatrixData, sidebarInfo);
       break;
