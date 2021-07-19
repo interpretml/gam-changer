@@ -62,7 +62,7 @@
   const getTime = (time) => {
     let date = new Date(time);
     let hour = date.getHours();
-    let minute = date.getMinutes();
+    let minute = String(date.getMinutes()).padStart(2, '0');
     let months = ['January','February','March','April','May','June','July',
       'August','September','October','November','December'].map(d => d.substring(0, 3));
     let month = months[date.getMonth()];
@@ -183,8 +183,13 @@
   }
 
   .commit-feature {
-    font-weight: 600;
-    color: $blue-dark;
+    font-weight: 400;
+    color: $gray-700;
+
+    &.current {
+      font-weight: 600;
+      color: $blue-dark;
+    }
   }
 
   .commit-time {
@@ -237,12 +242,19 @@
 
   .commit-icon {
     .svg-icon {
-      color: $blue-dark;
-      fill: $blue-dark;
+      color: $gray-700;
+      fill: $gray-700;
+      opacity: 0.6;
 
       :global(svg) {
         width: 1.2em;
         height: 1.2em;
+      }
+
+      &.current {
+        color: $blue-dark;
+        fill: $blue-dark;
+        opacity: 1;
       }
     }
   }
@@ -271,6 +283,17 @@
       &.selected {
         color: $blue-reg;
         fill: $blue-reg;
+      }
+
+      &.disabled, &.disabled:hover {
+        cursor: not-allowed;
+        color: $gray-700;
+        fill: $gray-700;
+        opacity: 0.5;
+      }
+
+      &.disabled:active {
+        pointer-events: none;
       }
     }
 
@@ -325,7 +348,7 @@
         <!-- Header -->
         <div class='commit-title'>
 
-          <div class='commit-feature'>
+          <div class='commit-feature' class:current={sidebarInfo.featureName === history.featureName}>
             {history.featureName}
           </div>
 
@@ -341,6 +364,7 @@
           {#if history.type !== 'original'}
             <div class='commit-icon'>
               <div class={`svg-icon ${editTypeIconMap[history.type]}`}
+                class:current={sidebarInfo.featureName === history.featureName}
                 title={history.type}
               ></div>
             </div>
@@ -374,7 +398,10 @@
             </div>
           </div>
 
-          <div class='svg-icon icon-eye' class:selected={sidebarInfo.historyHead === i} title='preview'
+          <div class='svg-icon icon-eye'
+            class:selected={sidebarInfo.historyHead === i}
+            class:disabled={sidebarInfo.featureName !== history.featureName}
+            title='preview'
             on:click={() => previewClicked(i)}
           ></div>
 

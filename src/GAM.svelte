@@ -23,6 +23,7 @@
   let isClassification = null;
   let ebm = null;
   let component = null;
+  let toggle = null;
   let changer = null;
   let featureSelect = null;
   let selectedFeature = null;
@@ -153,6 +154,8 @@
     tempSelectedFeature.name = featureSelectList.continuous[0].name;
     selectedFeature = tempSelectedFeature;
     updateChanger = !updateChanger;
+
+    sidebarInfo.featureName = selectedFeature.name;
 
     // Initialize an EBM object
     ebm = await initEBM(data, sampleData, selectedFeature.name, isClassification);
@@ -332,12 +335,16 @@
 
     // Force the effect scope to be 'global'
     sidebarInfo.effectScope = 'global';
+    sidebarInfo.featureName = selectedFeature.name;
 
     sidebarStore.set(sidebarInfo);
 
     // Make sure all the updates are done before calling the following code
     // (It would trigger a view update)
     updateChanger = !updateChanger;
+
+    // Reset the toggle button
+    toggle.reset();
   };
 
   const bindUndoKey = (undoCallback, redoCallback) => {
@@ -598,7 +605,9 @@
 
         <div class='header__control-panel'>
           <div class='toggle-switch-wrapper'>
-            <ToggleSwitch name='cont' on:selectModeSwitched={selectModeSwitched}/>
+            <ToggleSwitch name='cont' bind:this={toggle}
+              on:selectModeSwitched={selectModeSwitched}
+            />
           </div>
         </div>
 

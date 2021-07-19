@@ -26,6 +26,13 @@
     });
   };
 
+  export const reset = () => {
+    d3.select(component)
+      .select(`#${name}-toggle`)
+      .property('checked', false);
+    selectMode = false;
+  };
+
   /**
    * Dynamically bind SVG files as inline SVG strings in this component
    */
@@ -175,9 +182,9 @@
 
 <div class='toggle-wrapper' bind:this={component}>
 
-  <input class='toggle' id={`{${name}}-toggle`} type='checkbox' on:change={selectModeSwitched}/>
+  <input class='toggle' id={`${name}-toggle`} type='checkbox' on:change={selectModeSwitched}/>
 
-  <label for={`{${name}}-toggle`} class='toggle-button'>
+  <label for={`${name}-toggle`} class='toggle-button'>
 
     <div class='left-label' class:select-mode = {selectMode}
       on:mouseenter={(e) => mouseoverHandler(e, 'navigate graph', 120, 30)}
