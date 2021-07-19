@@ -594,16 +594,6 @@
         .call(zoom.transform, d3.zoomIdentity);
     });
 
-    // Now the graph is drawn, update the height to sidebar
-    sidebarInfo.height = component.getBoundingClientRect().height;
-    sidebarInfo.curGroup = 'setHeight';
-    sidebarStore.set(sidebarInfo);
-
-    // Wait until the the effect sidebar is updated
-    while (sidebarInfo.curGroup !== 'setHeightCompleted') {
-      await new Promise(r => setTimeout(r, 500));
-    }
-
     // Update the footer for more instruction
     footerStore.update(value => {
       value.help = '<b>Drag</b> to pan view, <b>Scroll</b> to zoom';
@@ -873,7 +863,7 @@
   /**
    * Event handler for the select button in the header
    */
-  const selectModeSwitched = () => {
+  export const selectModeSwitched = () => {
     selectMode = !selectMode;
 
     let lineChartContent = d3.select(svg)
@@ -1675,19 +1665,6 @@
     }
   }
 
-  .header__history {
-    background: hsl(225, 53%, 93%);
-    border-radius: 5px;
-    padding: 1px 7px;
-    font-size: 0.9em;
-    color: $gray-900;
-    margin-left: 1em;
-
-    &.past {
-      background: hsl(35.3, 100%, 90%);
-    }
-  }
-
 </style>
 
 <div class='explain-panel' bind:this={component}>
@@ -1712,46 +1689,8 @@
       /> 
     </div>
 
-    <div class='header'>
-
-      <div class='header__info'>
-        <div class='header__name'>
-          {featureData === null ? ' ' : featureData.name}
-        </div>
-        
-        <div class='header__importance'>
-          {featureData === null ? ' ': round(featureData.importance, 2)}
-        </div>
-
-        <div class='header__history' class:past={sidebarInfo.previewHistory}>
-          <span class='hash'>
-            {#if sidebarInfo.historyHead === 0}
-              Original
-            {:else}
-              {#if sidebarInfo.previewHistory}
-                Previous Edit:
-              {:else}
-                Latest Edit:
-              {/if}
-              {get(historyStore)[sidebarInfo.historyHead].hash.substring(0, 7)}
-            {/if}
-          </span>
-        </div>
-
-      </div>
-
-      <div class='header__control-panel'>
-        <!-- The toggle button -->
-        <div class='toggle-switch-wrapper'>
-          <ToggleSwitch name='cont' on:selectModeSwitched={selectModeSwitched}/>
-        </div>
-      </div>
-
-    </div>
-
-
   <div class='svg-container'>
-    <svg class='svg-explainer' bind:this={svg}></svg>
+    <svg class='svg-explainer' width={svgWidth} height={svgHeight} bind:this={svg}></svg>
   </div>
   
 </div>

@@ -15,15 +15,6 @@
 
   sidebarStore.subscribe(value => {
     sidebarInfo = value;
-
-    if (sidebarInfo.curGroup === 'setHeight') {
-      if (sidebarInfo.setHeight === undefined) {
-        component.style.height = `${value.height}px`;
-        sidebarInfo.setHeight = sidebarInfo.height;
-      }
-      sidebarInfo.curGroup = 'setHeightCompleted';
-      sidebarStore.set(sidebarInfo);
-    }
   });
 
   const updateSelectedTab = (newTab) => {

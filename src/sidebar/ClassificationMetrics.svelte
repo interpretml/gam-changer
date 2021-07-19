@@ -48,7 +48,7 @@
     d3.select(component)
       .selectAll('.bar-svg')
       .attr('width', width)
-      .attr('height', 500);
+      .attr('height', 455);
 
   });
 

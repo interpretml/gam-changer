@@ -6,12 +6,13 @@
   import InterContContGlobalExplain from './global-explanation/InterContContFeature.svelte';
   import InterCatCatGlobalExplain from './global-explanation/InterCatCatFeature.svelte';
   import Sidebar from './sidebar/Sidebar.svelte';
+  import ToggleSwitch from './components/ToggleSwitch.svelte';
 
   import * as d3 from 'd3';
   import { initEBM } from './ebm';
   import { onMount } from 'svelte';
   import { writable, derived, get } from 'svelte/store';
-  import { downloadJSON } from './utils/utils';
+  import { downloadJSON, round } from './utils/utils';
 
   import redoIconSVG from './img/redo-icon.svg';
   import undoIconSVG from './img/undo-icon.svg';
@@ -20,7 +21,10 @@
   let data = null;
   let ebm = null;
   let component = null;
+  let changer = null;
+  let featureSelect = null;
 
+  // Create stores to pass to child components
   let sidebarInfo = {};
   let sidebarStore = writable({
     rmse: 0,
@@ -55,17 +59,7 @@
 
   let historyStore = writable([]);
 
-  /**
-   * Pre-process the data loaded from a json file or passed from other sources
-   * Sort the features based on their importance scores
-   * @param {[object]} data An array of feature objects.
-   * @return {[object]} processed data
-   */
-  const processData = (data) => {
-    data.features.sort((a, b) => b.importance - a.importance);
-    return data;
-  };
-
+  // Bind the SVGs
   const preProcessSVG = (svgString) => {
     return svgString.replaceAll('black', 'currentcolor')
       .replaceAll('fill:none', 'fill:currentcolor')
@@ -96,7 +90,6 @@
     // let loadedData = await d3.json('/data/iow-house-ebm.json');
     // let loadedData = await d3.json('/data/medical-ebm.json');
 
-    // loadedData = processData(loadedData);
     data = loadedData;
     console.log('loaded data');
     console.log(data);
@@ -110,7 +103,6 @@
     const testDataHistCount = ebm.getHistBinCounts();
 
     // Create the sidebar feature data
-    // const bandwidth = 10;
     let featurePlotData = {cont: [], cat: []};
     let featureDataNameMap = new Map();
     data.features.forEach((d, i) => featureDataNameMap.set(d.name, i));
@@ -130,7 +122,6 @@
           histEdge: histEdge,
           histCount: testDataHistCount[j],
           histSelectedCount: new Array(testDataHistCount[j].length).fill(0)
-          // histDensity: kde(bandwidth, histEdge, testDataHistCount[j])
         });
       } else {
         let histEdge = data.features[featureDataNameMap.get(curName)].histEdge;
@@ -192,6 +183,51 @@
     sidebarInfo.sliceOptions = sliceOptions;
     
     sidebarStore.set(sidebarInfo);
+
+    // Create a list of feature select options (grouped by types, sorted by importance)
+    let featureSelectList = {
+      continuous: [],
+      categorical: [],
+      interaction: []
+    };
+
+    data.features.forEach((f, i) => {
+      featureSelectList[f.type].push({
+        name: f.name,
+        featureID: i,
+        sampleFeatureID: f.type !== 'interaction' ? sampleDataNameMap.get(f.name) : null,
+        importance: f.importance
+      });
+    });
+
+    // Sort each feature type by importance score
+    Object.keys(featureSelectList).forEach(k => featureSelectList[k].sort((a, b) => b.importance - a.importance));
+
+    // Popularize the slice option list
+    let selectElement = d3.select(component).select('#feature-select');
+    let featureGroups = ['continuous', 'categorical', 'interaction'];
+
+    featureGroups.forEach(type => {
+      let groupName = type.charAt(0).toUpperCase() + type.slice(1);
+      let optGroup = selectElement.append('optgroup')
+        .attr('label', groupName + ' (name - importance)');
+      
+      featureSelectList[type].forEach(opt => {
+        optGroup.append('option')
+          .attr('value', opt.featureID)
+          .attr('data-level', opt.level)
+          .text(`${opt.name} - ${round(opt.importance, 3)}`);
+      });
+    });
+
+    resizeFeatureSelect();
+  };
+
+  /**
+   * Wrapper to call the child changer's handler
+  */
+  const selectModeSwitched = () => {
+    changer.selectModeSwitched();
   };
 
   const footerActionTriggered = (message) => {
@@ -208,6 +244,32 @@
         alert('You need to confirm all edits in the History panel (click 👍 icons) before saving the model.');
       }
     }
+  };
+
+  /**
+   * Change the width of the select button so it fits the current content
+   */
+  const resizeFeatureSelect = () => {
+    let opt = featureSelect.options[featureSelect.selectedIndex];
+
+    let hiddenSelect = d3.select(component)
+      .select('#hidden-select')
+      .style('display', 'initial');
+
+    hiddenSelect.select('#hidden-option')
+      .text(opt.text);
+    
+    let selectWidth = hiddenSelect.node().clientWidth + 'px';
+    hiddenSelect.style('display', 'none');
+      
+    d3.select(component)
+      .select('#feature-select')
+      .style('width', selectWidth);
+  };
+
+  const featureChanged = () => {
+    console.log('feature select changed');
+    resizeFeatureSelect();
   };
 
   const bindUndoKey = (undoCallback, redoCallback) => {
@@ -253,6 +315,81 @@
   .tool {
     display: flex;
     flex-direction: row;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 10px;
+    border-bottom: 1px solid $gray-border;
+    background: white;
+    border-top-left-radius: 5px;
+    height: 53px;
+
+    .header__info {
+      display: flex;
+      align-items: center;
+    }
+
+    .header__control-panel {
+      display: flex;
+      align-items: center;
+    }
+
+    .header__history {
+      background: hsl(225, 53%, 93%);
+      border-radius: 5px;
+      padding: 1px 7px;
+      font-size: 0.9em;
+      color: $gray-900;
+      margin-left: 1em;
+
+      &.past {
+        background: hsl(35.3, 100%, 90%);
+      }
+    }
+  }
+
+  .select {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    select {
+      height: 2em;
+      border-radius: 5px;
+      padding-top: 0;
+      padding-bottom: 0;
+      padding-left: 10px;
+      border: 1px solid hsl(0, 0%, 85.9%);
+      background: hsl(0, 20%, 99%);
+
+      &:hover {
+        border: 1px solid hsl(0, 0%, 71%);
+      }
+
+      &:focus {
+        box-shadow: none;
+      }
+    }
+  }
+
+  .select:not(.is-multiple):not(.is-loading)::after {
+    border-color: $blue-dark;
+    right: 12px;
+  }
+
+  .select select:not([multiple]) {
+    padding-right: 30px;
+  }
+
+  #hidden-select {
+    display: none;
+  }
+
+  .toggle-switch-wrapper {
+    width: 180px;
   }
 
   .sidebar-wrapper {
@@ -352,10 +489,58 @@
 
   <div class='tool'>
     <div class='feature-window'>
+
+      <div class='header'>
+
+        <div class='header__info'>
+
+          <div class='select'>
+            <select name='feature'
+              bind:this={featureSelect}
+              id='feature-select'
+              title='Select a feature'
+              on:blur={() => {}}
+              on:change={featureChanged}
+            >
+            </select>
+          </div>
+
+          <div class='select'>
+            <select id='hidden-select'>
+              <option id='hidden-option'></option>
+            </select>
+          </div>
+
+          <div class='header__history' class:past={sidebarInfo.previewHistory}>
+            <span class='hash'>
+              {#if sidebarInfo.historyHead === 0}
+                Original
+              {:else}
+                {#if sidebarInfo.previewHistory}
+                  Previous Edit:
+                {:else}
+                  Latest Edit:
+                {/if}
+                {get(historyStore)[sidebarInfo.historyHead].hash.substring(0, 7)}
+              {/if}
+            </span>
+          </div>
+
+        </div>
+
+        <div class='header__control-panel'>
+          <div class='toggle-switch-wrapper'>
+            <ToggleSwitch name='cont' on:selectModeSwitched={selectModeSwitched}/>
+          </div>
+        </div>
+
+      </div>
+
       <ContGlobalExplain
         featureData = {data === null ? null : data.features[2]}
         scoreRange = {data === null ? null : data.scoreRange}
         bind:ebm = {ebm}
+        bind:this = {changer}
         sidebarStore = {sidebarStore}
         footerStore = {footerStore}
         footerActionStore = {footerActionStore}
