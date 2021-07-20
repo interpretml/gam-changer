@@ -85,7 +85,6 @@
       }
 
       value.previewHistory = i !== historyList.length - 1;
-
       value.historyHead = i;
       return value;
     });
@@ -172,6 +171,11 @@
     padding: 5px 10px;
     font-size: 0.9em;
     gap: 5px;
+    opacity: 0.6;
+
+    &.current {
+      opacity: 1;
+    }
   }
 
   .commit-title {
@@ -204,6 +208,25 @@
     flex-direction: row;
     align-items: center;
     gap: 0.5em;
+    position: relative;
+  }
+
+  .commit-pen {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+
+    .svg-icon {
+      color: $gray-700;
+      fill: $gray-700;
+      opacity: 0.4;
+      display: flex;
+
+      :global(svg) {
+        width: 0.9em;
+        height: 0.9em;
+      }
+    }
   }
 
   .commit-message {
@@ -232,12 +255,15 @@
   @keyframes thumbup {
     0%{
       transform: scale(0);
+      -webkit-transform: scale(0);
     }
     80%{
       transform: scale(1.3);
+      -webkit-transform: scale(1.3);
     }
     100%{
       transform: scale(1);
+      -webkit-transform: scale(1);
     }
   }
 
@@ -307,6 +333,8 @@
 
     .checkbox-check {
       animation: thumbup 150ms ease-in;
+      -webkit-animation: thumbup 150ms ease-in;
+
       &.hidden {
         display: none;
       }
@@ -342,7 +370,7 @@
 
     {#each historyList as history, i}
 
-      <div class='commit'>
+      <div class='commit' class:current={sidebarInfo.featureName === history.featureName}>
         <!-- Header -->
         <div class='commit-title'>
 
@@ -359,17 +387,21 @@
         <!-- Content -->
         <div class='commit-content'>
 
-          <!-- {#if history.type !== 'original'} -->
-            <div class='commit-icon'>
-              <div class={`svg-icon ${editTypeIconMap[history.type]}`}
-                class:current={sidebarInfo.featureName === history.featureName}
-                title={history.type}
-              ></div>
-            </div>
-          <!-- {/if} -->
+          <div class='commit-icon'>
+            <div class={`svg-icon ${editTypeIconMap[history.type]}`}
+              class:current={sidebarInfo.featureName === history.featureName}
+              title={history.type}
+            ></div>
+          </div>
 
           <span class='commit-message' contenteditable bind:innerHTML={history.description}>
           </span>
+
+          {#if i === 0}
+            <div class='commit-pen'>
+              <div class='svg-icon icon-pen'></div>
+            </div>
+          {/if}
 
         </div>
 

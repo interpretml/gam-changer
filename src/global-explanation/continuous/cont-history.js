@@ -17,32 +17,51 @@ import { MD5 } from '../../utils/md5';
  */
 export const undoHandler = async (state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
   historyStore, redoStack, setEBM, sidebarStore) => {
+  
+  // If the current edit is original, we do not undo
+  let curHistoryStoreValue = get(historyStore);
+  if (curHistoryStoreValue[curHistoryStoreValue.length - 1].type === 'original' ||
+    state.featureName !== curHistoryStoreValue[curHistoryStoreValue.length - 1].featureName
+  ) {
+    return;
+  }
+
   let curCommit;
   let lastCommit;
+  let lastCommitIndex;
 
   // Step 1: If the user has selected some nodes, discard the selections
   quitSelection(svg, state, multiMenu, resetContextMenu, resetFeatureSidebar);
 
+  // Search for the lastEdit
+  for (let i = curHistoryStoreValue.length - 2; i >= 0; i--) {
+    if (curHistoryStoreValue[i].featureName === state.featureName) {
+      lastCommit = curHistoryStoreValue[i];
+      lastCommitIndex = i;
+      break;
+    }
+  }
+
   // Step 1.5: Update the HEAD
   // This step must be done before updating the historyStore!
   sidebarStore.update(value => {
-    value.historyHead = get(historyStore).length - 2;
+    value.historyHead = lastCommitIndex;
+    if (value.historyHead !== curHistoryStoreValue.length - 2) {
+      value.previewHistory = true;
+    }
     return value;
   });
 
   // Step 2: Remove the current commit from history
   historyStore.update(value => {
     curCommit = value.pop();
-    lastCommit = value[value.length - 1];
     return value;
   });
-
-  let curHistoryStoreValue = get(historyStore);
 
   // Step 3: Save the current commit into the redo stack
   redoStack.push(curCommit);
 
-  // Step 4: Replace the current state with last commit
+  // Step 4: Replace the current state with lastCommit
   state.additiveData = lastCommit.state.additiveData;
   state.pointData = lastCommit.state.pointData;
 
@@ -50,8 +69,20 @@ export const undoHandler = async (state, svg, multiMenu, resetContextMenu, reset
   state.pointDataBuffer = null;
 
   // Step 5: Update the last edit state, redraw the last edit graphs
-  if (curHistoryStoreValue.length > 1) {
-    state.additiveDataLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 2].state.additiveData;
+
+  // Note that the last last edit is possible not the one right next to lastCommit
+  // because users can edit multiple features
+  // Need to search it backward
+  let lastLastCommit = null;
+  for (let i = lastCommitIndex - 1; i >= 0; i--) {
+    if (curHistoryStoreValue[i].featureName === state.featureName) {
+      lastLastCommit = curHistoryStoreValue[i];
+      break;
+    }
+  }
+
+  if (lastLastCommit !== null) {
+    state.additiveDataLastEdit = lastLastCommit.state.additiveData;
     drawLastEdit(state, svg);
   } else {
     // If there is no last edit, then it is the origin
@@ -61,8 +92,8 @@ export const undoHandler = async (state, svg, multiMenu, resetContextMenu, reset
   // Step 6: Update the last last edit state
   // Note lastLastEdit is *only* used to restore lastEdit after user enters editing mode then cancel
   // So when we restore it, it is the same as lastEdit
-  if (curHistoryStoreValue.length > 1) {
-    state.additiveDataLastLastEdit = curHistoryStoreValue[curHistoryStoreValue.length - 2].state.additiveData;
+  if (lastLastCommit !== null) {
+    state.additiveDataLastLastEdit = lastLastCommit.state.additiveData;
   } else {
     // If there is no last last edit, then it is the origin or the first edit
     state.additiveDataLastLastEdit = undefined;
@@ -134,6 +165,7 @@ export const undoHandler = async (state, svg, multiMenu, resetContextMenu, reset
     break;
   }
 
+  console.log(svg);
   // Redraw the graph
   redrawOriginal(state, svg);
 };
@@ -308,6 +340,7 @@ export const pushCurStateToHistoryStack = (state, type, description, historyStor
   // Change the HEAD pointer to new commit
   sidebarStore.update(value => {
     value.historyHead = historyLength - 1;
+    value.previewHistory = false;
     return value;
   });
 };
@@ -403,3 +436,7 @@ export const tryRestoreLastEdit = async (state, svg, multiMenu, resetContextMenu
 
   return true;
 };
+
+export const checkoutCommit = () => {
+
+}

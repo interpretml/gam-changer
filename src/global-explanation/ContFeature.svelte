@@ -1,6 +1,6 @@
 <script>
   import * as d3 from 'd3';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { get } from 'svelte/store';
 
   import { initIsotonicRegression } from '../isotonic-regression';
@@ -111,7 +111,7 @@
 
   // Communicate with the sidebar
   let sidebarInfo = {};
-  sidebarStore.subscribe(async value => {
+  let sidebarStoreUnsubscribe = sidebarStore.subscribe(async value => {
     sidebarInfo = value;
 
     // Listen to events ['globalClicked', 'selectedClicked', 'sliceClicked']
@@ -222,13 +222,19 @@
       break;
     }
 
+    // User clicks to preview a previous edit
+    case 'headChanged': {
+      let curHead = sidebarInfo.historyHead;
+      break;
+    }
+
     default:
       break;
     }
   });
 
   // Listen to footer buttons
-  footerActionStore.subscribe(message => {
+  let footerActionUnsubscribe = footerActionStore.subscribe(message => {
     switch(message){
     case 'undo': {
       console.log('undo clicked');
@@ -262,6 +268,12 @@
   });
 
   onMount(() => {mounted = true;});
+
+  // Need to unsubscribe stores when the component is destroyed
+  onDestroy(() => {
+    sidebarStoreUnsubscribe();
+    footerActionUnsubscribe();
+  });
 
   /**
    * Draw the plot in the SVG component
@@ -978,6 +990,17 @@
    * Call this handler when users click the check button
    */
   const multiMenuMoveCheckClicked = async () => {
+    // Check if user is in previous commit
+    if (sidebarInfo.previewHistory) {
+      let proceed = confirm('Current graph is not on the latest edit, committing' +
+        ' this edit would overwrite all later edits on this feature. Is it OK?'
+      );
+      if (!proceed) {
+        multiMenuMoveCancelClicked();
+        return;
+      }
+    }
+
     // Save the changes
     state.pointData = JSON.parse(JSON.stringify(state.pointDataBuffer));
     state.additiveData = JSON.parse(JSON.stringify(state.additiveDataBuffer));
@@ -1498,10 +1521,10 @@
       description = `Made ${binNum} bins (${binRange}) monotonically decreasing.`;
       break;
     case 'inplace-interpolate':
-      description = `Interpolated ${binNum} bins (${binRange}) inplace.`;
+      description = `Interpolated ${binNum} bins (${binRange}) in place.`;
       break;
     case 'inplace-regression':
-      description = `Regression transformed ${binNum} bins (${binRange}) inplace.`;
+      description = `Regression transformed ${binNum} bins (${binRange}) in place.`;
       break;
     case 'equal-interpolate':
       description = `Interpolated ${binNum} bins (${binRange}) into ${multiMenuControlInfo.step} equal-size bins.`;

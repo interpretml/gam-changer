@@ -246,6 +246,7 @@
   };
 
   const footerActionTriggered = (message) => {
+    console.log('triggered!! from GAM');
     footerActionStore.set(message);
 
     if (message === 'save') {
@@ -274,7 +275,7 @@
     hiddenSelect.select('#hidden-option')
       .text(opt.text);
     
-    let selectWidth = hiddenSelect.node().clientWidth + 'px';
+    let selectWidth = hiddenSelect.node().clientWidth + 5 + 'px';
     hiddenSelect.style('display', 'none');
       
     d3.select(component)
