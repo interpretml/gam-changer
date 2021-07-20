@@ -86,6 +86,9 @@
 
       value.previewHistory = i !== historyList.length - 1;
       value.historyHead = i;
+
+      // Force the effect scope to be global
+      value.effectScope = 'global';
       return value;
     });
   };
@@ -171,11 +174,6 @@
     padding: 5px 10px;
     font-size: 0.9em;
     gap: 5px;
-    opacity: 0.6;
-
-    &.current {
-      opacity: 1;
-    }
   }
 
   .commit-title {

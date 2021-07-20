@@ -165,7 +165,6 @@ export const undoHandler = async (state, svg, multiMenu, resetContextMenu, reset
     break;
   }
 
-  console.log(svg);
   // Redraw the graph
   redrawOriginal(state, svg);
 };
@@ -437,6 +436,87 @@ export const tryRestoreLastEdit = async (state, svg, multiMenu, resetContextMenu
   return true;
 };
 
-export const checkoutCommit = () => {
+/**
+ * Checkout the current HEAD commit
+ * @param {object} state Global state
+ * @param {element} svg SVG element
+ * @param {element} multiMenu multiMenu element
+ * @param {func} resetContextMenu function to reset context menu bar
+ * @param {func} resetFeatureSidebar function to reset the feature side bar
+ * @param {object} historyStore History store
+ * @param {func} setEBM function to set EBM bin definitions
+ * @param {object} sidebarStore sidebar store object
+ */
+export const checkoutCommitHead = async (state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+  historyStore, setEBM, sidebarStore) => {
 
-}
+  let curHistoryStoreValue = get(historyStore);
+  let sidebarInfo = get(sidebarStore);
+
+  let targetCommit = curHistoryStoreValue[sidebarInfo.historyHead];
+  let targetCommitIndex = sidebarInfo.historyHead;
+
+  // Step 1: If the user has selected some nodes, discard the selections
+  quitSelection(svg, state, multiMenu, resetContextMenu, resetFeatureSidebar);
+
+  // Step 2: Replace the current state with targetCommit
+  state.additiveData = targetCommit.state.additiveData;
+  state.pointData = targetCommit.state.pointData;
+
+  state.additiveDataBuffer = null;
+  state.pointDataBuffer = null;
+
+  // Step 3: Update the last edit state, redraw the last edit graphs
+
+  // Note that the last last edit is possible not the one right next to lastCommit
+  // because users can edit multiple features
+  // Need to search it backward
+  let lastCommit = null;
+  for (let i = targetCommitIndex - 1; i >= 0; i--) {
+    if (curHistoryStoreValue[i].featureName === state.featureName) {
+      lastCommit = curHistoryStoreValue[i];
+      break;
+    }
+  }
+
+  if (lastCommit !== null) {
+    state.additiveDataLastEdit = lastCommit.state.additiveData;
+    drawLastEdit(state, svg);
+  } else {
+    // If there is no last edit, then it is the origin
+    state.additiveDataLastEdit = undefined;
+  }
+
+  // Step 4: Update the last last edit state
+  // Note lastLastEdit is *only* used to restore lastEdit after user enters editing mode then cancel
+  // So when we restore it, it is the same as lastEdit
+  if (lastCommit !== null) {
+    state.additiveDataLastLastEdit = lastCommit.state.additiveData;
+  } else {
+    // If there is no last last edit, then it is the origin or the first edit
+    state.additiveDataLastLastEdit = undefined;
+  }
+
+  // Step 4.5: If the user tries to check out the original graph, the lastEdit would
+  // be the same as the original graph
+  if (targetCommit.type === 'original') {
+    state.additiveDataLastEdit = targetCommit.state.additiveData;
+    state.additiveDataLastLastEdit = targetCommit.state.additiveData;
+    drawLastEdit(state, svg);
+  }
+
+  // Step 5: Reset EBM bin definition
+  await setEBM('current', state.pointData);
+
+
+  // Update the metrics, we force it to be global scope
+  sidebarStore.update(value => {
+    value.barData = JSON.parse(JSON.stringify(targetCommit.metrics.barData));
+    value.confusionMatrixData = JSON.parse(JSON.stringify(targetCommit.metrics.confusionMatrixData));
+    value.curGroup = 'overwrite';
+    return value;
+  });
+
+  // Redraw the graph
+  redrawOriginal(state, svg);
+};

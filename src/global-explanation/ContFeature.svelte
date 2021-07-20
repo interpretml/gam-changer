@@ -15,12 +15,9 @@
   import { dragged, redrawOriginal, redrawMonotone, inplaceInterpolate,
     stepInterpolate, merge, drawLastEdit, regressionInterpolate } from './continuous/cont-edit';
   import { moveMenubar } from './continuous/cont-bbox';
-  import { undoHandler, redoHandler, tryRestoreLastEdit, pushCurStateToHistoryStack } from './continuous/cont-history';
+  import { undoHandler, redoHandler, tryRestoreLastEdit,
+    pushCurStateToHistoryStack, checkoutCommitHead } from './continuous/cont-history';
 
-  import selectIconSVG from '../img/select-icon.svg';
-  import dragIconSVG from '../img/drag-icon.svg';
-
-  import ToggleSwitch from '../components/ToggleSwitch.svelte';
   import ContextMenu from '../components/ContextMenu.svelte';
 
   export let featureData = null;
@@ -224,7 +221,8 @@
 
     // User clicks to preview a previous edit
     case 'headChanged': {
-      let curHead = sidebarInfo.historyHead;
+      checkoutCommitHead(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+        historyStore, setEBM, sidebarStore);
       break;
     }
 
