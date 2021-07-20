@@ -1,5 +1,6 @@
 <script>
   import * as d3 from 'd3';
+  import { onMount } from 'svelte';
   import { round } from '../utils/utils';
   import { config } from '../config';
 
@@ -20,6 +21,9 @@
   let brush = null;
   let multiMenu = null;
   let myContextMenu = null;
+
+  let mounted = false;
+  let initialized = false;
 
   // Visualization constants
   const svgPadding = config.svgPadding;
@@ -82,6 +86,8 @@
     return pathStr;
   };
 
+  onMount(() => {mounted = true;});
+
   /**
    * Draw the plot in the SVG component
    * @param featureData
@@ -92,9 +98,9 @@
 
     // For categorical variables, the width depends on the number of levels
     // Level # <= 4 => 300, level # <= 10 => 450, others => 600
-    let levelNum = featureData.binLabel.length;
-    if (levelNum <= 10) width = 450;
-    if (levelNum <= 4) width = 300;
+    // let levelNum = featureData.binLabel.length;
+    // if (levelNum <= 10) width = 450;
+    // if (levelNum <= 4) width = 300;
 
     // Make the svg keep the viewbox 3:2 ratio
     svgWidth = svgHeight * (width / height);
@@ -393,6 +399,7 @@
         .call(zoom.transform, d3.zoomIdentity);
     });
 
+    initialized = true;
   };
 
   // ---- Interaction Functions ----
@@ -459,7 +466,7 @@
   /**
    * Event handler for the select button in the header
    */
-  const selectModeSwitched = () => {
+  export const selectModeSwitched = () => {
     selectMode = !selectMode;
 
     let lineChartContent = d3.select(svg)
@@ -470,7 +477,7 @@
       .attr('cursor', null);
   };
 
-  $: featureData && drawFeature(featureData);
+  $: featureData && mounted && !initialized && drawFeature(featureData);
 
 </script>
 
@@ -531,28 +538,6 @@
       on:subItemCancelClicked={multiMenuSubItemCancelClicked}
     /> 
   </div>
-
-  <div class='header'>
-
-    <div class='header__info'>
-      <div class='header__name'>
-        {featureData === null ? ' ' : featureData.name}
-      </div>
-      
-      <div class='header__importance'>
-        {featureData === null ? ' ': round(featureData.importance, 2)}
-      </div>
-    </div>
-
-    <div class='header__control-panel'>
-      <!-- The toggle button -->
-      <div class='toggle-switch-wrapper'>
-        <ToggleSwitch name='cat' on:selectModeSwitched={selectModeSwitched}/>
-      </div>
-    </div>
-
-  </div>
-
 
   <div class='svg-container'>
     <svg class='svg-explainer' bind:this={svg}></svg>

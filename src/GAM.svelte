@@ -632,6 +632,15 @@
             />
           {/if}
 
+          {#if selectedFeature.type === 'categorical'}
+            <CatGlobalExplain
+              featureData = {selectedFeature === null ? null : selectedFeature.data}
+              scoreRange = {data === null ? null : data.scoreRange}
+              svgHeight = 500
+              bind:this = {changer}
+            />
+          {/if}
+
         {/if}
 
       {/key}
