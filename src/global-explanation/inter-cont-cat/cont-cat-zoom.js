@@ -128,8 +128,10 @@ export const zoomedBar = (event, xScale, yScale, svg,
     .call(d3.axisLeft(zYScale));
 
   // Transform the bars
-  svgSelect.selectAll('g.bar-chart-bar-group')
+  let barGroup = svgSelect.selectAll('g.bar-chart-bar-group')
     .attr('transform', transform);
+
+  barGroup.style('stroke-width', 1 / transform.k);
 
   // Transform the density rectangles
   // Here we want to translate and scale the x axis, and keep y axis consistent

@@ -1,5 +1,6 @@
 <script>
   import * as d3 from 'd3';
+  import { onMount } from 'svelte';
   import { round, transpose2dArray } from '../utils/utils';
   import { config } from '../config';
   import { drawHorizontalColorLegend } from './draw';
@@ -19,6 +20,9 @@
   let svg = null;
   let component = null;
   let multiMenu = null;
+
+  let mounted = false;
+  let initialized = false;
 
   // Visualization constants
   const svgPadding = config.svgPadding;
@@ -66,7 +70,7 @@
 
     // Some constant lengths of different elements
     // Approximate the longest width of score (y-axis)
-    const yAxisWidth = 5 * d3.max(scoreRange.map(d => String(round(d, 1)).length));
+    const yAxisWidth = 5 * d3.max(featureData.binLabel2.map(d => String(round(d, 1)).length));
     const legendConfig = {
       startColor: '#b2182b',
       endColor: '#2166ac',
@@ -156,7 +160,7 @@
 
     let barGroup = barChartContent.append('g')
       .attr('class', 'bar-chart-bar-group')
-      .style('stroke', 'hsla(0, 0%, 60%, 0.1)')
+      .style('stroke', 'hsla(0, 0%, 0%, 0.05)')
       .style('stroke-width', 1);
 
     let axisGroup = barChart.append('g')
@@ -204,7 +208,7 @@
     yAxisGroup.attr('font-family', config.defaultFont);
 
     yAxisGroup.append('g')
-      .attr('transform', `translate(${-yAxisWidth - 10}, ${chartHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth - 15}, ${chartHeight / 2}) rotate(-90)`)
       .append('text')
       .attr('class', 'y-axis-text')
       .text(featureData.name2)
@@ -277,7 +281,7 @@
       .attr('class', 'y-axis-text')
       .attr('transform', `translate(${-yAxisWidth - 15}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
-      .text('density')
+      .text('Density')
       .style('fill', colors.histAxis);
 
     // Add panning and zooming
@@ -307,14 +311,18 @@
         .ease(d3.easeCubicInOut)
         .call(zoom.transform, d3.zoomIdentity);
     });
+
+    initialized = true;
   };
+
+  onMount(() => {mounted = true;});
 
   const drawFeature = drawFeatureBar;
 
   /**
    * Event handler for the select button in the header
    */
-  const selectModeSwitched = () => {
+  export const selectModeSwitched = () => {
     selectMode = !selectMode;
 
     let lineChartContent = d3.select(svg)
@@ -325,7 +333,7 @@
       .attr('cursor', null);
   };
 
-  $: featureData && drawFeature(featureData);
+  $: featureData && mounted && !initialized && drawFeature(featureData);
 
 </script>
 
@@ -362,28 +370,6 @@
       on:subItemCancelClicked={multiMenuSubItemCancelClicked}
     /> 
   </div> -->
-
-  <div class='header'>
-
-    <div class='header__info'>
-      <div class='header__name'>
-        {featureData === null ? ' ' : featureData.name}
-      </div>
-      
-      <div class='header__importance'>
-        {featureData === null ? ' ': round(featureData.importance, 2)}
-      </div>
-    </div>
-
-    <div class='header__control-panel'>
-      <!-- The toggle button -->
-      <div class='toggle-switch-wrapper'>
-        <ToggleSwitch name='cont-cont' on:selectModeSwitched={selectModeSwitched}/>
-      </div>
-    </div>
-
-  </div>
-
 
   <div class='svg-container'>
     <svg class='svg-explainer' bind:this={svg}></svg>

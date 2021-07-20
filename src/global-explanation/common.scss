@@ -33,32 +33,9 @@
   }
 }
 
-// .is-very-small {
-//   font-size: 1em;
-//   padding: 4px 12px;
-//   height: auto;
-// }
-
 .toggle-switch-wrapper {
   width: 180px;
 }
-
-// .state-button {
-//   color: $indigo-dark;
-//   transition: border-color 200ms ease-in-out, color 200ms ease-in-out;
-// }
-
-// .state-button.is-activated,
-// .state-button.is-activated:hover {
-//   color: $blue-icon;
-//   // border-color: $blue-icon;
-//   border-color: hsl(0, 0%, 71%);
-// }
-
-// .state-button:hover {
-//   color: $blue-icon;
-//   // border-color: hsl(0, 0%, 85.9%);;
-// }
 
 .context-menu-container {
   position: absolute;
@@ -70,7 +47,7 @@
 }
 
 :global(.explain-panel .y-axis-text) {
-  font-size: 1.4em;
+  font-size: 14px;
   text-anchor: middle;
   dominant-baseline: text-bottom;
 }
@@ -97,4 +74,19 @@
   stroke-width: 3;
   stroke: black;
   stroke-opacity: 0.1;
+}
+
+:global(.explain-panel .legend-title) {
+  font-size: 12px;
+  dominant-baseline: hanging;
+}
+
+:global(.explain-panel .legend-value) {
+  font-size: 12px;
+  dominant-baseline: middle;
+}
+
+:global(.explain-panel .x-axis-text) {
+  dominant-baseline: hanging;
+  font-size: 14px;
 }

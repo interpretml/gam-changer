@@ -314,9 +314,12 @@
     selectedFeature.id = selectedFeatureID;
 
     // Update the ebm model
-    ebm.destroy();
-    ebm = null;
-    ebm = await initEBM(data, sampleData, selectedFeature.name, isClassification);
+    // TODO: update the model for interaction term as well
+    if (curFeatureData.type !== 'interaction') {
+      ebm.destroy();
+      ebm = null;
+      ebm = await initEBM(data, sampleData, selectedFeature.name, isClassification);
+    }
 
     // Update the metrics
     let metrics = ebm.getMetrics();
@@ -634,6 +637,34 @@
 
           {#if selectedFeature.type === 'categorical'}
             <CatGlobalExplain
+              featureData = {selectedFeature === null ? null : selectedFeature.data}
+              scoreRange = {data === null ? null : data.scoreRange}
+              svgHeight = 500
+              bind:this = {changer}
+            />
+          {/if}
+
+          {#if selectedFeature.type === 'cont-cont'}
+            <InterContContGlobalExplain
+              featureData = {selectedFeature === null ? null : selectedFeature.data}
+              scoreRange = {data === null ? null : data.scoreRange}
+              svgHeight = 500
+              bind:this = {changer}
+            />
+          {/if}
+
+          {#if selectedFeature.type === 'cont-cat'}
+            <InterContCatGlobalExplain
+              featureData = {selectedFeature === null ? null : selectedFeature.data}
+              scoreRange = {data === null ? null : data.scoreRange}
+              svgHeight = 500
+              chartType = 'bar'
+              bind:this = {changer}
+            />
+          {/if}
+
+          {#if selectedFeature.type === 'cat-cat'}
+            <InterCatCatGlobalExplain
               featureData = {selectedFeature === null ? null : selectedFeature.data}
               scoreRange = {data === null ? null : data.scoreRange}
               svgHeight = 500

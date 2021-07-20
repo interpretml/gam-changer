@@ -280,7 +280,7 @@
       .attr('class', 'y-axis-text')
       .attr('transform', `translate(${-yAxisWidth - 15}, ${chartHeight / 2}) rotate(-90)`)
       .append('text')
-      .text('score')
+      .text('Score')
       .style('fill', 'black');
 
     // Draw the histograms at the bottom
@@ -344,7 +344,7 @@
       .attr('transform', `translate(${-yAxisWidth - 15}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
       .attr('class', 'y-axis-text')
-      .text('density')
+      .text('Density')
       .style('fill', colors.histAxis);
 
     // Add brush

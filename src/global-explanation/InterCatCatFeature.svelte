@@ -1,5 +1,6 @@
 <script>
   import * as d3 from 'd3';
+  import { onMount } from 'svelte';
   import { round } from '../utils/utils';
   import { config } from '../config';
   import { drawHorizontalColorLegend } from './draw';
@@ -19,6 +20,9 @@
   let svg = null;
   let component = null;
   let multiMenu = null;
+
+  let mounted = false;
+  let initialized = false;
 
   // Visualization constants
   const svgPadding = config.svgPadding;
@@ -99,6 +103,8 @@
     return data;
   };
 
+  onMount(() => {mounted = true;});
+
   const drawFeature = (featureData) => {
     console.log(featureData);
     let svgSelect = d3.select(svg);
@@ -130,7 +136,7 @@
 
     // Some constant lengths of different elements
     // Approximate the longest width of score (y-axis)
-    const yAxisWidth = 5 * d3.max(scoreRange.map(d => String(round(d, 1)).length));
+    const yAxisWidth = 5 * d3.max(data.shortBinLabel.map(d => String(d).length));
 
     const barHeight = 10;
     const legendConfig = {
@@ -214,9 +220,9 @@
     scatterPlot.append('clipPath')
       .attr('id', `${featureData.name.replace(/\s/g, '')}-y-axis-clip`)
       .append('rect')
-      .attr('x', 0)
+      .attr('x', -svgPadding.left)
       .attr('y', 0)
-      .attr('width', yAxisWidth)
+      .attr('width', svgPadding.left + yAxisWidth)
       .attr('height', chartHeight);
     
     let scatterPlotContent = scatterPlot.append('g')
@@ -273,7 +279,7 @@
     
     // Draw the line chart Y axis
     let yAxisGroup = axisGroup.append('g')
-      .attr('class', 'x-axis-wrapper')
+      .attr('class', 'y-axis-wrapper')
       .attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-y-axis-clip)`)
       .append('g')
       .attr('class', 'y-axis')
@@ -283,7 +289,7 @@
     yAxisGroup.attr('font-family', config.defaultFont);
 
     yAxisGroup.append('g')
-      .attr('transform', `translate(${-yAxisWidth - 5}, ${chartHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth - 15}, ${chartHeight / 2}) rotate(-90)`)
       .append('text')
       .attr('class', 'y-axis-text')
       .text(data.shortName)
@@ -392,12 +398,14 @@
         .call(zoom.transform, d3.zoomIdentity);
     });
 
+    initialized = true;
+
   };
 
   /**
    * Event handler for the select button in the header
    */
-  const selectModeSwitched = () => {
+  export const selectModeSwitched = () => {
     selectMode = !selectMode;
 
     let lineChartContent = d3.select(svg)
@@ -408,7 +416,7 @@
       .attr('cursor', null);
   };
 
-  $: featureData && drawFeature(featureData);
+  $: featureData && mounted && !initialized && drawFeature(featureData);
 
 </script>
 
@@ -452,28 +460,6 @@
       on:subItemCancelClicked={multiMenuSubItemCancelClicked}
     /> 
   </div> -->
-
-  <div class='header'>
-
-    <div class='header__info'>
-      <div class='header__name'>
-        {featureData === null ? ' ' : featureData.name}
-      </div>
-      
-      <div class='header__importance'>
-        {featureData === null ? ' ': round(featureData.importance, 2)}
-      </div>
-    </div>
-
-    <div class='header__control-panel'>
-      <!-- The toggle button -->
-      <div class='toggle-switch-wrapper'>
-        <ToggleSwitch name='cat-cat' on:selectModeSwitched={selectModeSwitched}/>
-      </div>
-    </div>
-
-  </div>
-
 
   <div class='svg-container'>
     <svg class='svg-explainer' bind:this={svg}></svg>
