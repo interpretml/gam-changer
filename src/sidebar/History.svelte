@@ -24,7 +24,8 @@
     'inplace-interpolate': 'icon-inplace',
     'equal-regression': 'icon-interpolation',
     'inplace-regression': 'icon-regression',
-    'delete': 'icon-delete'
+    'delete': 'icon-delete',
+    'original': 'icon-original'
   };
 
   sidebarStore.subscribe(value => {
@@ -245,6 +246,7 @@
       color: $gray-700;
       fill: $gray-700;
       opacity: 0.6;
+      display: flex;
 
       :global(svg) {
         width: 1.2em;
@@ -300,10 +302,6 @@
     .checkbox-box {
       &.hidden {
         display: none;
-      }
-
-      .svg-icon {
-        opacity: 0.3;
       }
     }
 
@@ -361,14 +359,14 @@
         <!-- Content -->
         <div class='commit-content'>
 
-          {#if history.type !== 'original'}
+          <!-- {#if history.type !== 'original'} -->
             <div class='commit-icon'>
               <div class={`svg-icon ${editTypeIconMap[history.type]}`}
                 class:current={sidebarInfo.featureName === history.featureName}
                 title={history.type}
               ></div>
             </div>
-          {/if}
+          <!-- {/if} -->
 
           <span class='commit-message' contenteditable bind:innerHTML={history.description}>
           </span>

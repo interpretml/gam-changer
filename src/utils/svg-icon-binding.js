@@ -20,6 +20,7 @@ import checkIconSVG from '../img/check-icon.svg';
 import refreshIconSVG from '../img/refresh-icon.svg';
 import minusIconSVG from '../img/minus-icon.svg';
 import plusIconSVG from '../img/plus-icon.svg';
+import originalSVG from '../img/original-icon.svg';
 
 const preProcessSVG = (svgString) => {
   return svgString.replaceAll('black', 'currentcolor')
@@ -110,4 +111,9 @@ export const bindInlineSVG = (component) => {
   d3.select(component)
     .selectAll('.svg-icon.icon-plus')
     .html(plusIconSVG.replaceAll('black', 'currentcolor'));
+
+  d3.select(component)
+    .selectAll('.svg-icon.icon-original')
+    .html(originalSVG.replaceAll('black', 'currentcolor'));
+
 };
