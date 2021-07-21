@@ -252,7 +252,6 @@
   };
 
   const footerActionTriggered = (message) => {
-    console.log('triggered!! from GAM');
     footerActionStore.set(message);
 
     if (message === 'save') {

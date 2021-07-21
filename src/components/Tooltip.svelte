@@ -50,17 +50,20 @@
       if (currentShow) {
         // Hide with animation
         if (value.hideAnimated) {
+          // d3.select(tooltip)
+          //   .transition('show')
+          //   .delay(100)
+          //   .duration(200)
+          //   .ease(d3.easeQuadInOut)
+          //   .style('opacity', 0)
+          //   .on('end', function() {
+          //     d3.select(this)
+          //       .style('visibility', 'hidden');
+          //     currentShow = false;
+          //   });
           d3.select(tooltip)
-            .transition('show')
-            .delay(100)
-            .duration(200)
-            .ease(d3.easeQuadInOut)
-            .style('opacity', 0)
-            .on('end', function() {
-              d3.select(this)
-                .style('visibility', 'hidden');
-              currentShow = false;
-            });
+            .style('visibility', 'hidden');
+          currentShow = false;
         } else {
           d3.select(tooltip)
             .style('visibility', 'hidden');

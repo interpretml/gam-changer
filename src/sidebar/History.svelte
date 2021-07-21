@@ -2,7 +2,7 @@
 
   import * as d3 from 'd3';
   import { onMount, afterUpdate } from 'svelte';
-  import { flip } from 'svelte/animate';
+  import { slide, fade, crossfade } from 'svelte/transition';
   import { quadInOut, expoInOut, cubicInOut } from 'svelte/easing';
   import { round, shuffle } from '../utils/utils';
   import { bindInlineSVG } from '../utils/svg-icon-binding';
@@ -94,14 +94,43 @@
   };
 
   const deleteClicked = (i) => {
-    // Need user to confirm the delete action
-    let result = confirm('Delete this commit will also remove all commits after it.');
+
+    // Search the history stack to see if it is the last commit on this feature
+    const featureName = historyList[i].featureName;
+    let isLastCommit = true;
+    for (let j = i + 1; j < historyList.length; j++) {
+      if (historyList[j].featureName === featureName) {
+        isLastCommit = false;
+        break;
+      }
+    }
+
+    // Need user to confirm the delete action if it is not the last commit
+    let result = true;
+    if (!isLastCommit) {
+      result = confirm(
+        `Deleting this commit will also remove all later commits on feature ${featureName}. This action cannot be undone. Is it OK?`);
+    } else {
+      result = confirm('Deleting a commit cannot be undone. Is it OK?');
+    }
 
     if (result) {
       historyList = historyList.slice(0, i);
     }
 
-    console.log(historyList);
+    // Update the HEAD if HEAD is at/after the deleted commit
+    if (sidebarInfo.historyHead >= i) {
+      sidebarInfo.curGroup = 'headChanged';
+      sidebarInfo.previewHistory = false;
+      sidebarInfo.historyHead = historyList.length - 1;
+
+      // Force the effect scope to be global
+      sidebarInfo.effectScope = 'global';
+    }
+
+    sidebarStore.set(sidebarInfo);
+    historyStore.set(historyList);
+
   };
 
   initData();
@@ -368,7 +397,9 @@
 
     {#each historyList as history, i}
 
-      <div class='commit' class:current={sidebarInfo.featureName === history.featureName}>
+      <div class='commit' class:current={sidebarInfo.featureName === history.featureName}
+        transition:slide={{duration: 300}}
+      >
         <!-- Header -->
         <div class='commit-title'>
 
