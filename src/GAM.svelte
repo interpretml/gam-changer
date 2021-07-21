@@ -125,9 +125,12 @@
     });
 
     // Sort each feature type by importance score
-    Object.keys(featureSelectList).forEach(k => featureSelectList[k].sort((a, b) => b.importance - a.importance));
+    // Object.keys(featureSelectList).forEach(k => featureSelectList[k].sort((a, b) => b.importance - a.importance));
 
-    // Popularize the slice option list
+    // Sort each feature type by alphabetical order
+    Object.keys(featureSelectList).forEach(k => featureSelectList[k].sort((a, b) => a.name.localeCompare(b.name)));
+
+    // Populate the slice option list
     let selectElement = d3.select(component).select('#feature-select');
     let featureGroups = ['continuous', 'categorical', 'interaction'];
 
@@ -147,12 +150,15 @@
     resizeFeatureSelect();
 
     // Initialize GAM Changer using the continuous variable with the highest importance
-    let tempSelectedFeature = {};
-    tempSelectedFeature.type = 'continuous';
-    tempSelectedFeature.data = data.features[featureSelectList.continuous[0].featureID];
-    tempSelectedFeature.id = featureSelectList.continuous[0].featureID;
-    tempSelectedFeature.name = featureSelectList.continuous[0].name;
-    selectedFeature = tempSelectedFeature;
+    const maxImportanceIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
+
+    selectedFeature = {};
+    selectedFeature.type = 'continuous';
+    selectedFeature.data = data.features[featureSelectList.continuous[maxImportanceIndex].featureID];
+    selectedFeature.id = featureSelectList.continuous[maxImportanceIndex].featureID;
+    selectedFeature.name = featureSelectList.continuous[maxImportanceIndex].name;
+    featureSelect.selectedIndex = maxImportanceIndex;
+
     updateChanger = !updateChanger;
 
     sidebarInfo.featureName = selectedFeature.name;
@@ -317,6 +323,7 @@
     // Update the ebm model
     // TODO: update the model for interaction term as well
     if (curFeatureData.type !== 'interaction') {
+      console.log('re-init ebm');
       ebm.destroy();
       ebm = null;
       ebm = await initEBM(data, sampleData, selectedFeature.name, isClassification);
