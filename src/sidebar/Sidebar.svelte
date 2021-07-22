@@ -4,11 +4,13 @@
 
   import ClassificationMetrics from './ClassificationMetrics.svelte';
   import RegressionMetrics from './RegressionMetrics.svelte';
+  import Dropzone from '../components/Dropzone.svelte';
   import Feature from './Feature.svelte';
   import History from './History.svelte';
 
   export let sidebarStore;
   export let historyStore;
+  export let width;
 
   let sidebarInfo = {};
   let component = null;
@@ -30,7 +32,7 @@
   @import '../define';
 
   .sidebar {
-    width: $sidebar-width;
+    width: 100%;
     height: 100%;
     border-left: 1px double $gray-border;
     display: flex;
@@ -120,7 +122,7 @@
 
 </style>
 
-<div class='sidebar' bind:this={component}>
+<div class='sidebar' bind:this={component} style={`width: ${width};`}>
 
   <div class='header'>
     <div class='tab-button'
@@ -152,7 +154,8 @@
   <div class='content'>
 
     <div class='tab' class:hidden={sidebarInfo.selectedTab !== 'effect'}>
-      <ClassificationMetrics sidebarStore={sidebarStore}/>
+      <!-- <ClassificationMetrics sidebarStore={sidebarStore}/> -->
+      <Dropzone sidebarStore={sidebarStore} dataType={'sampleData'}/>
     </div>
 
     <div class='tab' class:hidden={sidebarInfo.selectedTab !== 'feature'}>

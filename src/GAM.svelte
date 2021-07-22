@@ -7,6 +7,7 @@
   import InterCatCatGlobalExplain from './global-explanation/InterCatCatFeature.svelte';
   import Sidebar from './sidebar/Sidebar.svelte';
   import ToggleSwitch from './components/ToggleSwitch.svelte';
+  import Dropzone from './components/Dropzone.svelte';
 
   import * as d3 from 'd3';
   import { initEBM } from './ebm';
@@ -29,6 +30,25 @@
   let selectedFeature = null;
   let updateChanger = true;
 
+  // Some view size constants
+  const svgHeight = 500;
+  const svgWidth = svgHeight / 2 * 3;
+  const sidebarWidth = 250;
+
+  const confusionMatrixData = {
+    tn: [23.2, null, 23, null],
+    fn: [23.2, null, 23, null],
+    fp: [23.2, null, 23, null],
+    tp: [23.2, null, 23, null]
+  };
+
+  // [original, last, current, last last]
+  const barData = {
+    accuracy: [0.5, null, 0.5, null],
+    rocAuc: [0.5, null, 0.5, null],
+    balancedAccuracy: [0.5, null, 0.5, null]
+  };
+
   // Create stores to pass to child components
   let sidebarInfo = {};
   let sidebarStore = writable({
@@ -45,6 +65,8 @@
     effectScope: 'global',
     historyHead: 0,
     previewHistory: false,
+    barData: JSON.parse(JSON.stringify(barData)),
+    confusionMatrixData: JSON.parse(JSON.stringify(confusionMatrixData)),
   });
 
   let footerStore = writable({
@@ -60,6 +82,26 @@
 
   sidebarStore.subscribe(value => {
     sidebarInfo = value;
+
+    // Listen to sampleDataCreated and featureDataCreated (user uploads file)
+    if (value.curGroup === 'sampleDataCreated') {
+      let sampleData = value.loadedData;
+      value.loadedData = null;
+      value.curGroup = '';
+      console.log(sampleData);
+
+      sidebarStore.set(sidebarInfo);
+    }
+
+    if (value.curGroup === 'modelDataCreated') {
+      let data = value.loadedData;
+      value.loadedData = null;
+      value.curGroup = '';
+      console.log(data);
+
+      sidebarStore.set(sidebarInfo);
+    }
+    
   });
 
   let historyStore = writable([]);
@@ -119,7 +161,6 @@
       featureSelectList[f.type].push({
         name: f.name,
         featureID: i,
-        sampleFeatureID: f.type !== 'interaction' ? sampleDataNameMap.get(f.name) : null,
         importance: f.importance
       });
     });
@@ -132,6 +173,10 @@
 
     // Populate the slice option list
     let selectElement = d3.select(component).select('#feature-select');
+    
+    // Remove existing options
+    selectElement.selectAll('option').remove();
+
     let featureGroups = ['continuous', 'categorical', 'interaction'];
 
     featureGroups.forEach(type => {
@@ -147,8 +192,6 @@
       });
     });
 
-    resizeFeatureSelect();
-
     // Initialize GAM Changer using the continuous variable with the highest importance
     const maxImportanceIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
 
@@ -159,6 +202,7 @@
     selectedFeature.name = featureSelectList.continuous[maxImportanceIndex].name;
     featureSelect.selectedIndex = maxImportanceIndex;
 
+    resizeFeatureSelect();
     updateChanger = !updateChanger;
 
     sidebarInfo.featureName = selectedFeature.name;
@@ -373,7 +417,7 @@
       });
   };
 
-  initData();
+  // initData();
 
   onMount(() => {
     bindInlineSVG();
@@ -386,15 +430,12 @@
 
   @import 'define';
 
-  $tool-width: $svg-width + $sidebar-width + 2px;
-
   .main-tool {
     display: flex;
     flex-direction: column;
     border: 1px solid $gray-border;
     border-radius: 5px;
     background: white;
-    width: $tool-width;
   }
 
   .tool {
@@ -475,10 +516,6 @@
 
   .toggle-switch-wrapper {
     width: 180px;
-  }
-
-  .sidebar-wrapper {
-    width: $sidebar-width;
   }
 
   .tool-footer {
@@ -567,9 +604,13 @@
     border-radius: 5px;
   }
 
+  .dropzone-wrapper {
+
+  }
+
 </style>
 
-<div class='main-tool' bind:this={component}>
+<div class='main-tool' bind:this={component} style={`width: ${sidebarWidth + svgWidth + 2}px;`}>
   <a id="download-anchor" style="display:none"> </a>
 
   <div class='tool'>
@@ -587,6 +628,7 @@
               on:blur={() => {}}
               on:change={featureChanged}
             >
+              <option>No data loaded</option>
             </select>
           </div>
 
@@ -596,20 +638,22 @@
             </select>
           </div>
 
-          <div class='header__history' class:past={sidebarInfo.previewHistory}>
-            <span class='hash'>
-              {#if sidebarInfo.historyHead === 0}
-                Original
-              {:else}
-                {#if sidebarInfo.previewHistory}
-                  Previous Edit:
+          {#if selectedFeature !== null}
+            <div class='header__history' class:past={sidebarInfo.previewHistory}>
+              <span class='hash'>
+                {#if sidebarInfo.historyHead === 0}
+                  Original
                 {:else}
-                  Latest Edit:
+                  {#if sidebarInfo.previewHistory}
+                    Previous Edit:
+                  {:else}
+                    Latest Edit:
+                  {/if}
+                  {get(historyStore)[sidebarInfo.historyHead].hash.substring(0, 7)}
                 {/if}
-                {get(historyStore)[sidebarInfo.historyHead].hash.substring(0, 7)}
-              {/if}
-            </span>
-          </div>
+              </span>
+            </div>
+          {/if}
 
         </div>
 
@@ -679,28 +723,37 @@
             />
           {/if}
 
+        {:else}
+          <!-- If the feature is not loaded, we show the dropzone -->
+          <div class='dropzone-wrapper' style={`width: ${svgWidth}px; height: ${svgHeight}px;`}>
+            <Dropzone sidebarStore={sidebarStore} dataType={'modelData'}/>
+          </div>
         {/if}
 
       {/key}
 
     </div>
 
-    <div class='sidebar-wrapper'>
-      <Sidebar sidebarStore={sidebarStore} historyStore={historyStore}/>
+    <div class='sidebar-wrapper' style={`width: ${sidebarWidth}px;`}>
+      <Sidebar sidebarStore={sidebarStore} historyStore={historyStore} width={sidebarWidth}/>
     </div>
   </div>
 
   <div class='tool-footer'>
+
     <div class='message-line'>
-      <span>{@html $footerStore.help}</span>
-      <div class='separator'></div>
+      {#if selectedFeature !== null}
+        <span>{@html $footerStore.help}</span>
+        <div class='separator'></div>
 
-      <span>{@html $footerStore.sample}</span>
-      <span>{@html $footerStore.slice}</span>
-      <div class='separator'></div>
+        <span>{@html $footerStore.sample}</span>
+        <span>{@html $footerStore.slice}</span>
+        <div class='separator'></div>
 
-      <span>{@html $footerStore.state}</span>
+        <span>{@html $footerStore.state}</span>
+      {/if}
     </div>
+
       
     <div class='field has-addons'>
 

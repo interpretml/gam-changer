@@ -1,0 +1,233 @@
+<script>
+
+  // 'sampleData' or 'modelData'
+  export let dataType = 'sampleData';
+  export let sidebarStore;
+
+  let component = null;
+  let inputElem = null;
+  let isDragging = false;
+  let dragElement = null;
+
+  let errorMessage = ' ';
+
+  const clickHandler = () => {
+    inputElem.click();
+  };
+
+  const dragEnterHandler = (e) => {
+    e.preventDefault();
+
+    isDragging = true;
+
+    // Store the drag element, so we don't leave the drag state when user hovers
+    // over the messages
+    dragElement = e.target;
+  };
+
+  const dragOverHandler = (e) => {
+    e.preventDefault();
+  };
+
+  const dragLeaveHandler = (e) => {
+    e.preventDefault();
+
+    if (dragElement === e.target) {
+      isDragging = false;
+    }
+  };
+
+  const readJSON = (file) => {
+    return new Promise((resolve, reject) => {
+      let fr = new FileReader();  
+      fr.onload = () => {
+        resolve(JSON.parse(fr.result));
+      };
+      fr.onerror = reject;
+      fr.readAsText(file);
+    });
+  };
+
+  const validateFile = async (file) => {
+    if (file.type !== 'application/json') {
+      errorMessage = 'It is not a JSON file';
+      return false;
+    }
+
+    // Try to read the file
+    let data = await readJSON(file);
+
+    // Test if it is a valid file
+    let isValid = false;
+    if (dataType === 'sampleData') {
+      isValid = (data.featureNames !== undefined && data.featureTypes !== undefined &&
+        data.samples !== undefined && data.labels !== undefined);
+    }
+
+    if (dataType === 'modelData') {
+      isValid = (data.intercept !== undefined && data.features !== undefined &&
+        data.labelEncoder !== undefined && data.scoreRange !== undefined);
+    }
+
+    if (!isValid) {
+      errorMessage = `Not a valid ${dataType === 'sampleData' ? 'sample data' : 'model data'} file`;
+      return false;
+    }
+
+    return data;
+  };
+
+  const dropHandler = async(e) => {
+    e.preventDefault();
+    let data = false;
+
+    if (e.dataTransfer.items) {
+      // Use DataTransferItemList interface to access the file(s)
+      if (e.dataTransfer.items[0].kind === 'file') {
+        let file = e.dataTransfer.items[0].getAsFile();
+        data = await validateFile(file);
+      }
+    } else {
+      // Use DataTransfer interface to access the file(s)
+      let file = e.dataTransfer.files[0];
+      data = await validateFile(file);
+    }
+
+    if (!data) return;
+
+    // Pass the data to other components through store
+    sidebarStore.update(value => {
+      value.curGroup = `${dataType}Created`;
+      value.loadedData = data;
+      return value;
+    });
+
+    isDragging = false;
+  };
+
+  const inputChanged = async (e) => {
+    e.preventDefault();
+    let data = false;
+
+    let file = e.target.files[0];
+    data = await validateFile(file);
+
+    if (!data) return;
+
+    // Pass the data to other components through store
+    sidebarStore.update(value => {
+      value.curGroup = `${dataType}Created`;
+      value.loadedData = data;
+      return value;
+    });
+  };
+
+  const inputClicked = () => {
+    console.log('input clicked');
+  };
+
+
+
+</script>
+
+<style type='text/scss'>
+
+  @import '../define';
+
+  .dropzone-tab {
+    height: 100%;
+    width: 100%;
+    padding: 10px;
+    display: flex;
+    background-color: hsl(20, 16%, 99%);
+  }
+
+  .dropzone {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 3px dashed hsla(0, 0%, 86%);
+    border-radius: 3px;
+    transition: border 300ms ease-in-out;
+    padding: 0 10px;
+    gap: 12px;
+
+    &.drag-over {
+      border: 3px dashed $blue-300;
+    }
+  }
+
+  .drop-message {
+    text-align: center;
+    color: hsl(0, 0%, 60%);
+    cursor: default;
+  }
+
+  .help-message {
+    text-align: center;
+    font-size: 0.9em;
+    color: hsl(0, 0%, 60%);
+    padding: 2px 8px;
+    background: hsla(0, 0%, 50%, 0.05);
+    border-radius: 5px;
+
+    &:hover {
+      background: hsla(0, 0%, 50%, 0.09);
+
+      a {
+        text-decoration: none;
+      }
+    }
+
+    a {
+      font-style: italic;
+      color: hsl(0, 0%, 60%);
+    }
+  }
+
+  .error-message {
+    font-size: 0.9em;
+    color: hsl(0, 50%, 56%);
+    text-align: center;
+    white-space: pre-wrap;
+  }
+
+</style>
+
+<div class='dropzone-tab' bind:this={component}>
+
+  <div class='dropzone'
+    class:drag-over={isDragging}
+    on:click={clickHandler}
+    on:dragenter={dragEnterHandler}
+    on:dragover={dragOverHandler}
+    on:dragleave={dragLeaveHandler}
+    on:drop={dropHandler}
+  >
+    <div class='drop-message'>
+      Drop the {dataType === 'sampleData' ? 'sample data' : 'model data'} JSON file here to start
+    </div>
+
+    <div class='help-message' on:click={(e) => {e.stopPropagation();}}>
+      <a href='https://interpret.ml' target="_blank">How to generate this file?</a>
+    </div>
+
+    <span class='error-message'>
+      {errorMessage}
+    </span>
+
+    <input
+      accept="json"
+      type="file"
+      autocomplete="off"
+      on:change={inputChanged}
+      on:click={inputClicked}
+      bind:this={inputElem}
+      style="display: none;"/>
+
+  </div>
+
+</div>
