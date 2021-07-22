@@ -800,6 +800,8 @@
    * @param {[number]} binIndexes Selected bin indexes
    */
   const updateFeatureSidebar = async (binIndexes) => {
+    if (ebm.isDummy) return;
+
     // Get the selected counts
     let selectedHistCounts = ebm.getSelectedSampleDist(binIndexes);
 
@@ -822,6 +824,8 @@
    * Reset the feature count of selected samples to 0
    */
   const resetFeatureSidebar = async () => {
+    if (ebm.isDummy) return;
+
     for (let i = 0; i < sidebarInfo.featurePlotData.cont.length; i++) {
       sidebarInfo.featurePlotData.cont[i].histSelectedCount = new Array(
         sidebarInfo.featurePlotData.cont[i].histSelectedCount.length).fill(0);
@@ -1034,9 +1038,9 @@
     }
 
     // Wait until the the effect sidebar is updated
-    while (sidebarInfo.curGroup !== 'commitCompleted') {
-      await new Promise(r => setTimeout(r, 500));
-    }
+    // while (sidebarInfo.curGroup !== 'commitCompleted') {
+    //   await new Promise(r => setTimeout(r, 500));
+    // }
 
     // Update the footer message
     let curEditBaseline = 0;
@@ -1059,6 +1063,7 @@
     const binRange = binRight === undefined ? `${binLeft.x} <= x` : `${binLeft.x} <= x < ${binRight.x}`;
     const message = `${curEditBaseline >= 0 ? 'Increased' : 'Decreased'} scores of ${binNum} ` +
       `bins (${binRange}) by ${round(Math.abs(curEditBaseline), 2)}.`;
+
     pushCurStateToHistoryStack(state, 'move', message, historyStore, sidebarStore);
 
     // Any new commit purges the redo stack

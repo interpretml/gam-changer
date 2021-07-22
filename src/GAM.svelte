@@ -11,6 +11,7 @@
 
   import * as d3 from 'd3';
   import { initEBM } from './ebm';
+  import { initDummyEBM} from './dummyEbm';
   import { onMount } from 'svelte';
   import { writable, derived, get } from 'svelte/store';
   import { downloadJSON, round } from './utils/utils';
@@ -22,7 +23,7 @@
   let data = null;
   let sampleData = null;
   let isClassification = null;
-  let ebm = null;
+  let ebm = initDummyEBM(0, 0, 0, 0);
   let component = null;
   let toggle = null;
   let changer = null;
@@ -67,6 +68,7 @@
     previewHistory: false,
     barData: JSON.parse(JSON.stringify(barData)),
     confusionMatrixData: JSON.parse(JSON.stringify(confusionMatrixData)),
+    totalSampleNum: 0
   });
 
   let footerStore = writable({
@@ -85,7 +87,7 @@
 
     // Listen to sampleDataCreated and featureDataCreated (user uploads file)
     if (value.curGroup === 'sampleDataCreated') {
-      let sampleData = value.loadedData;
+      sampleData = value.loadedData;
       value.loadedData = null;
       value.curGroup = '';
       console.log(sampleData);
@@ -94,10 +96,12 @@
     }
 
     if (value.curGroup === 'modelDataCreated') {
-      let data = value.loadedData;
+      data = value.loadedData;
       value.loadedData = null;
       value.curGroup = '';
-      console.log(data);
+
+      // Initialize the GAM View
+      initGAMView(data);
 
       sidebarStore.set(sidebarInfo);
     }
@@ -128,6 +132,79 @@
     d3.select(component)
       .selectAll('.svg-icon.icon-export')
       .html(preProcessSVG(exportIconSVG));
+  };
+
+  /**
+   * Initialize the GAM view
+   * @param data Model data
+   */
+  const initGAMView = (data) => {
+
+    isClassification = true;
+
+    // Create a list of feature select options (grouped by types, sorted by importance)
+    let featureSelectList = {
+      continuous: [],
+      categorical: [],
+      interaction: []
+    };
+
+    data.features.forEach((f, i) => {
+      featureSelectList[f.type].push({
+        name: f.name,
+        featureID: i,
+        importance: f.importance
+      });
+    });
+
+    // Sort each feature type by importance score
+    // Object.keys(featureSelectList).forEach(k => featureSelectList[k].sort((a, b) => b.importance - a.importance));
+
+    // Sort each feature type by alphabetical order
+    Object.keys(featureSelectList).forEach(k => featureSelectList[k].sort((a, b) => a.name.localeCompare(b.name)));
+
+    // Populate the slice option list
+    let selectElement = d3.select(component).select('#feature-select');
+    
+    // Remove existing options
+    selectElement.selectAll('option').remove();
+
+    let featureGroups = ['continuous', 'categorical', 'interaction'];
+
+    featureGroups.forEach(type => {
+      let groupName = type.charAt(0).toUpperCase() + type.slice(1);
+      let optGroup = selectElement.append('optgroup')
+        .attr('label', groupName + ' (name - importance)');
+      
+      featureSelectList[type].forEach(opt => {
+        optGroup.append('option')
+          .attr('value', opt.featureID)
+          .attr('data-level', opt.level)
+          .text(`${opt.name} - ${round(opt.importance, 3)}`);
+      });
+    });
+
+    // Initialize GAM Changer using the continuous variable with the highest importance
+    const maxImportanceIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
+
+    selectedFeature = {};
+    selectedFeature.type = 'continuous';
+    selectedFeature.data = data.features[featureSelectList.continuous[maxImportanceIndex].featureID];
+    selectedFeature.id = featureSelectList.continuous[maxImportanceIndex].featureID;
+    selectedFeature.name = featureSelectList.continuous[maxImportanceIndex].name;
+    featureSelect.selectedIndex = maxImportanceIndex;
+
+    resizeFeatureSelect();
+    updateChanger = !updateChanger;
+
+    sidebarInfo.totalSampleNum = 0;
+    footerStore.update(value => {
+      value.totalSampleNum = sidebarInfo.totalSampleNum;
+      value.sample = `<b>0/${sidebarInfo.totalSampleNum }</b> test samples selected`;
+      return value;
+    });
+
+    sidebarInfo.featureName = selectedFeature.name;
   };
 
   const initData = async () => {
@@ -264,7 +341,7 @@
     sidebarInfo.curGroup = 'original';
 
     // Get the list of all categorical variables and their values to popularize
-    // the select dropdown
+    // the slice select dropdown
     let sliceOptions = [];
     data.features.forEach(f => {
       if (f.type === 'categorical') {
@@ -365,7 +442,7 @@
 
     // Update the ebm model
     // TODO: update the model for interaction term as well
-    if (curFeatureData.type !== 'interaction') {
+    if (!ebm.isDummy && curFeatureData.type !== 'interaction') {
       console.log('re-init ebm');
       ebm.destroy();
       ebm = null;
@@ -725,7 +802,7 @@
 
         {:else}
           <!-- If the feature is not loaded, we show the dropzone -->
-          <div class='dropzone-wrapper' style={`width: ${svgWidth}px; height: ${svgHeight}px;`}>
+          <div class='dropzone-wrapper' style={`width: ${svgWidth}px; height: ${svgHeight + 6}px;`}>
             <Dropzone sidebarStore={sidebarStore} dataType={'modelData'}/>
           </div>
         {/if}

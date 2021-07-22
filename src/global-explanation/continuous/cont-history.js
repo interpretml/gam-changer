@@ -312,6 +312,7 @@ export const pushCurStateToHistoryStack = (state, type, description, historyStor
   let historyLength = 0;
   let sidebarInfo = get(sidebarStore);
 
+  console.log(type);
   historyStore.update(value => {
     const time = Date.now();
 
