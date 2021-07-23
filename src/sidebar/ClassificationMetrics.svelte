@@ -102,6 +102,9 @@
     sidebarStore.set(sidebarInfo);
   };
 
+  /**
+   * Load the data from sidebarInfo to barData, confusionMatrixData at index i
+   */
   const updateData = (index, barData, confusionMatrixData, sidebarInfo) => {
     barData.accuracy[index] = sidebarInfo.accuracy;
     barData.rocAuc[index] = sidebarInfo.rocAuc;
@@ -147,10 +150,6 @@
     }
 
     case 'new-feature-original': {
-      updateData(0, barData, confusionMatrixData, sidebarInfo);
-
-      copyMetricData(barData, confusionMatrixData, 0, 2);
-
       // Nullify the last metric
       Object.keys(barData).forEach(k => barData[k][1] = null);
       Object.keys(confusionMatrixData).forEach(k => confusionMatrixData[k][1] = null);

@@ -99,6 +99,10 @@ export const undoHandler = async (state, svg, multiMenu, resetContextMenu, reset
     state.additiveDataLastLastEdit = undefined;
   }
 
+  // After drawing the lastEdit curve, change lastEdit to curEdit (so when user
+  // clicks any editing, the orange line moves to current location)
+  state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+
   // Step 7: If the current edit has changed the EBM bin definition, then we need
   // to reset the definition in WASM
   if (curCommit.type.includes('equal')) {
@@ -228,6 +232,10 @@ export const redoHandler = async (state, svg, multiMenu, resetContextMenu, reset
     // If there is no last last edit, then it is the origin or the first edit
     state.additiveDataLastLastEdit = undefined;
   }
+
+  // After drawing the lastEdit curve, change lastEdit to curEdit (so when user
+  // clicks any editing, the orange line moves to current location)
+  state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
 
   // If the current edit has changed the EBM bin definition, then we need
   // to reset the definition in WASM
@@ -413,22 +421,25 @@ export const tryRestoreLastEdit = async (state, svg, multiMenu, resetContextMenu
     state.additiveDataLastLastEdit = undefined;
   }
 
-  // If the current edit has changed the EBM bin definition, then we need
-  // to reset the definition in WASM
+  // After drawing the lastEdit curve, change lastEdit to curEdit (so when user
+  // clicks any editing, the orange line moves to current location)
+  state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+
+  // Restore the bin definition
   await setEBM('current', state.pointData);
 
   // We force the effect scope to be global when switching features
-  sidebarStore.update(value => {
-    value.curGroup = 'no action';
-    value.barData = JSON.parse(JSON.stringify(lastCommit.metrics.barData));
-    value.confusionMatrixData = JSON.parse(JSON.stringify(lastCommit.metrics.confusionMatrixData));
-    return value;
-  });
+  // sidebarStore.update(value => {
+  //   value.curGroup = 'no action';
+  //   value.barData = JSON.parse(JSON.stringify(lastCommit.metrics.barData));
+  //   value.confusionMatrixData = JSON.parse(JSON.stringify(lastCommit.metrics.confusionMatrixData));
+  //   return value;
+  // });
 
-  sidebarStore.update(value => {
-    value.curGroup = 'overwrite';
-    return value;
-  });
+  // sidebarStore.update(value => {
+  //   value.curGroup = 'overwrite';
+  //   return value;
+  // });
 
   // Redraw the graph
   redrawOriginal(state, svg);
@@ -445,10 +456,11 @@ export const tryRestoreLastEdit = async (state, svg, multiMenu, resetContextMenu
  * @param {func} resetFeatureSidebar function to reset the feature side bar
  * @param {object} historyStore History store
  * @param {func} setEBM function to set EBM bin definitions
+ * @param {func} setEBMEditingFeature function to set the currently editing feature in ebm
  * @param {object} sidebarStore sidebar store object
  */
 export const checkoutCommitHead = async (state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
-  historyStore, setEBM, sidebarStore) => {
+  historyStore, setEBM, setEBMEditingFeature, sidebarStore) => {
 
   let curHistoryStoreValue = get(historyStore);
   let sidebarInfo = get(sidebarStore);
@@ -505,6 +517,10 @@ export const checkoutCommitHead = async (state, svg, multiMenu, resetContextMenu
     drawLastEdit(state, svg);
   }
 
+  // After drawing the lastEdit curve, change lastEdit to curEdit (so when user
+  // clicks any editing, the orange line moves to current location)
+  state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+
   // Step 5: Reset EBM bin definition
   // This step is tricky when we have edited multiple features between the checkouts
   // A0 -> A1 -> A2 -> B0 -> C0 -> C1 -> A3
@@ -517,7 +533,7 @@ export const checkoutCommitHead = async (state, svg, multiMenu, resetContextMenu
     for (let i = sidebarInfo.historyLastHead; i >= targetCommitIndex; i--) {
       let curCommit = curHistoryStoreValue[i];
       if (curCommit.type === 'original') {
-        // await setEBM('current', curCommit.state.pointData);
+        await setEBM('current', curCommit.state.pointData, curCommit.featureName);
       }
     }
   } else {
@@ -532,6 +548,9 @@ export const checkoutCommitHead = async (state, svg, multiMenu, resetContextMenu
   }
 
   await setEBM('current', state.pointData);
+
+  // Change the currently editing feature to the target
+  setEBMEditingFeature(targetCommit.featureName);
 
 
   // Update the metrics, we force it to be global scope

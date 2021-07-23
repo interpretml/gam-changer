@@ -443,10 +443,9 @@
     // Update the ebm model
     // TODO: update the model for interaction term as well
     if (!ebm.isDummy && curFeatureData.type !== 'interaction') {
-      console.log('re-init ebm');
-      ebm.destroy();
-      ebm = null;
-      ebm = await initEBM(data, sampleData, selectedFeature.name, isClassification);
+      console.log('Change feature in ebm');
+      ebm.setEditingFeature(selectedFeature.name);
+      ebm = ebm;
     }
 
     // Update the metrics
@@ -494,7 +493,7 @@
       });
   };
 
-  // initData();
+  initData();
 
   onMount(() => {
     bindInlineSVG();

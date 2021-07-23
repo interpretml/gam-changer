@@ -222,7 +222,7 @@
     // User clicks to preview a previous edit
     case 'headChanged': {
       checkoutCommitHead(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
-        historyStore, setEBM, sidebarStore);
+        historyStore, setEBM, setEBMEditingFeature, sidebarStore);
       break;
     }
 
@@ -614,8 +614,10 @@
     });
 
     // Try to restore the last edit if possible
+    console.log(state.pointData);
     let hasBeenCreated = await tryRestoreLastEdit(state, svg, multiMenu, resetContextMenu,
       resetFeatureSidebar, historyStore, redoStack, setEBM, sidebarStore);
+    console.log(state.pointData);
 
     if (!hasBeenCreated) {
       // Push the initial state into the history stack
@@ -717,8 +719,9 @@
    * Overwrite the edge definition in the EBM WASM model.
    * @param {string} curGroup Message to the metrics sidebar
    * @param {object} curNodeData Node data in `state`
+   * @param {bool} transfer If the new metrics need to be transferred to the sidebar
    */
-  const setEBM = async (curGroup, curNodeData) => {
+  const setEBM = async (curGroup, curNodeData, transfer=true) => {
 
     // Update the complete bin edge definition in the EBM model
     let newBinEdges = [];
@@ -748,25 +751,34 @@
 
     await ebm.setModel(newBinEdges, newScores);
 
-    switch(sidebarInfo.effectScope) {
-    case 'global': {
-      let metrics = await getEBMMetrics('global');
-      transferMetricToSidebar(metrics, curGroup);
-      break;
+    if (transfer) {
+      switch(sidebarInfo.effectScope) {
+      case 'global': {
+        let metrics = await getEBMMetrics('global');
+        transferMetricToSidebar(metrics, curGroup);
+        break;
+      }
+      case 'selected': {
+        let metrics = await getEBMMetrics('selected');
+        transferMetricToSidebar(metrics, curGroup);
+        break;
+      }
+      case 'slice': {
+        let metrics = await getEBMMetrics('slice');
+        transferMetricToSidebar(metrics, curGroup);
+        break;
+      }
+      default:
+        break;
+      }
     }
-    case 'selected': {
-      let metrics = await getEBMMetrics('selected');
-      transferMetricToSidebar(metrics, curGroup);
-      break;
-    }
-    case 'slice': {
-      let metrics = await getEBMMetrics('slice');
-      transferMetricToSidebar(metrics, curGroup);
-      break;
-    }
-    default:
-      break;
-    }
+  };
+
+  /**
+   * Change the currently editing feature in ebm wasm
+  */
+  const setEBMEditingFeature = (featureName) => {
+    ebm.setEditingFeature(featureName);
   };
 
   /**
@@ -1154,6 +1166,7 @@
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
 
+    console.log(state.pointDataBuffer);
     // Update the last edit graph
     drawLastEdit(state, svg);
 
@@ -1622,7 +1635,7 @@
     });
   };
 
-  $: featureData && ebm && mounted && !initialized && drawFeature(featureData);
+  $: featureData && ebm && mounted && !initialized && featureData.name === ebm.editingFeatureName && drawFeature(featureData);
 
 </script>
 
