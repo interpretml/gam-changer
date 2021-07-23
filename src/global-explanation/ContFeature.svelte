@@ -800,7 +800,7 @@
    * @param {[number]} binIndexes Selected bin indexes
    */
   const updateFeatureSidebar = async (binIndexes) => {
-    if (ebm.isDummy) return;
+    if (ebm.isDummy !== undefined) return;
 
     // Get the selected counts
     let selectedHistCounts = ebm.getSelectedSampleDist(binIndexes);
@@ -824,7 +824,7 @@
    * Reset the feature count of selected samples to 0
    */
   const resetFeatureSidebar = async () => {
-    if (ebm.isDummy) return;
+    if (ebm.isDummy !== undefined) return;
 
     for (let i = 0; i < sidebarInfo.featurePlotData.cont.length; i++) {
       sidebarInfo.featurePlotData.cont[i].histSelectedCount = new Array(
@@ -1038,9 +1038,11 @@
     }
 
     // Wait until the the effect sidebar is updated
-    // while (sidebarInfo.curGroup !== 'commitCompleted') {
-    //   await new Promise(r => setTimeout(r, 500));
-    // }
+    if (ebm.isDummy === undefined) {
+      while (sidebarInfo.curGroup !== 'commitCompleted') {
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
 
     // Update the footer message
     let curEditBaseline = 0;

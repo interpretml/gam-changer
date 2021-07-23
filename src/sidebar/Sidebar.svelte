@@ -11,6 +11,7 @@
   export let sidebarStore;
   export let historyStore;
   export let width;
+  export let sampleDataInitialized;
 
   let sidebarInfo = {};
   let component = null;
@@ -154,12 +155,19 @@
   <div class='content'>
 
     <div class='tab' class:hidden={sidebarInfo.selectedTab !== 'effect'}>
-      <!-- <ClassificationMetrics sidebarStore={sidebarStore}/> -->
-      <Dropzone sidebarStore={sidebarStore} dataType={'sampleData'}/>
+      {#if sampleDataInitialized}
+        <ClassificationMetrics sidebarStore={sidebarStore}/>
+      {:else}
+        <Dropzone sidebarStore={sidebarStore} dataType={'sampleData'}/>
+      {/if}
     </div>
 
     <div class='tab' class:hidden={sidebarInfo.selectedTab !== 'feature'}>
-      <Feature sidebarStore={sidebarStore}/>
+      {#if sampleDataInitialized}
+        <Feature sidebarStore={sidebarStore}/>
+      {:else}
+        <Dropzone sidebarStore={sidebarStore} dataType={'sampleData'}/>
+      {/if}
     </div>
 
     <div class='tab' class:hidden={sidebarInfo.selectedTab !== 'history'}>

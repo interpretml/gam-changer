@@ -812,7 +812,11 @@
     </div>
 
     <div class='sidebar-wrapper' style={`width: ${sidebarWidth}px;`}>
-      <Sidebar sidebarStore={sidebarStore} historyStore={historyStore} width={sidebarWidth}/>
+      <Sidebar sidebarStore={sidebarStore}
+        historyStore={historyStore}
+        width={sidebarWidth}
+        sampleDataInitialized={sampleData !== null}
+      />
     </div>
   </div>
 

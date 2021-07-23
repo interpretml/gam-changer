@@ -85,6 +85,7 @@
       }
 
       value.previewHistory = i !== historyList.length - 1;
+      value.historyLastHead = value.historyHead;
       value.historyHead = i;
 
       // Force the effect scope to be global
