@@ -312,7 +312,6 @@ export const pushCurStateToHistoryStack = (state, type, description, historyStor
   let historyLength = 0;
   let sidebarInfo = get(sidebarStore);
 
-  console.log(type);
   historyStore.update(value => {
     const time = Date.now();
 
@@ -507,6 +506,31 @@ export const checkoutCommitHead = async (state, svg, multiMenu, resetContextMenu
   }
 
   // Step 5: Reset EBM bin definition
+  // This step is tricky when we have edited multiple features between the checkouts
+  // A0 -> A1 -> A2 -> B0 -> C0 -> C1 -> A3
+  // Backward (A3 -> A2), iterate backward, setEBM when we pass original graph
+  // Forward (A2 -> A3), iterate forward, if the next step changes featureName, setEBM
+  // at the cur step
+
+  // Backward
+  if (targetCommitIndex < sidebarInfo.historyLastHead) {
+    for (let i = sidebarInfo.historyLastHead; i >= targetCommitIndex; i--) {
+      let curCommit = curHistoryStoreValue[i];
+      if (curCommit.type === 'original') {
+        // await setEBM('current', curCommit.state.pointData);
+      }
+    }
+  } else {
+    // Forward
+    for (let i = sidebarInfo.historyLastHead + 1; i <= targetCommitIndex - 1; i++) {
+      let curCommit = curHistoryStoreValue[i];
+      let nextCommit = curHistoryStoreValue[i + 1];
+      if (nextCommit.featureName !== curCommit.featureName) {
+        // await setEBM('current', curCommit.state.pointData);
+      }
+    }
+  }
+
   await setEBM('current', state.pointData);
 
 
