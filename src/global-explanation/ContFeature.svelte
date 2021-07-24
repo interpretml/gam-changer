@@ -614,15 +614,18 @@
     });
 
     // Try to restore the last edit if possible
-    console.log(state.pointData);
     let hasBeenCreated = await tryRestoreLastEdit(state, svg, multiMenu, resetContextMenu,
       resetFeatureSidebar, historyStore, redoStack, setEBM, sidebarStore);
-    console.log(state.pointData);
 
     if (!hasBeenCreated) {
       // Push the initial state into the history stack
       pushCurStateToHistoryStack(state, 'original', 'original graph', historyStore, sidebarStore);
     }
+
+    // Update the HEAD
+    sidebarInfo.historyHead = get(historyStore).length - 1;
+    sidebarInfo.previewHistory = false;
+    sidebarStore.set(sidebarInfo);
 
     initialized = true;
   };

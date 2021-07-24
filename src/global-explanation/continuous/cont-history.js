@@ -428,19 +428,6 @@ export const tryRestoreLastEdit = async (state, svg, multiMenu, resetContextMenu
   // Restore the bin definition
   await setEBM('current', state.pointData);
 
-  // We force the effect scope to be global when switching features
-  // sidebarStore.update(value => {
-  //   value.curGroup = 'no action';
-  //   value.barData = JSON.parse(JSON.stringify(lastCommit.metrics.barData));
-  //   value.confusionMatrixData = JSON.parse(JSON.stringify(lastCommit.metrics.confusionMatrixData));
-  //   return value;
-  // });
-
-  // sidebarStore.update(value => {
-  //   value.curGroup = 'overwrite';
-  //   return value;
-  // });
-
   // Redraw the graph
   redrawOriginal(state, svg);
 
@@ -521,43 +508,26 @@ export const checkoutCommitHead = async (state, svg, multiMenu, resetContextMenu
   // clicks any editing, the orange line moves to current location)
   state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
 
-  // Step 5: Reset EBM bin definition
-  // This step is tricky when we have edited multiple features between the checkouts
-  // A0 -> A1 -> A2 -> B0 -> C0 -> C1 -> A3
-  // Backward (A3 -> A2), iterate backward, setEBM when we pass original graph
-  // Forward (A2 -> A3), iterate forward, if the next step changes featureName, setEBM
-  // at the cur step
-
-  // Backward
-  if (targetCommitIndex < sidebarInfo.historyLastHead) {
-    for (let i = sidebarInfo.historyLastHead; i >= targetCommitIndex; i--) {
-      let curCommit = curHistoryStoreValue[i];
-      if (curCommit.type === 'original') {
-        await setEBM('current', curCommit.state.pointData, curCommit.featureName);
-      }
-    }
-  } else {
-    // Forward
-    for (let i = sidebarInfo.historyLastHead + 1; i <= targetCommitIndex - 1; i++) {
-      let curCommit = curHistoryStoreValue[i];
-      let nextCommit = curHistoryStoreValue[i + 1];
-      if (nextCommit.featureName !== curCommit.featureName) {
-        // await setEBM('current', curCommit.state.pointData);
-      }
-    }
-  }
+  /**
+   * Step 5: Reset EBM bin definition
+   * This step is tricky when we have edited multiple features between the checkouts
+   * A0 -> A1 -> A2 -> B0 -> C0 -> C1 -> A3
+   * Backward (A3 -> A2), iterate backward, setEBM when we pass original graph
+   * Forward (A2 -> A3), iterate forward, if the next step changes featureName, setEBM
+   * at the cur step.
+   * 
+   * Another approach is to not restore the historical metrics when jump in history
+   * stack => the current is always the latest' edit metric, last would be NA
+   */
 
   await setEBM('current', state.pointData);
 
   // Change the currently editing feature to the target
   setEBMEditingFeature(targetCommit.featureName);
 
-
-  // Update the metrics, we force it to be global scope
+  // Update the metrics, we has forced it to be global scope
   sidebarStore.update(value => {
-    value.barData = JSON.parse(JSON.stringify(targetCommit.metrics.barData));
-    value.confusionMatrixData = JSON.parse(JSON.stringify(targetCommit.metrics.confusionMatrixData));
-    value.curGroup = 'overwrite';
+    value.curGroup = 'nullify-last';
     return value;
   });
 

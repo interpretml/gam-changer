@@ -238,7 +238,7 @@
       };
       break;
 
-    case 'copy-current-last':
+    case 'nullify-last':
       Object.keys(confusionMatrixData).forEach(k => confusionMatrixData[k][1] = null);
       Object.keys(barData).forEach(k => barData[k][1] = null);
       break;
