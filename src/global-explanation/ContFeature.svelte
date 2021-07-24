@@ -221,8 +221,13 @@
 
     // User clicks to preview a previous edit
     case 'headChanged': {
-      checkoutCommitHead(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
-        historyStore, setEBM, setEBMEditingFeature, sidebarStore);
+      const headFeatureName = get(historyStore)[value.historyHead].featureName;
+      // Only checkout the commit if it is still on the same feature
+      // Otherwise, this component should wait for its parent to kill it
+      if (headFeatureName === state.featureName) {
+        checkoutCommitHead(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+          historyStore, setEBM, setEBMEditingFeature, sidebarStore);
+      }
       break;
     }
 

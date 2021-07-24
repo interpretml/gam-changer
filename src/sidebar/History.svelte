@@ -186,8 +186,8 @@
       sidebarInfo.effectScope = 'global';
     }
 
-    sidebarStore.set(sidebarInfo);
     historyStore.set(historyList);
+    sidebarStore.set(sidebarInfo);
 
   };
 

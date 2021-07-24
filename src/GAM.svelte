@@ -30,6 +30,7 @@
   let featureSelect = null;
   let selectedFeature = null;
   let updateChanger = true;
+  let featureSelectList = null;
 
   // Some view size constants
   const svgHeight = 500;
@@ -105,6 +106,34 @@
 
       sidebarStore.set(sidebarInfo);
     }
+
+    // Double check to make sure the head matches the current feature
+    if (value.curGroup === 'headChanged') {
+      const headFeatureName = get(historyStore)[value.historyHead].featureName;
+      if (headFeatureName !== selectedFeature.name) {
+        // Search the feature name in all types
+        const types = ['continuous', 'categorical', 'interaction'];
+        types.forEach(t => {
+          let curIndex = featureSelectList[t].findIndex(d => d.name === headFeatureName);
+          if (curIndex !== -1) {
+            selectedFeature = {};
+            selectedFeature.type = t;
+            selectedFeature.data = data.features[featureSelectList.continuous[curIndex].featureID];
+            selectedFeature.id = featureSelectList.continuous[curIndex].featureID;
+            selectedFeature.name = featureSelectList.continuous[curIndex].name;
+            featureSelect.selectedIndex = curIndex;
+            
+            sidebarInfo.featureName = headFeatureName;
+            ebm.setEditingFeature(headFeatureName);
+
+            resizeFeatureSelect();
+            updateChanger = !updateChanger;
+
+            sidebarStore.set(sidebarInfo);
+          }
+        });
+      }
+    }
     
   });
 
@@ -143,7 +172,7 @@
     isClassification = true;
 
     // Create a list of feature select options (grouped by types, sorted by importance)
-    let featureSelectList = {
+    featureSelectList = {
       continuous: [],
       categorical: [],
       interaction: []
@@ -228,7 +257,7 @@
     sampleData.featureNames.forEach((d, i) => sampleDataNameMap.set(d, i));
 
     // Create a list of feature select options (grouped by types, sorted by importance)
-    let featureSelectList = {
+    featureSelectList = {
       continuous: [],
       categorical: [],
       interaction: []

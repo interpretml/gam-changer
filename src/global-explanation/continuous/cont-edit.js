@@ -71,7 +71,7 @@ export const redrawOriginal = (state, svg, bounce=true, animationEndFunc=undefin
       .period(0.35)
     );
   
-  let transNoBounce = d3.transition('restore')
+  let transNoBounce = d3.transition('restoreNo')
     .duration(500)
     .ease(d3.easeLinear);
 
