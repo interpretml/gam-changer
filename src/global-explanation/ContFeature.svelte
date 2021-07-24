@@ -619,13 +619,16 @@
 
     if (!hasBeenCreated) {
       // Push the initial state into the history stack
-      pushCurStateToHistoryStack(state, 'original', 'original graph', historyStore, sidebarStore);
+      pushCurStateToHistoryStack(state, 'original', 'Original graph', historyStore, sidebarStore);
+    } else {
+      pushCurStateToHistoryStack(state, 'original',
+        `Reloaded commit ${hasBeenCreated.substring(0, 7)}`,
+        historyStore, sidebarStore);
     }
 
     // Update the HEAD
     sidebarInfo.historyHead = get(historyStore).length - 1;
     sidebarInfo.previewHistory = false;
-    sidebarStore.set(sidebarInfo);
 
     initialized = true;
   };

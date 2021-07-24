@@ -6,7 +6,8 @@ import decreasingIconSVG from '../img/decreasing-icon.svg';
 import upDownIconSVG from '../img/updown-icon.svg';
 import trashIconSVG from '../img/trash-icon.svg';
 import trashCommitIconSVG from '../img/trash-commit-icon.svg';
-import eyeIconSVG from '../img/eye-icon.svg';
+import rightArrowIconSVG from '../img/right-arrow-icon.svg';
+import locationIconSVG from '../img/location-icon.svg';
 import upIconSVG from '../img/up-icon.svg';
 import downIconSVG from '../img/down-icon.svg';
 import interpolateIconSVG from '../img/interpolate-icon.svg';
@@ -65,8 +66,12 @@ export const bindInlineSVG = (component) => {
     .html(preProcessSVG(trashCommitIconSVG));
 
   d3.select(component)
-    .selectAll('.svg-icon.icon-eye')
-    .html(preProcessSVG(eyeIconSVG));
+    .selectAll('.svg-icon.icon-right-arrow')
+    .html(preProcessSVG(rightArrowIconSVG));
+
+  d3.select(component)
+    .selectAll('.svg-icon.icon-location')
+    .html(preProcessSVG(locationIconSVG));
 
   d3.select(component)
     .selectAll('.svg-icon.icon-interpolate')

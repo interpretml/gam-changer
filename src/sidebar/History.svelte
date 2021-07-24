@@ -204,6 +204,11 @@
     padding: 5px 10px;
     font-size: 0.9em;
     gap: 5px;
+    // opacity: 0.5;
+
+    // &.current {
+    //   opacity: 1;
+    // }
   }
 
   .commit-title {
@@ -386,6 +391,10 @@
     }
   }
 
+  .hidden {
+    display: none;
+  }
+
 </style>
 
 <div class='history-tab' bind:this={component}>
@@ -446,7 +455,7 @@
             {/if}
           </div>
 
-          <div class='commit-checkbox' title='confirm the edit'
+          <div class='commit-checkbox' title='confirm'
             on:click={() => checkboxClicked(i)}
           >
             <div class='checkbox-box' class:hidden={history.reviewed}>
@@ -458,12 +467,19 @@
             </div>
           </div>
 
-          <div class='svg-icon icon-eye'
-            class:selected={sidebarInfo.historyHead === i}
+          <div class='svg-icon icon-location selected'
+            class:hidden={sidebarInfo.historyHead !== i}
+            title='current'
+            style='cursor: default;'
+          ></div>
+
+          <div class='svg-icon icon-right-arrow'
+            class:hidden={sidebarInfo.historyHead === i}
             class:disabled={sidebarInfo.featureName !== history.featureName}
-            title='preview'
+            title='check out'
             on:click={() => previewClicked(i)}
           ></div>
+
 
           {#if history.type !== 'original'}
             <div class='svg-icon icon-commit-delete' title='delete'
