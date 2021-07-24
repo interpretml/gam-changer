@@ -12,6 +12,7 @@
   export let historyStore;
   export let width;
   export let sampleDataInitialized;
+  export let ebm;
 
   let sidebarInfo = {};
   let component = null;
@@ -171,7 +172,7 @@
     </div>
 
     <div class='tab' class:hidden={sidebarInfo.selectedTab !== 'history'}>
-      <History sidebarStore={sidebarStore} historyStore={historyStore}/>
+      <History sidebarStore={sidebarStore} historyStore={historyStore} ebm={ebm}/>
     </div>
     
   </div>

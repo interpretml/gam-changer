@@ -815,6 +815,7 @@
         historyStore={historyStore}
         width={sidebarWidth}
         sampleDataInitialized={sampleData !== null}
+        ebm={ebm}
       />
     </div>
   </div>

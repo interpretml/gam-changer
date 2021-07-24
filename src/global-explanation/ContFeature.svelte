@@ -725,9 +725,10 @@
    * Overwrite the edge definition in the EBM WASM model.
    * @param {string} curGroup Message to the metrics sidebar
    * @param {object} curNodeData Node data in `state`
+   * @param {featureName} featureName The name of feature to be edited
    * @param {bool} transfer If the new metrics need to be transferred to the sidebar
    */
-  const setEBM = async (curGroup, curNodeData, transfer=true) => {
+  const setEBM = async (curGroup, curNodeData, featureName=undefined, transfer=true) => {
 
     // Update the complete bin edge definition in the EBM model
     let newBinEdges = [];
@@ -755,7 +756,7 @@
     newScores.push(curPoint.y);
     curPoint.ebmID = curEBMID;
 
-    await ebm.setModel(newBinEdges, newScores);
+    await ebm.setModel(newBinEdges, newScores, featureName);
 
     if (transfer) {
       switch(sidebarInfo.effectScope) {

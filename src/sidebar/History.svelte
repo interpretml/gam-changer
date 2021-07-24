@@ -9,6 +9,7 @@
   
   export let sidebarStore;
   export let historyStore;
+  export let ebm;
 
   let component = null;
   let historyList = [];
@@ -36,6 +37,43 @@
     historyList = value;
     needToBindSVGs = true;
   });
+
+  /**
+   * Overwrite the edge definition in the EBM WASM model.
+   * @param {string} curGroup Message to the metrics sidebar
+   * @param {object} curNodeData Node data in `state`
+   * @param {featureName} featureName The name of feature to be edited
+   */
+  const setEBM = async (curGroup, curNodeData, featureName=undefined) => {
+
+    // Update the complete bin edge definition in the EBM model
+    let newBinEdges = [];
+    let newScores = [];
+
+    // The left point will always have index 0
+    let curPoint = curNodeData[0];
+    let curEBMID = 0;
+
+    while (curPoint.rightPointID !== null) {
+      // Collect x and y
+      newBinEdges.push(curPoint.x);
+      newScores.push(curPoint.y);
+
+      // Update the new ID so we can map them to bin indexes later (needed for
+      // selection to check sample number)
+      curPoint.ebmID = curEBMID;
+      curEBMID++;
+
+      curPoint = curNodeData[curPoint.rightPointID];
+    }
+
+    // Add the right node
+    newBinEdges.push(curPoint.x);
+    newScores.push(curPoint.y);
+    curPoint.ebmID = curEBMID;
+
+    await ebm.setModel(newBinEdges, newScores, featureName);
+  };
   
   const initData = async() => {
     let fakeHistoryList = await d3.json('/data/history.json');
@@ -94,7 +132,7 @@
     });
   };
 
-  const deleteClicked = (i) => {
+  const deleteClicked = async (i) => {
 
     // Search the history stack to see if it is the last commit on this feature
     const featureName = historyList[i].featureName;
@@ -115,11 +153,30 @@
       result = confirm('Deleting a commit cannot be undone. Is it OK?');
     }
 
-    if (result) {
-      historyList = historyList.slice(0, i);
+    if (!result) {
+      return;
     }
 
+    // Iterate the end to i, delete all commits on this feature
+    for (let j = historyList.length - 1; j >= i; j--) {
+      if (historyList[j].featureName === featureName) {
+        historyList.splice(j, 1);
+      }
+    }
+
+    // Need to reset EBM (fallback to the last commit on this feature)
+    // We can always find a commit to fall back to because the first
+    // original commit cannot never be deleted
+    for (let j = i - 1; j >= 0; j--) {
+      if (historyList[j].featureName === featureName) {
+        await setEBM('current', historyList[j].state.pointData, featureName);
+        break;
+      }
+    }
+
+
     // Update the HEAD if HEAD is at/after the deleted commit
+    // If if the HEAD is on a different feature, the index is influenced
     if (sidebarInfo.historyHead >= i) {
       sidebarInfo.curGroup = 'headChanged';
       sidebarInfo.previewHistory = false;
