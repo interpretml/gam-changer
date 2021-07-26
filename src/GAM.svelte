@@ -242,10 +242,11 @@
     data = await d3.json('/data/iow-house-ebm-binary.json');
     // let loadedData = await d3.json('/data/iow-house-ebm.json');
     // let loadedData = await d3.json('/data/medical-ebm.json');
-
     console.log(data);
 
     sampleData = await d3.json('/data/iow-house-sample-binary.json');
+
+    console.log(sampleData);
     console.log('loaded data');
 
     // Create the sidebar feature data
@@ -410,7 +411,17 @@
       let allReviewed = true;
       historyList.forEach(d => allReviewed = allReviewed && d.reviewed);
       if (allReviewed) {
-        downloadJSON(historyList, d3.select(component).select('#download-anchor'), 'history');
+        let fileName = new Date().toLocaleDateString().replaceAll('/', '-');
+        fileName = `edit-${fileName}.gamchanger`;
+
+        // Create the .gamchanger project file
+        let downloadData = {
+          modelData: data,
+          sampleData: sampleData,
+          historyList: historyList
+        };
+
+        downloadJSON(downloadData, d3.select(component).select('#download-anchor'), fileName);
       } else {
         alert('You need to confirm all edits in the History panel (click 👍 icons) before saving the model.');
       }

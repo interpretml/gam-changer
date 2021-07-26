@@ -1086,7 +1086,7 @@
     const binNum = state.selectedInfo.nodeData.length;
     const binLeft = state.selectedInfo.nodeData[0];
     const binRight = state.pointData[state.pointData[state.selectedInfo.nodeData[binNum - 1].id].rightPointID];
-    const binRange = binRight === undefined ? `${binLeft.x} <= x` : `${binLeft.x} <= x < ${binRight.x}`;
+    const binRange = binRight === undefined ? `${round(binLeft.x, 2)} <= x` : `${round(binLeft.x, 2)} <= x < ${round(binRight.x, 2)}`;
     const message = `${curEditBaseline >= 0 ? 'Increased' : 'Decreased'} scores of ${binNum} ` +
       `bins (${binRange}) by ${round(Math.abs(curEditBaseline), 2)}.`;
 
@@ -1540,7 +1540,7 @@
     const binLeft = state.selectedInfo.nodeData[0];
     const binRight = state.pointData[state.pointData[
       state.selectedInfo.nodeData[state.selectedInfo.nodeData.length - 1].id].rightPointID];
-    const binRange = binRight === undefined ? `${binLeft.x} <= x` : `${binLeft.x} <= x < ${binRight.x}`;
+    const binRange = binRight === undefined ? `${round(binLeft.x, 2)} <= x` : `${round(binLeft.x, 2)} <= x < ${round(binRight.x, 2)}`;
     let description = '';
 
     switch(editType) {

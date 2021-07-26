@@ -89,10 +89,10 @@ export const hashString = function (str, seed = 0) {
   return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 };
 
-export const downloadJSON = (object, anchorSelect, fileName='download') => {
+export const downloadJSON = (object, anchorSelect, fileName='download.json') => {
   let dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(object));
   var dlAnchorElem = anchorSelect.node();
   dlAnchorElem.setAttribute('href', dataStr);
-  dlAnchorElem.setAttribute('download', `${fileName}.json`);
+  dlAnchorElem.setAttribute('download', `${fileName}`);
   dlAnchorElem.click();
 };

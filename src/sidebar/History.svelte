@@ -1,7 +1,7 @@
 <script>
 
   import * as d3 from 'd3';
-  import { onMount, afterUpdate } from 'svelte';
+  import { onMount, beforeUpdate, afterUpdate } from 'svelte';
   import { slide, fade, crossfade } from 'svelte/transition';
   import { quadInOut, expoInOut, cubicInOut } from 'svelte/easing';
   import { round, shuffle } from '../utils/utils';
@@ -15,6 +15,10 @@
   let historyList = [];
   let sidebarInfo = null;
   let needToBindSVGs = false;
+
+  // Auto scroll
+  let autoscroll = null;
+  let historyDIV = null;
 
   const editTypeIconMap = {
     'increasing': 'icon-increasing',
@@ -193,7 +197,20 @@
 
   initData();
 
+  // beforeUpdate(() => {
+  //   if (historyDIV) {
+  //     console.log(historyDIV.offsetHeight, historyDIV.scrollTop, historyDIV.scrollHeight);
+  //     console.log(historyDIV.offsetHeight + historyDIV.scrollTop > historyDIV.scrollHeight);
+  //   }
+  //   autoscroll = historyDIV &&
+  //     (historyDIV.offsetHeight + historyDIV.scrollTop) > (historyDIV.scrollHeight );
+  // });
+
   afterUpdate(() => {
+    // if (autoscroll) {
+    //   historyDIV.scrollTo(0, historyDIV.scrollHeight);
+    // }
+
     if (needToBindSVGs) {
       bindInlineSVG(component);
       needToBindSVGs = false;
@@ -460,7 +477,7 @@
 
   </div>
 
-  <div class='history'>
+  <div class='history' bind:this={historyDIV}>
 
     {#each historyList as history, i}
 
@@ -537,12 +554,10 @@
             on:click={() => previewClicked(i)}
           ></div>
 
-
-          {#if history.type !== 'original'}
-            <div class='svg-icon icon-commit-delete' title='delete'
-              on:click={() => deleteClicked(i)}
-            ></div>
-          {/if}
+          <div class='svg-icon icon-commit-delete' title='delete'
+            class:disabled={history.type === 'original'}
+            on:click={() => deleteClicked(i)}
+          ></div>
 
         </div>
 
