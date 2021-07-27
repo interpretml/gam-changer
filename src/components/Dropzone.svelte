@@ -1,4 +1,9 @@
 <script>
+  import * as d3 from 'd3';
+  import { onMount } from 'svelte';
+
+  import oneIconSVG from '../img/one-icon.svg';
+  import twoIconSVG from '../img/two-icon.svg';
 
   // 'sampleData' or 'modelData'
   export let dataType = 'sampleData';
@@ -10,6 +15,26 @@
   let dragElement = null;
 
   let errorMessage = ' ';
+
+  // Bind the SVGs
+  const preProcessSVG = (svgString) => {
+    return svgString.replaceAll('black', 'currentcolor')
+      .replaceAll('fill:none', 'fill:currentcolor')
+      .replaceAll('stroke:none', 'fill:currentcolor');
+  };
+
+  /**
+   * Dynamically bind SVG files as inline SVG strings in this component
+   */
+  const bindInlineSVG = () => {
+    d3.select(component)
+      .selectAll('.svg-icon.icon-one')
+      .html(preProcessSVG(oneIconSVG));
+
+    d3.select(component)
+      .selectAll('.svg-icon.icon-two')
+      .html(preProcessSVG(twoIconSVG));
+  };
 
   const clickHandler = () => {
     inputElem.click();
@@ -126,7 +151,7 @@
     console.log('input clicked');
   };
 
-
+  onMount(() => {bindInlineSVG();});
 
 </script>
 
@@ -153,23 +178,36 @@
     border-radius: 3px;
     transition: border 300ms ease-in-out;
     padding: 0 10px;
-    gap: 12px;
+    gap: 18px;
 
     &.drag-over {
       border: 3px dashed $blue-300;
     }
   }
 
+  .svg-icon {
+    color: hsl(0, 0%, 90%);
+    fill: hsl(0, 0%, 90%);
+    display: inline-flex;
+    align-items: center;
+    pointer-events: none;
+
+    :global(svg) {
+      width: 40px;
+      height: 40px;
+    }
+  }
+
   .drop-message {
     text-align: center;
-    color: hsl(0, 0%, 60%);
+    color: hsl(0, 0%, 50%);
     cursor: default;
   }
 
   .help-message {
     text-align: center;
     font-size: 0.9em;
-    color: hsl(0, 0%, 60%);
+    color: hsl(0, 0%, 50%);
     padding: 2px 8px;
     background: hsla(0, 0%, 50%, 0.05);
     border-radius: 5px;
@@ -207,8 +245,18 @@
     on:dragleave={dragLeaveHandler}
     on:drop={dropHandler}
   >
+    {#if dataType === 'modelData'}
+      <div class='svg-icon icon-one'></div>
+    {:else}
+      <div class='svg-icon icon-two'></div>
+    {/if}
+    
     <div class='drop-message'>
-      Drop the {dataType === 'sampleData' ? 'sample data' : 'model data'} JSON file here to start
+      {#if dataType === 'modelData'}
+        Drop a <u>model file</u> (.json) or a <u>GAM Changer document</u> (.gamchanger) here to start
+      {:else}
+        Drop a <u>sample data file</u> (.json) file here to start
+      {/if}
     </div>
 
     <div class='help-message' on:click={(e) => {e.stopPropagation();}}>

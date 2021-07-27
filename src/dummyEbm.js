@@ -3,6 +3,7 @@ const initDummyEBM = (_featureData, _sampleData, _editingFeature, _isClassificat
   class EBM {
     // Store an instance of WASM EBM
     ebm;
+    editingFeatureName;
 
     constructor(featureData, sampleData, editingFeature, isClassification) {
 
@@ -121,6 +122,15 @@ const initDummyEBM = (_featureData, _sampleData, _editingFeature, _isClassificat
       return;
     }
 
+    /**
+     * Change the currently editing feature. If this feature has not been edited
+     * before, EBM wasm internally creates a bin-sample mapping for it.
+     * Need to call this function before update() or set() ebm on any feature.
+     * @param {string} featureName Name of the editing feature
+     */
+    setEditingFeature(featureName) {
+      this.editingFeatureName = featureName;
+    }
   }
 
   let model = new EBM(_featureData, _sampleData, _editingFeature, _isClassification);

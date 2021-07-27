@@ -13,7 +13,7 @@
   import { initEBM } from './ebm';
   import { initDummyEBM} from './dummyEbm';
   import { onMount } from 'svelte';
-  import { writable, derived, get } from 'svelte/store';
+  import { writable, get } from 'svelte/store';
   import { downloadJSON, round } from './utils/utils';
 
   import redoIconSVG from './img/redo-icon.svg';
@@ -91,7 +91,9 @@
       sampleData = value.loadedData;
       value.loadedData = null;
       value.curGroup = '';
-      console.log(sampleData);
+
+      // Initialize the sidebar view
+      initSidebar();
 
       sidebarStore.set(sidebarInfo);
     }
@@ -102,7 +104,7 @@
       value.curGroup = '';
 
       // Initialize the GAM View
-      initGAMView(data);
+      initGAMView();
 
       sidebarStore.set(sidebarInfo);
     }
@@ -165,11 +167,12 @@
 
   /**
    * Initialize the GAM view
-   * @param data Model data
+   * This function assumes the variable `data` is not null
    */
-  const initGAMView = (data) => {
+  const initGAMView = () => {
+    if (data === null) return;
 
-    isClassification = true;
+    isClassification = data.isClassifier;
 
     // Create a list of feature select options (grouped by types, sorted by importance)
     featureSelectList = {
@@ -185,9 +188,6 @@
         importance: f.importance
       });
     });
-
-    // Sort each feature type by importance score
-    // Object.keys(featureSelectList).forEach(k => featureSelectList[k].sort((a, b) => b.importance - a.importance));
 
     // Sort each feature type by alphabetical order
     Object.keys(featureSelectList).forEach(k => featureSelectList[k].sort((a, b) => a.name.localeCompare(b.name)));
@@ -225,6 +225,10 @@
 
     resizeFeatureSelect();
     updateChanger = !updateChanger;
+
+    // Need to set the name for EBM (even if it is a dummy EBM) so that
+    // ContFeature can start drawing
+    ebm.setEditingFeature(selectedFeature.name);
 
     sidebarInfo.totalSampleNum = 0;
     footerStore.update(value => {
@@ -234,20 +238,19 @@
     });
 
     sidebarInfo.featureName = selectedFeature.name;
+
+    // If the user has already loaded sampleData, we init sidebar here too
+    if (sampleData !== null) initSidebar();
   };
 
-  const initData = async () => {
-    console.log('loading data');
-    isClassification = true;
-    data = await d3.json('/data/iow-house-ebm-binary.json');
-    // let loadedData = await d3.json('/data/iow-house-ebm.json');
-    // let loadedData = await d3.json('/data/medical-ebm.json');
-    console.log(data);
+  /**
+   * Initialize the sidebar view
+   * This function assumes that both `data` and `sampleData` are loaded
+   */
+  const initSidebar = async () => {
+    if (data === null || sampleData === null) return;
 
-    sampleData = await d3.json('/data/iow-house-sample-binary.json');
-
-    console.log(sampleData);
-    console.log('loaded data');
+    isClassification = data.isClassifier;
 
     // Create the sidebar feature data
     let featurePlotData = {cont: [], cat: []};
@@ -256,63 +259,6 @@
 
     let sampleDataNameMap = new Map();
     sampleData.featureNames.forEach((d, i) => sampleDataNameMap.set(d, i));
-
-    // Create a list of feature select options (grouped by types, sorted by importance)
-    featureSelectList = {
-      continuous: [],
-      categorical: [],
-      interaction: []
-    };
-
-    data.features.forEach((f, i) => {
-      featureSelectList[f.type].push({
-        name: f.name,
-        featureID: i,
-        importance: f.importance
-      });
-    });
-
-    // Sort each feature type by importance score
-    // Object.keys(featureSelectList).forEach(k => featureSelectList[k].sort((a, b) => b.importance - a.importance));
-
-    // Sort each feature type by alphabetical order
-    Object.keys(featureSelectList).forEach(k => featureSelectList[k].sort((a, b) => a.name.localeCompare(b.name)));
-
-    // Populate the slice option list
-    let selectElement = d3.select(component).select('#feature-select');
-    
-    // Remove existing options
-    selectElement.selectAll('option').remove();
-
-    let featureGroups = ['continuous', 'categorical', 'interaction'];
-
-    featureGroups.forEach(type => {
-      let groupName = type.charAt(0).toUpperCase() + type.slice(1);
-      let optGroup = selectElement.append('optgroup')
-        .attr('label', groupName + ' (name - importance)');
-      
-      featureSelectList[type].forEach(opt => {
-        optGroup.append('option')
-          .attr('value', opt.featureID)
-          .attr('data-level', opt.level)
-          .text(`${opt.name} - ${round(opt.importance, 3)}`);
-      });
-    });
-
-    // Initialize GAM Changer using the continuous variable with the highest importance
-    const maxImportanceIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
-
-    selectedFeature = {};
-    selectedFeature.type = 'continuous';
-    selectedFeature.data = data.features[featureSelectList.continuous[maxImportanceIndex].featureID];
-    selectedFeature.id = featureSelectList.continuous[maxImportanceIndex].featureID;
-    selectedFeature.name = featureSelectList.continuous[maxImportanceIndex].name;
-    featureSelect.selectedIndex = maxImportanceIndex;
-
-    resizeFeatureSelect();
-    updateChanger = !updateChanger;
-
-    sidebarInfo.featureName = selectedFeature.name;
 
     // Initialize an EBM object
     ebm = await initEBM(data, sampleData, selectedFeature.name, isClassification);
@@ -392,7 +338,23 @@
     sidebarInfo.sliceOptions = sliceOptions;
     
     sidebarStore.set(sidebarInfo);
+  };
 
+  const initData = async () => {
+    console.log('loading data');
+    isClassification = true;
+    data = await d3.json('/data/iow-house-ebm-binary.json');
+    // let loadedData = await d3.json('/data/iow-house-ebm.json');
+    // let loadedData = await d3.json('/data/medical-ebm.json');
+    console.log(data);
+
+    sampleData = await d3.json('/data/iow-house-sample-binary.json');
+
+    console.log(sampleData);
+    console.log('loaded data');
+
+    initGAMView();
+    initSidebar();
   };
 
   /**
@@ -533,7 +495,7 @@
       });
   };
 
-  initData();
+  // initData();
 
   onMount(() => {
     bindInlineSVG();
