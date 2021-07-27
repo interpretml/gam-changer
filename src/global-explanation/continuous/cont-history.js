@@ -1,5 +1,4 @@
 import { quitSelection } from './cont-brush';
-import { get } from 'svelte/store';
 import { drawLastEdit, redrawOriginal } from './cont-edit';
 import { MD5 } from '../../utils/md5';
 
@@ -19,7 +18,12 @@ export const undoHandler = async (state, svg, multiMenu, resetContextMenu, reset
   historyStore, redoStack, setEBM, sidebarStore) => {
   
   // If the current edit is original, we do not undo
-  let curHistoryStoreValue = get(historyStore);
+  let curHistoryStoreValue;
+  historyStore.update(value => {
+    curHistoryStoreValue = value;
+    return value;
+  });
+
   if (curHistoryStoreValue[curHistoryStoreValue.length - 1].type === 'original' ||
     state.featureName !== curHistoryStoreValue[curHistoryStoreValue.length - 1].featureName
   ) {
@@ -118,7 +122,7 @@ export const undoHandler = async (state, svg, multiMenu, resetContextMenu, reset
    * 3. Slice: load the metrics from history stack (no draw);
    *  then reset EBM to compute the metrics
    */
-  let sidebarInfo = get(sidebarStore);
+  let sidebarInfo;
 
   // No matter what scope it is, we need to reload the global metrics from the
   // history stack
@@ -126,6 +130,7 @@ export const undoHandler = async (state, svg, multiMenu, resetContextMenu, reset
     value.curGroup = 'no action';
     value.barData = JSON.parse(JSON.stringify(lastCommit.metrics.barData));
     value.confusionMatrixData = JSON.parse(JSON.stringify(lastCommit.metrics.confusionMatrixData));
+    sidebarInfo = value;
     return value;
   });
 
@@ -143,7 +148,11 @@ export const undoHandler = async (state, svg, multiMenu, resetContextMenu, reset
     });
     break;
   case 'slice': {
-    let historyInfo = get(historyStore);
+    let historyInfo;
+    historyStore.update(value => {
+      historyInfo = value;
+      return value;
+    });
     await setEBM('original-only', historyInfo[0].state.pointData);
 
     // Step 2.2: Last edit
@@ -190,10 +199,17 @@ export const redoHandler = async (state, svg, multiMenu, resetContextMenu, reset
   // Step 1: If the user has selected some nodes, discard the selections
   quitSelection(svg, state, multiMenu, resetContextMenu, resetFeatureSidebar);
 
+  let curHistoryStoreValue;
+
+  historyStore.update(value => {
+    curHistoryStoreValue = value;
+    return value;
+  });
+
   // Step 1.5: Update the HEAD
   // This step must be done before updating the historyStore!
   sidebarStore.update(value => {
-    value.historyHead = get(historyStore).length;
+    value.historyHead = curHistoryStoreValue.length;
     return value;
   });
 
@@ -202,10 +218,9 @@ export const redoHandler = async (state, svg, multiMenu, resetContextMenu, reset
 
   historyStore.update(value => {
     value.push(newCommit);
+    curHistoryStoreValue = value;
     return value;
   });
-
-  let curHistoryStoreValue = get(historyStore);
 
   // Replace the current state with the new commit
   state.additiveData = newCommit.state.additiveData;
@@ -252,7 +267,7 @@ export const redoHandler = async (state, svg, multiMenu, resetContextMenu, reset
    * 3. Slice: load the metrics from history stack (no draw);
    *  then reset EBM to compute the metrics
    */
-  let sidebarInfo = get(sidebarStore);
+  let sidebarInfo;
 
   // No matter what scope it is, we need to reload the global metrics from the
   // history stack
@@ -260,6 +275,7 @@ export const redoHandler = async (state, svg, multiMenu, resetContextMenu, reset
     value.curGroup = 'no action';
     value.barData = JSON.parse(JSON.stringify(newCommit.metrics.barData));
     value.confusionMatrixData = JSON.parse(JSON.stringify(newCommit.metrics.confusionMatrixData));
+    sidebarInfo = value;
     return value;
   });
 
@@ -277,7 +293,12 @@ export const redoHandler = async (state, svg, multiMenu, resetContextMenu, reset
     });
     break;
   case 'slice': {
-    let historyInfo = get(historyStore);
+    let historyInfo;
+    historyStore.update(value => {
+      historyInfo = value;
+      return value;
+    });
+
     await setEBM('original-only', historyInfo[0].state.pointData);
 
     // Step 2.2: Last edit
@@ -318,7 +339,12 @@ export const redoHandler = async (state, svg, multiMenu, resetContextMenu, reset
 export const pushCurStateToHistoryStack = (state, type, description, historyStore, sidebarStore) => {
   // Push the new commit to the history stack
   let historyLength = 0;
-  let sidebarInfo = get(sidebarStore);
+  let sidebarInfo;
+
+  sidebarStore.update(value => {
+    sidebarInfo = value;
+    return value;
+  });
 
   historyStore.update(value => {
     const time = Date.now();
@@ -371,7 +397,12 @@ export const tryRestoreLastEdit = async (state, svg, multiMenu, resetContextMenu
   let lastCommit = null;
   let lastCommitID = -1;
   let lastLastCommit = null;
-  let curHistoryStoreValue = get(historyStore);
+  let curHistoryStoreValue;
+
+  historyStore.update(value => {
+    curHistoryStoreValue = value;
+    return value;
+  });
 
   // Try to find the last edit
   for (let i = curHistoryStoreValue.length - 1; i >= 0; i--) {
@@ -449,8 +480,17 @@ export const tryRestoreLastEdit = async (state, svg, multiMenu, resetContextMenu
 export const checkoutCommitHead = async (state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
   historyStore, setEBM, setEBMEditingFeature, sidebarStore) => {
 
-  let curHistoryStoreValue = get(historyStore);
-  let sidebarInfo = get(sidebarStore);
+  let curHistoryStoreValue;
+  historyStore.update(value => {
+    curHistoryStoreValue = value;
+    return value;
+  });
+
+  let sidebarInfo;
+  sidebarStore.update(value => {
+    sidebarInfo = value;
+    return value;
+  });
 
   let targetCommit = curHistoryStoreValue[sidebarInfo.historyHead];
   let targetCommitIndex = sidebarInfo.historyHead;

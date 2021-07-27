@@ -1,5 +1,4 @@
 <script>
-
   import * as d3 from 'd3';
   import { onMount, beforeUpdate, afterUpdate } from 'svelte';
   import { slide, fade, crossfade } from 'svelte/transition';

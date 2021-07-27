@@ -1,5 +1,4 @@
 import * as d3 from 'd3';
-import { get } from 'svelte/store';
 import { round } from '../../utils/utils';
 import { rScale, rExtent } from './cont-zoom';
 import { updateAdditiveDataBufferFromPointDataBuffer } from './cont-data';
