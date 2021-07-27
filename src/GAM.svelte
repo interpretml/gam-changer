@@ -295,6 +295,8 @@
           ebm.setModel(result.newBinEdges, result.newScores);
         }
       }
+
+      sidebarInfo.historyHead = historyList.length - 1;
     }
 
     selectedFeature = tempSelectedFeature;
@@ -302,7 +304,7 @@
 
     sidebarInfo.totalSampleNum = 0;
     sidebarInfo.featureName = selectedFeature.name;
-    sidebarInfo.historyHead = historyList.length - 1;
+    sidebarInfo.historyHead = 0;
     sidebarInfo.previewHistory = false;
 
     sidebarStore.set(sidebarInfo);
@@ -418,12 +420,14 @@
   const initData = async () => {
     console.log('loading data');
     isClassification = true;
-    data = await d3.json('/data/iow-house-ebm-binary.json');
+    // data = await d3.json('/data/iow-house-ebm-binary.json');
+    data = await d3.json('/data/mimic2-model.json');
     // let loadedData = await d3.json('/data/iow-house-ebm.json');
     // let loadedData = await d3.json('/data/medical-ebm.json');
     console.log(data);
 
-    sampleData = await d3.json('/data/iow-house-sample-binary.json');
+    // sampleData = await d3.json('/data/iow-house-sample-binary.json');
+    sampleData = await d3.json('/data/mimic2-sample-5000.json');
 
     console.log(sampleData);
     console.log('loaded data');
@@ -570,7 +574,7 @@
       });
   };
 
-  // initData();
+  initData();
 
   onMount(() => {
     bindInlineSVG();

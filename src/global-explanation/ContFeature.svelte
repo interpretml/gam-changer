@@ -638,6 +638,8 @@
         historyStore, sidebarStore);
     }
 
+    sidebarInfo.historyHead = historyList.length - 1;
+    sidebarInfo.previewHistory = false;
   };
 
   const getEBMMetrics = async (scope='global') => {

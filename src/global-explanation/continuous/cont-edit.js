@@ -6,6 +6,7 @@ import { SimpleLinearRegression } from '../../simple-linear-regression';
 
 // TODO: Uniform this variable across all files (use config file)
 const nodeStrokeWidth = 1;
+let idleTimeout = null;
 
 export const dragged = (e, state, svg, component, ebm, sidebarStore, footerStore, updateEBM) => {
 
