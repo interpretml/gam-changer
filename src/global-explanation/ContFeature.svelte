@@ -1,7 +1,6 @@
 <script>
   import * as d3 from 'd3';
   import { onMount, onDestroy } from 'svelte';
-  import { get } from 'svelte/store';
 
   import { initIsotonicRegression } from '../isotonic-regression';
 
@@ -106,6 +105,10 @@
   let increasingISO = null;
   let decreasingISO = null;
 
+  // Subscribe the history store
+  let historyList = null;
+  let historyStoreUnsubscribe = historyStore.subscribe(value => {historyList = value;});
+
   // Communicate with the sidebar
   let sidebarInfo = {};
   let sidebarStoreUnsubscribe = sidebarStore.subscribe(async value => {
@@ -153,23 +156,22 @@
         // Here we reset the EBM model completely, because
         // the intermediate historical events might update() different portions
         // of the EBM
-        let historyInfo = get(historyStore);
-        await setEBM('original-only', historyInfo[0].state.pointData);
+        await setEBM('original-only', historyList[0].state.pointData);
 
         // Step 2.2: Last edit
-        if (historyInfo.length > 1) {
-          await setEBM('last-only', historyInfo[historyInfo.length - 2].state.pointData);
+        if (historyList.length > 1) {
+          await setEBM('last-only', historyList[historyList.length - 2].state.pointData);
         }
 
         // Step 2.3: Current edit
         let curPointData = state.pointDataBuffer === null ?
-          historyInfo[historyInfo.length - 1].state.pointData :
+          historyList[historyList.length - 1].state.pointData :
           state.pointDataBuffer;
 
         await setEBM('current-only', curPointData);
 
         // Step 2.2.5: If we didn't restore the last edit, use the current edit as last
-        if (historyInfo.length === 1) {
+        if (historyList.length === 1) {
           sidebarInfo.curGroup = 'last';
           sidebarStore.set(sidebarInfo);
         }
@@ -195,23 +197,22 @@
       // Here we reset the EBM model completely, because
       // the intermediate historical events might update() different portions
       // of the EBM
-      let historyInfo = get(historyStore);
-      await setEBM('original-only', historyInfo[0].state.pointData);
+      await setEBM('original-only', historyList[0].state.pointData);
 
       // Step 2.2: Last edit
-      if (historyInfo.length > 1) {
-        await setEBM('last-only', historyInfo[historyInfo.length - 2].state.pointData);
+      if (historyList.length > 1) {
+        await setEBM('last-only', historyList[historyList.length - 2].state.pointData);
       }
 
       // Step 2.3: Current edit
       let curPointData = state.pointDataBuffer === null ?
-        historyInfo[historyInfo.length - 1].state.pointData :
+        historyList[historyList.length - 1].state.pointData :
         state.pointDataBuffer;
 
       await setEBM('current-only', curPointData);
 
       // Step 2.2.5: If we didn't restore the last edit, use the current edit as last
-      if (historyInfo.length === 1) {
+      if (historyList.length === 1) {
         sidebarInfo.curGroup = 'last';
         sidebarStore.set(sidebarInfo);
       }
@@ -221,7 +222,7 @@
 
     // User clicks to preview a previous edit
     case 'headChanged': {
-      const headFeatureName = get(historyStore)[value.historyHead].featureName;
+      const headFeatureName = historyList[value.historyHead].featureName;
       // Only checkout the commit if it is still on the same feature
       // Otherwise, this component should wait for its parent to kill it
       if (headFeatureName === state.featureName) {
@@ -237,12 +238,14 @@
   });
 
   // Listen to footer buttons
+  let footerValue = null;
   let footerActionUnsubscribe = footerActionStore.subscribe(message => {
+    footerValue = message;
     switch(message){
     case 'undo': {
       console.log('undo clicked');
 
-      if (get(historyStore).length > 1) {
+      if (historyList.length > 1) {
         undoHandler(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
           historyStore, redoStack, setEBM, sidebarStore);
       }
@@ -270,12 +273,15 @@
     footerActionStore.set('');
   });
 
-  onMount(() => {mounted = true;});
+  onMount(() => {
+    mounted = true;
+  });
 
   // Need to unsubscribe stores when the component is destroyed
   onDestroy(() => {
     sidebarStoreUnsubscribe();
     footerActionUnsubscribe();
+    historyStoreUnsubscribe();
   });
 
   /**
@@ -283,6 +289,7 @@
    * @param featureData
    */
   const drawFeature = async (featureData) => {
+    initialized = true;
     console.log(featureData);
 
     // Track the feature name
@@ -631,11 +638,6 @@
         historyStore, sidebarStore);
     }
 
-    // Update the HEAD
-    sidebarInfo.historyHead = get(historyStore).length - 1;
-    sidebarInfo.previewHistory = false;
-
-    initialized = true;
   };
 
   const getEBMMetrics = async (scope='global') => {
@@ -797,25 +799,24 @@
    * Set all metrics to null if there is no selection and the scope is 'selected'.
   */
   const nullifyMetrics = () => {
-    if (!state.selectedInfo.hasSelected && get(sidebarStore).effectScope === 'selected') {
+    if (!state.selectedInfo.hasSelected && sidebarInfo.effectScope === 'selected') {
       sidebarInfo.curGroup = 'nullify';
       sidebarStore.set(sidebarInfo);
     }
   };
 
   const computeSelectedEffects = async () => {
-    if (get(sidebarStore).effectScope === 'selected' && state.selectedInfo.hasSelected) {
+    if (sidebarInfo.effectScope === 'selected' && state.selectedInfo.hasSelected) {
       // Step 1: compute the original metrics
-      let historyInfo = get(historyStore);
-      await setEBM('original-only', historyInfo[0].state.pointData);
+      await setEBM('original-only', historyList[0].state.pointData);
 
       // Step 2: Last edit
-      if (historyInfo.length > 1) {
-        await setEBM('last-only', historyInfo[historyInfo.length - 2].state.pointData);
+      if (historyList.length > 1) {
+        await setEBM('last-only', historyList[historyList.length - 2].state.pointData);
       }
 
       // Step 3: Current edit
-      await setEBM('current-only', historyInfo[historyInfo.length - 1].state.pointData);
+      await setEBM('current-only', historyList[historyList.length - 1].state.pointData);
     }
   };
 
@@ -1311,7 +1312,6 @@
   */
   const multiMenuInterpolateUpdated = () => {
     console.log('interpolation updated');
-    let footerValue = get(footerStore);
     let beforeBinNum = 0;
 
     if (multiMenuControlInfo.interpolationMode === 'inplace') {

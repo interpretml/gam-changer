@@ -106,6 +106,9 @@
    * Load the data from sidebarInfo to barData, confusionMatrixData at index i
    */
   const updateData = (index, barData, confusionMatrixData, sidebarInfo) => {
+    if (sidebarInfo.confusionMatrix.length === 0) {
+      return;
+    }
     barData.accuracy[index] = sidebarInfo.accuracy;
     barData.rocAuc[index] = sidebarInfo.rocAuc;
     barData.balancedAccuracy[index] = sidebarInfo.balancedAccuracy;

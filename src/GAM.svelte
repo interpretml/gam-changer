@@ -13,8 +13,9 @@
   import { initEBM } from './ebm';
   import { initDummyEBM} from './dummyEbm';
   import { onMount } from 'svelte';
-  import { writable, get } from 'svelte/store';
+  import { writable } from 'svelte/store';
   import { downloadJSON, round } from './utils/utils';
+  import { getBinEdgeScore } from './utils/ebm-edit';
 
   import redoIconSVG from './img/redo-icon.svg';
   import undoIconSVG from './img/undo-icon.svg';
@@ -52,6 +53,10 @@
   };
 
   // Create stores to pass to child components
+  let historyList = null;
+  let historyStore = writable([]);
+  historyStore.subscribe(value => {historyList = value;});
+
   let sidebarInfo = {};
   let sidebarStore = writable({
     rmse: 0,
@@ -83,7 +88,7 @@
 
   let footerActionStore = writable('');
 
-  sidebarStore.subscribe(value => {
+  sidebarStore.subscribe(async value => {
     sidebarInfo = value;
 
     // Listen to sampleDataCreated and featureDataCreated (user uploads file)
@@ -93,7 +98,7 @@
       value.curGroup = '';
 
       // Initialize the sidebar view
-      initSidebar();
+      await initSidebar();
 
       sidebarStore.set(sidebarInfo);
     }
@@ -104,14 +109,36 @@
       value.curGroup = '';
 
       // Initialize the GAM View
-      initGAMView();
+      await initGAMView();
+
+      // If the user has already loaded sampleData, we init sidebar here too
+      if (sampleData !== null) await initSidebar();
+
+      sidebarStore.set(sidebarInfo);
+    }
+
+    // User can also directly upload a .gamchanger file
+    if (value.curGroup === 'gamchangerCreated') {
+      data = value.loadedData.modelData;
+      sampleData = value.loadedData.sampleData;
+
+      // Also restore the history stack
+      historyList = value.loadedData.historyList;
+      historyStore.set(historyList);
+
+      value.loadedData = null;
+      value.curGroup = '';
+
+      // Initialize the GAM View & sidebar view
+      await initGAMView();
+      await initSidebar();
 
       sidebarStore.set(sidebarInfo);
     }
 
     // Double check to make sure the head matches the current feature
     if (value.curGroup === 'headChanged') {
-      const headFeatureName = get(historyStore)[value.historyHead].featureName;
+      const headFeatureName = historyList[value.historyHead].featureName;
       if (headFeatureName !== selectedFeature.name) {
         // Search the feature name in all types
         const types = ['continuous', 'categorical', 'interaction'];
@@ -138,8 +165,6 @@
     }
     
   });
-
-  let historyStore = writable([]);
 
   // Bind the SVGs
   const preProcessSVG = (svgString) => {
@@ -169,7 +194,7 @@
    * Initialize the GAM view
    * This function assumes the variable `data` is not null
    */
-  const initGAMView = () => {
+  const initGAMView = async () => {
     if (data === null) return;
 
     isClassification = data.isClassifier;
@@ -213,34 +238,80 @@
       });
     });
 
-    // Initialize GAM Changer using the continuous variable with the highest importance
-    const maxImportanceIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
+    // Use the latest edited feature as the initial feature is history is restored
+    let targetFeatureIndex = null;
+    let tempSelectedFeature = {};
 
-    selectedFeature = {};
-    selectedFeature.type = 'continuous';
-    selectedFeature.data = data.features[featureSelectList.continuous[maxImportanceIndex].featureID];
-    selectedFeature.id = featureSelectList.continuous[maxImportanceIndex].featureID;
-    selectedFeature.name = featureSelectList.continuous[maxImportanceIndex].name;
-    featureSelect.selectedIndex = maxImportanceIndex;
+    if (historyList.length > 0) {
+      const lastEditName = historyList[historyList.length - 1].featureName;
+      data.features.forEach(f => {
+        if (f.name === lastEditName) {
+          tempSelectedFeature.type = f.type;
+        }
+      });
+      targetFeatureIndex = featureSelectList[tempSelectedFeature.type].map(d => d.name).indexOf(lastEditName);
+    } else {
+      // Initialize GAM Changer using the continuous variable with the highest importance
+      targetFeatureIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
+      tempSelectedFeature.type = 'continuous';
+    }
+    
+    tempSelectedFeature.data = data.features[featureSelectList[tempSelectedFeature.type][targetFeatureIndex].featureID];
+    tempSelectedFeature.id = featureSelectList[tempSelectedFeature.type][targetFeatureIndex].featureID;
+    tempSelectedFeature.name = featureSelectList[tempSelectedFeature.type][targetFeatureIndex].name;
+    featureSelect.selectedIndex = targetFeatureIndex;
 
     resizeFeatureSelect();
-    updateChanger = !updateChanger;
 
     // Need to set the name for EBM (even if it is a dummy EBM) so that
     // ContFeature can start drawing
-    ebm.setEditingFeature(selectedFeature.name);
+    ebm.setEditingFeature(tempSelectedFeature.name);
+
+    // If we are reconstructing from .gamchanger file, we can load the real EBM here
+    // and re-do all the changes in the history
+    if (historyList.length > 0) {
+      ebm = await initEBM(data, sampleData, historyList[0].featureName, isClassification);
+
+      // Get the initial metrics
+      let metrics = ebm.getMetrics();
+
+      if (ebm.isClassification) {
+        sidebarInfo.accuracy = metrics.accuracy;
+        sidebarInfo.rocAuc = metrics.rocAuc;
+        sidebarInfo.balancedAccuracy = metrics.balancedAccuracy;
+        sidebarInfo.confusionMatrix = metrics.confusionMatrix;
+      } else {
+        sidebarInfo.rmse = metrics.rmse;
+        sidebarInfo.mae = metrics.mae;
+      }
+
+      for (let i = 0; i < historyList.length; i++) {
+        let curCommit = historyList[i];
+        if (curCommit.featureName !== ebm.editingFeatureName) {
+          ebm.setEditingFeature(curCommit.featureName);
+        }
+        if (curCommit.type !== 'original') {
+          let result = getBinEdgeScore(curCommit.state.pointData);
+          ebm.setModel(result.newBinEdges, result.newScores);
+        }
+      }
+    }
+
+    selectedFeature = tempSelectedFeature;
+    updateChanger = !updateChanger;
 
     sidebarInfo.totalSampleNum = 0;
+    sidebarInfo.featureName = selectedFeature.name;
+    sidebarInfo.historyHead = historyList.length - 1;
+    sidebarInfo.previewHistory = false;
+
+    sidebarStore.set(sidebarInfo);
+
     footerStore.update(value => {
       value.totalSampleNum = sidebarInfo.totalSampleNum;
       value.sample = `<b>0/${sidebarInfo.totalSampleNum }</b> test samples selected`;
       return value;
     });
-
-    sidebarInfo.featureName = selectedFeature.name;
-
-    // If the user has already loaded sampleData, we init sidebar here too
-    if (sampleData !== null) initSidebar();
   };
 
   /**
@@ -261,7 +332,26 @@
     sampleData.featureNames.forEach((d, i) => sampleDataNameMap.set(d, i));
 
     // Initialize an EBM object
-    ebm = await initEBM(data, sampleData, selectedFeature.name, isClassification);
+    if (ebm.isDummy !== undefined) {
+      ebm = await initEBM(data, sampleData, selectedFeature.name, isClassification);
+
+      // Get the initial metrics
+      let metrics = ebm.getMetrics();
+
+      if (ebm.isClassification) {
+        sidebarInfo.accuracy = metrics.accuracy;
+        sidebarInfo.rocAuc = metrics.rocAuc;
+        sidebarInfo.balancedAccuracy = metrics.balancedAccuracy;
+        sidebarInfo.confusionMatrix = metrics.confusionMatrix;
+      } else {
+        sidebarInfo.rmse = metrics.rmse;
+        sidebarInfo.mae = metrics.mae;
+      }
+    }
+
+    // Set curgroup outside the if block => metrics might be initialized form
+    // initGamView() when a .gamchanger file is given
+    sidebarInfo.curGroup = 'original';
 
     // Get the distribution of test data on each variable
     const testDataHistCount = ebm.getHistBinCounts();
@@ -300,21 +390,6 @@
       value.sample = `<b>0/${sidebarInfo.totalSampleNum }</b> test samples selected`;
       return value;
     });
-
-    // Get the initial metrics
-    let metrics = ebm.getMetrics();
-
-    if (ebm.isClassification) {
-      sidebarInfo.accuracy = metrics.accuracy;
-      sidebarInfo.rocAuc = metrics.rocAuc;
-      sidebarInfo.balancedAccuracy = metrics.balancedAccuracy;
-      sidebarInfo.confusionMatrix = metrics.confusionMatrix;
-    } else {
-      sidebarInfo.rmse = metrics.rmse;
-      sidebarInfo.mae = metrics.mae;
-    }
-
-    sidebarInfo.curGroup = 'original';
 
     // Get the list of all categorical variables and their values to popularize
     // the slice select dropdown
@@ -368,7 +443,7 @@
     footerActionStore.set(message);
 
     if (message === 'save') {
-      let historyList = get(historyStore);
+
       // Check if the user has confirmed all edits
       let allReviewed = true;
       historyList.forEach(d => allReviewed = allReviewed && d.reviewed);
@@ -727,7 +802,7 @@
                   {:else}
                     Latest Edit:
                   {/if}
-                  {get(historyStore)[sidebarInfo.historyHead].hash.substring(0, 7)}
+                  {historyList[sidebarInfo.historyHead].hash.substring(0, 7)}
                 {/if}
               </span>
             </div>
@@ -866,70 +941,6 @@
 
     </div>
 
-
   </div>
-
-
-
-    <!-- <div class='feature-window'>
-      <CatGlobalExplain
-        featureData = {data === null ? null : data.features[26]}
-        scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 400
-      />
-    </div> -->
-
-    <!-- <ContextMenu /> -->
-
-    <!-- <div class='feature-window'>
-      <CatGlobalExplain
-        featureData = {data === null ? null : data.features[12]}
-        scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 500
-      />
-    </div> -->
-
-    <!-- <div class='feature-window'>
-      <ContGlobalExplain
-        featureData = {data === null ? null : data.features[2]}
-        scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 500
-      />
-    </div> -->
-
-    <!-- <div class='feature-window'>
-      <InterContCatGlobalExplain
-        featureData = {data === null ? null : data.features[90]}
-        scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 500
-        chartType = 'line'
-      />
-    </div> -->
-
-    <!-- <div class='feature-window'>
-      <InterContCatGlobalExplain
-        featureData = {data === null ? null : data.features[89]}
-        scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 500
-        chartType = 'bar'
-      />
-    </div> -->
-
-    <!-- <div class='feature-window'>
-      <InterContContGlobalExplain
-        featureData = {data === null ? null : data.features[86]}
-        scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 500
-      />
-    </div> -->
-
-    <!-- <div class='feature-window'>
-      <InterCatCatGlobalExplain
-        featureData = {data === null ? null : data.features[81]}
-        scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 500
-      />
-    </div> -->
-  
 
 </div>

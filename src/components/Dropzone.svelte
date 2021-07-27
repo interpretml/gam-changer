@@ -1,6 +1,7 @@
 <script>
   import * as d3 from 'd3';
   import { onMount } from 'svelte';
+  import { splitFileName } from '../utils/utils';
 
   import oneIconSVG from '../img/one-icon.svg';
   import twoIconSVG from '../img/two-icon.svg';
@@ -74,7 +75,12 @@
   };
 
   const validateFile = async (file) => {
-    if (file.type !== 'application/json') {
+
+    // Test if it is a valid .gamchanger file
+    let extension = splitFileName(file)[1];
+    let isGamchangerFile = extension === 'gamchanger';
+
+    if (file.type !== 'application/json' && !isGamchangerFile) {
       errorMessage = 'It is not a JSON file';
       return false;
     }
@@ -94,8 +100,16 @@
         data.labelEncoder !== undefined && data.scoreRange !== undefined);
     }
 
+    if (isGamchangerFile) {
+      isValid = (data.modelData !== undefined && data.sampleData !== undefined);
+    }
+
     if (!isValid) {
-      errorMessage = `Not a valid ${dataType === 'sampleData' ? 'sample data' : 'model data'} file`;
+      if (isGamchangerFile) {
+        errorMessage = 'Not a valid .gamchanger document file';
+      } else {
+        errorMessage = `Not a valid ${dataType === 'sampleData' ? 'sample data' : 'model data'} file`;
+      }
       return false;
     }
 
@@ -105,24 +119,29 @@
   const dropHandler = async(e) => {
     e.preventDefault();
     let data = false;
+    let file = null;
 
     if (e.dataTransfer.items) {
       // Use DataTransferItemList interface to access the file(s)
       if (e.dataTransfer.items[0].kind === 'file') {
-        let file = e.dataTransfer.items[0].getAsFile();
+        file = e.dataTransfer.items[0].getAsFile();
         data = await validateFile(file);
       }
     } else {
       // Use DataTransfer interface to access the file(s)
-      let file = e.dataTransfer.files[0];
+      file = e.dataTransfer.files[0];
       data = await validateFile(file);
     }
 
     if (!data) return;
 
+    // Check if the file is .gamchanger file
+    const extension = splitFileName(file)[1];
+    const isGamchangerFile = extension === 'gamchanger';
+
     // Pass the data to other components through store
     sidebarStore.update(value => {
-      value.curGroup = `${dataType}Created`;
+      value.curGroup = isGamchangerFile ? 'gamchangerCreated' : `${dataType}Created`;
       value.loadedData = data;
       return value;
     });

@@ -78,25 +78,6 @@
 
     await ebm.setModel(newBinEdges, newScores, featureName);
   };
-  
-  const initData = async() => {
-    let fakeHistoryList = await d3.json('/data/history.json');
-
-    // Flag historyList changed, so we need to bind svgs after the divs are created
-    needToBindSVGs = true;
-    fakeHistoryList.forEach(d => d.reviewed = false);
-    fakeHistoryList[0].reviewed = true;
-    console.log(fakeHistoryList);
-
-    // d3.timeout(() => {
-    //   sidebarStore.update(value => {
-    //     value.historyHead = 5;
-    //     return value;
-    //   });
-
-    //   historyStore.set(fakeHistoryList);
-    // }, 1000);
-  };
 
   /**
    * Format the millisecond time to string
@@ -195,7 +176,6 @@
 
   };
 
-  initData();
 
   // beforeUpdate(() => {
   //   if (historyDIV) {

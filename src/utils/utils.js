@@ -96,3 +96,16 @@ export const downloadJSON = (object, anchorSelect, fileName='download.json') => 
   dlAnchorElem.setAttribute('download', `${fileName}`);
   dlAnchorElem.click();
 };
+
+/**
+ * Get the file name and file extension from a File object
+ * @param {File} file File object
+ * @returns [file name, file extension]
+ */
+export const splitFileName = (file) => {
+  let name = file.name;
+  let lastDot = name.lastIndexOf('.');
+  let value = name.slice(0, lastDot);
+  let extension = name.slice(lastDot + 1);
+  return [value, extension];
+};
