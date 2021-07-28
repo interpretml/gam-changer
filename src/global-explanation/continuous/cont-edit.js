@@ -87,6 +87,11 @@ export const redrawOriginal = (state, svg, bounce=true, animationEndFunc=undefin
   state.selectedInfo.updateNodeData(state.pointData);
   state.selectedInfo.computeBBox(state.pointData);
 
+  if (state.lastSelectedInfo !== null) {
+    state.lastSelectedInfo.updateNodeData(state.pointData);
+    state.lastSelectedInfo.computeBBox(state.pointData);
+  }
+
   // Step 2: redraw the nodes with original data
   let nodes = svgSelect.select('g.line-chart-node-group')
     .selectAll('circle.node');

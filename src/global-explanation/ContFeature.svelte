@@ -573,7 +573,7 @@
     brush = d3.brush()
       .on('end', e => brushEndSelect(
         e, state, svg, multiMenu, bboxStrokeWidth, brush, component, resetContextMenu,
-        sidebarStore, setEBM, updateFeatureSidebar, resetFeatureSidebar,
+        sidebarStore, setEBM, updateEBM, updateFeatureSidebar, resetFeatureSidebar,
         nullifyMetrics, computeSelectedEffects
       ))
       .on('start brush', e => brushDuring(e, state, svg, multiMenu, ebm, footerStore))
@@ -727,6 +727,10 @@
 
       // Pass the metrics to sidebar
       transferMetricToSidebar(metrics, curGroup);
+      break;
+    }
+    case 'recoverEBM': {
+      // No need to transfer the new metrics
       break;
     }
     default:
@@ -1110,12 +1114,15 @@
     // Discard the changes
     state.pointDataBuffer = null;
     state.additiveDataBuffer = null;
-    
+
     // Recover the original graph
     redrawOriginal(state, svg, true, () => {
       // Move the menu bar after animation
       d3.select(multiMenu)
         .call(moveMenubar, svg, component);
+
+      // Recover the EBM
+      updateEBM('recoverEBM');
     });
 
     // Remove the drag
@@ -1621,10 +1628,17 @@
 
     // If the current edit is interpolation, we need to recover the bin definition
     // in the EBM model
-    if (multiMenuControlInfo.subItemMode === 'interpolation') {
-      setEBM('current', state.pointData);
+    let callBack = () => {};
+
+    if (!cancelFromMove) {
+      if (multiMenuControlInfo.subItemMode === 'interpolation') {
+        callBack = () => {setEBM('current', state.pointData);};
+      } else {
+        // For other types of update, we need to revoke the changes
+        callBack = () => {updateEBM('recoverEBM');};
+      }
     }
-    
+
     // Update metrics
     if (!cancelFromMove) {
       sidebarInfo.curGroup = 'recover';
@@ -1636,6 +1650,9 @@
       // Move the menu bar after the animation
       d3.select(multiMenu)
         .call(moveMenubar, svg, component);
+
+      // Update the EBM in "background"
+      callBack();
     });
 
     // Hide the confirmation panel

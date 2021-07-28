@@ -427,7 +427,7 @@
     console.log(data);
 
     // sampleData = await d3.json('/data/iow-house-sample-binary.json');
-    sampleData = await d3.json('/data/mimic2-sample-5000.json');
+    sampleData = await d3.json('/data/mimic2-sample-1000.json');
 
     console.log(sampleData);
     console.log('loaded data');

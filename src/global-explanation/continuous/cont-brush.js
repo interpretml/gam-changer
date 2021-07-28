@@ -45,6 +45,11 @@ export const brushDuring = (event, state, svg, multiMenu, ebm, footerStore) => {
     let xRange = [state.curXScale.invert(selection[0][0]), state.curXScale.invert(selection[1][0])];
     let yRange = [state.curYScale.invert(selection[1][1]), state.curYScale.invert(selection[0][1])];
 
+    // Save the selectedInfo, we might need to recover EBM with it
+    // state.lastSelectedInfo = JSON.parse(JSON.stringify(state.selectedInfo));
+    state.lastSelectedInfo = Object.assign(Object.create(
+      Object.getPrototypeOf(state.selectedInfo)), state.selectedInfo);
+
     // Clean up the previous flowing lines
     state.selectedInfo = new SelectedInfo();
 
@@ -151,8 +156,8 @@ export const quitSelection = (svg, state, multiMenu, resetContextMenu, resetFeat
 };
 
 export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
-  brush, component, resetContextMenu, sidebarStore, setEBM, updateFeatureSidebar,
-  resetFeatureSidebar, nullifyMetrics, computeSelectedEffects
+  brush, component, resetContextMenu, sidebarStore, setEBM, updateEBM,
+  updateFeatureSidebar, resetFeatureSidebar, nullifyMetrics, computeSelectedEffects
 ) => {
   // Get the selection boundary
   let selection = event.selection;
@@ -162,7 +167,6 @@ export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
     if (idleTimeout === null) {
       // Clean up the previous flowing lines
       stopAnimateLine();
-      state.selectedInfo = new SelectedInfo();
 
       svgSelect.select('g.line-chart-content-group g.brush rect.overlay')
         .attr('cursor', null);
@@ -173,24 +177,37 @@ export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
       // End move mode
       let modeInfo = resetContextMenu();
 
-      // Do not save the user's change (same as clicking the cancel button)
-      // Redraw the graph with original data
-      redrawOriginal(state, svg);
+      let callBack = () => {};
+
+      // If the current edit is interpolation, we need to recover the bin definition
+      // in the EBM model
+      if (modeInfo.subItemMode === 'interpolation') {
+        callBack = () => {
+          setEBM('current', state.pointData);
+        };
+        
+      } else if (modeInfo.moveMode || modeInfo.subItemMode !== null) {
+        
+        callBack = () => {
+          // We are using lastSelectedInfo here because selectedInfo is purged
+          // in brushDuring
+          updateEBM('recoverEBM', state.lastSelectedInfo.nodeData);
+          state.lastSelectedInfo = null;
+        };
+      }
 
       // Redraw the last edit if possible
       if (modeInfo.moveMode || modeInfo.subItemMode !== null) {
+        // Do not save the user's change (same as clicking the cancel button)
+        // Redraw the graph with original data
+        redrawOriginal(state, svg, true, callBack);
+
         if (state.additiveDataLastLastEdit !== undefined) {
           state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
           drawLastEdit(state, svg);
           // Prepare for next redrawing after recovering the last last edit graph
           state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
         }
-      }
-
-      // If the current edit is interpolation, we need to recover the bin definition
-      // in the EBM model
-      if (modeInfo.subItemMode === 'interpolation') {
-        setEBM('current', state.pointData);
       }
 
       // Recover the metrics if user is quitting context menu without committing
