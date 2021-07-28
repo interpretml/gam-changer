@@ -157,7 +157,7 @@ export const redrawOriginal = (state, svg, bounce=true, animationEndFunc=undefin
     .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding);
 };
 
-export const redrawMonotone = (state, svg, isoYs) => {
+export const redrawMonotone = (state, svg, isoYs, callBack) => {
 
   // Change the data based on the y-value changes, then redraw nodes (preferred method)
   state.selectedInfo.nodeData.forEach((d, j) => {
@@ -194,11 +194,10 @@ export const redrawMonotone = (state, svg, isoYs) => {
   state.selectedInfo.computeBBox(state.pointDataBuffer);
 
   // Step 2 Update the visualization with new data
-  drawBufferGraph(state, svg, true);
-
+  drawBufferGraph(state, svg, true, 400, callBack);
 };
 
-export const regressionInterpolate = (state, svg) => {
+export const regressionInterpolate = (state, svg, callBack) => {
   // Regression interpolation
   // Create x and y arrays
   let xs = [];
@@ -240,10 +239,10 @@ export const regressionInterpolate = (state, svg) => {
   state.selectedInfo.computeBBox(state.pointDataBuffer);
 
   // Step 4: Update the graph using new data
-  drawBufferGraph(state, svg, true, 800);
+  drawBufferGraph(state, svg, true, 800, callBack);
 };
 
-export const inplaceInterpolate = (state, svg) => {
+export const inplaceInterpolate = (state, svg, callBack) => {
   // Regional interpolation
   // We use the points in between as interpolation steps
   let leftPoint = { x: Infinity, y: null, id: null };
@@ -283,10 +282,10 @@ export const inplaceInterpolate = (state, svg) => {
   state.selectedInfo.computeBBox(state.pointDataBuffer);
 
   // Step 4: Update the graph using new data
-  drawBufferGraph(state, svg, true, 800);
+  drawBufferGraph(state, svg, true, 800, callBack);
 };
 
-export const stepInterpolate = (state, svg, steps) => {
+export const stepInterpolate = (state, svg, steps, callBack) => {
   // Step 1: Find the left and right point in the selected region
   let leftPoint = { x: Infinity, y: null, id: null };
   let rightPoint = { x: -Infinity, y: null, id: null };
@@ -380,11 +379,11 @@ export const stepInterpolate = (state, svg, steps) => {
   state.selectedInfo.computeBBoxBuffer(state.pointDataBuffer);
 
   // Step 6: Update the graph using new data
-  drawBufferGraph(state, svg, true, 800);
+  drawBufferGraph(state, svg, true, 800, callBack);
 
 };
 
-export const merge = (state, svg, value=undefined) => {
+export const merge = (state, svg, value, callBack) => {
   // Step 1: Find the left and right point in the selected region
   let leftPoint = { x: Infinity, y: null, id: null };
   let rightPoint = { x: -Infinity, y: null, id: null };
@@ -420,16 +419,20 @@ export const merge = (state, svg, value=undefined) => {
   state.selectedInfo.computeBBox(state.pointDataBuffer);
 
   // Step 5: Update the graph using new data
-  drawBufferGraph(state, svg, true, 500);
+  drawBufferGraph(state, svg, true, 500, callBack);
 };
 
-export const drawBufferGraph = (state, svg, animated=true, duration=400) => {
+export const drawBufferGraph = (state, svg, animated, duration,
+  callBack=() => {}) => {
 
   const svgSelect = d3.select(svg);
 
   let trans = d3.transition('buffer')
     .duration(duration)
-    .ease(d3.easeCubicInOut);
+    .ease(d3.easeCubicInOut)
+    .on('end', () => {
+      callBack();
+    });
 
   // Change the node data and node position based on the y-value changes
   let nodes = svgSelect.select('g.line-chart-node-group')
@@ -505,7 +508,6 @@ export const drawBufferGraph = (state, svg, animated=true, duration=400) => {
           )
           .call(
             enter => enter.transition(trans)
-              .delay(duration / 2)
               .attr('d', d => `M ${state.oriXScale(d.x1)}, ${state.oriYScale(d.y1)}
                 L ${state.oriXScale(d.x2)} ${state.oriYScale(d.y2)}`)
           ),

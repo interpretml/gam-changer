@@ -62,6 +62,7 @@
   const linePathWidth = 2.5;
   const bboxStrokeWidth = 1;
   const nodeStrokeWidth = 1;
+  const animationDuration = 600;
 
   // --- Interactions ---
   // Brush interactions
@@ -237,10 +238,13 @@
     }
   });
 
-  // Listen to footer buttons
   let footerValue = null;
+  footerStore.subscribe(value => {
+    footerValue = value;
+  });
+
+  // Listen to footer buttons
   let footerActionUnsubscribe = footerActionStore.subscribe(message => {
-    footerValue = message;
     switch(message){
     case 'undo': {
       console.log('undo clicked');
@@ -1181,18 +1185,17 @@
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
 
-    console.log(state.pointDataBuffer);
     // Update the last edit graph
     drawLastEdit(state, svg);
 
-    redrawMonotone(state, svg, isoYs);
+    redrawMonotone(state, svg, isoYs, () => {updateEBM('current');});
     myContextMenu.showConfirmation('increasing', 600);
 
     // Update EBM
     sidebarInfo.curGroup = 'last';
     sidebarStore.set(sidebarInfo);
-    updateEBM('current');
-
+    console.log('before ebm');
+    
     // Update the footer message
     footerStore.update(value => {
       value.state = `Made ${xs.length} bins <b>monotonically increasing</b>`;
@@ -1237,13 +1240,12 @@
     // Update the last edit graph
     drawLastEdit(state, svg);
 
-    redrawMonotone(state, svg, isoYs);
+    redrawMonotone(state, svg, isoYs, () => {updateEBM('current');});
     myContextMenu.showConfirmation('decreasing', 600);
 
     // Update EBM
     sidebarInfo.curGroup = 'last';
     sidebarStore.set(sidebarInfo);
-    updateEBM('current');
     
     // Update the footer message
     footerStore.update(value => {
@@ -1275,15 +1277,18 @@
     // Update the last edit graph
     drawLastEdit(state, svg);
 
+    // Set the EBM model (need to change bin definition)
+    const callBack = () => {setEBM('current', state.pointDataBuffer);};
+
     // Determine whether to use in-place interpolation
     if (state.selectedInfo.nodeData.length == 1) {
       return;
     } else if (state.selectedInfo.nodeData.length == 2) {
       multiMenuControlInfo.interpolationMode = 'equal';
-      stepInterpolate(state, svg, multiMenuControlInfo.step);
+      stepInterpolate(state, svg, multiMenuControlInfo.step, callBack);
     } else {
       multiMenuControlInfo.interpolationMode = 'inplace';
-      inplaceInterpolate(state, svg);
+      inplaceInterpolate(state, svg, callBack);
     }
 
     myContextMenu.showConfirmation('interpolation', 600);
@@ -1291,9 +1296,6 @@
     // Update EBM
     sidebarInfo.curGroup = 'last';
     sidebarStore.set(sidebarInfo);
-
-    // Set the EBM model (need to change bin definition)
-    setEBM('current', state.pointDataBuffer);
 
     // Update the footer message
     footerStore.update(value => {
@@ -1312,9 +1314,13 @@
   /**
    * Event handler when user clicks the control button in the interpolation sub-menu
   */
-  const multiMenuInterpolateUpdated = () => {
+  const multiMenuInterpolateUpdated = async () => {
     console.log('interpolation updated');
     let beforeBinNum = 0;
+
+    const callBack = () => {
+      setEBM('current', state.pointDataBuffer);
+    };
 
     if (multiMenuControlInfo.interpolationMode === 'inplace') {
       // Special case: we want to do inplace interpolation from the original data
@@ -1323,7 +1329,7 @@
       state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
       state.selectedInfo.nodeDataBuffer = JSON.parse(JSON.stringify(state.selectedInfo.nodeData));
       beforeBinNum = state.selectedInfo.nodeDataBuffer.length;
-      inplaceInterpolate(state, svg);
+      inplaceInterpolate(state, svg, callBack);
 
       footerValue.interpolateStyle = 'Interpolated';
       footerValue.interpolateEqual = 'in place';
@@ -1333,7 +1339,7 @@
       // If user clicks here direction => step interpolate between start & end
       // If user has clicked regression => regression with equal bins
       beforeBinNum = state.selectedInfo.nodeDataBuffer.length;
-      stepInterpolate(state, svg, multiMenuControlInfo.step);
+      stepInterpolate(state, svg, multiMenuControlInfo.step, callBack);
 
       footerValue.interpolateEqual = `with ${multiMenuControlInfo.step} equal-size bins`;
 
@@ -1344,7 +1350,7 @@
       state.selectedInfo.nodeDataBuffer = JSON.parse(JSON.stringify(state.selectedInfo.nodeData));
       beforeBinNum = state.selectedInfo.nodeDataBuffer.length;
 
-      regressionInterpolate(state, svg);
+      regressionInterpolate(state, svg, callBack);
 
       footerValue.interpolateStyle = 'Regression transformed';
       footerValue.interpolateEqual = 'in place';
@@ -1352,8 +1358,6 @@
     } else {
       console.error('Unknown regression mode ', multiMenuControlInfo.interpolationMode);
     }
-
-    setEBM('current', state.pointDataBuffer);
 
     // Update the footer message
     footerValue.state = `<b>${footerValue.interpolateStyle}</b> ${beforeBinNum}
@@ -1388,17 +1392,18 @@
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
 
+    // Update EBM
+    const callBack = () => {updateEBM('current');};
+
     // Update the last edit graph
     drawLastEdit(state, svg);
 
-    merge(state, svg);
+    merge(state, svg, undefined, callBack);
 
     myContextMenu.showConfirmation('merge', 600);
 
-    // Update EBM
     sidebarInfo.curGroup = 'last';
     sidebarStore.set(sidebarInfo);
-    updateEBM('current');
 
     // Update the footer message
     footerStore.update(value => {
@@ -1421,14 +1426,14 @@
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
 
-    merge(state, svg, multiMenuControlInfo.setValue);
+    // Update EBM
+    const callBack = () => {updateEBM('current');};
+    merge(state, svg, multiMenuControlInfo.setValue, callBack);
 
     myContextMenu.showConfirmation('change', 600);
 
-    // Update EBM
     sidebarInfo.curGroup = 'last';
     sidebarStore.set(sidebarInfo);
-    updateEBM('current');
 
     // Update the footer message
     footerStore.update(value => {
@@ -1453,14 +1458,16 @@
     // Update the last edit graph
     drawLastEdit(state, svg);
 
-    merge(state, svg, 0);
+    // Update EBM
+    const callBack = () => {updateEBM('current');};
+
+    merge(state, svg, 0, callBack);
 
     myContextMenu.showConfirmation('delete', 600);
 
     // Update EBM
     sidebarInfo.curGroup = 'last';
     sidebarStore.set(sidebarInfo);
-    updateEBM('current');
 
     // Update the footer message
     footerStore.update(value => {
