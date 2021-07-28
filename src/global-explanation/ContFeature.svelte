@@ -999,7 +999,7 @@
             return value;
           });
         })
-        .on('drag', (e) => dragged(e, state, svg, component, ebm, sidebarStore,
+        .on('drag', (e) => dragged(e, state, svg, sidebarInfo.totalSampleNum > 2000,
           footerStore, updateEBM))
       );
     

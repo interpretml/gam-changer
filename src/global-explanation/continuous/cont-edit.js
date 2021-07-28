@@ -6,9 +6,9 @@ import { SimpleLinearRegression } from '../../simple-linear-regression';
 
 // TODO: Uniform this variable across all files (use config file)
 const nodeStrokeWidth = 1;
-let idleTimeout = null;
+let dragTimeout = null;
 
-export const dragged = (e, state, svg, component, ebm, sidebarStore, footerStore, updateEBM) => {
+export const dragged = (e, state, svg, useTimeout, footerStore, updateEBM) => {
 
   const dataYChange = state.curYScale.invert(e.y) - state.curYScale.invert(e.y - e.dy);
 
@@ -52,7 +52,13 @@ export const dragged = (e, state, svg, component, ebm, sidebarStore, footerStore
   drawBufferGraph(state, svg, false);
 
   // Update the sidebar info
-  updateEBM('current');
+  if (dragTimeout !== null) {
+    clearTimeout(dragTimeout);
+  }
+  dragTimeout = setTimeout(() => {
+    updateEBM('current');
+  }, useTimeout ? 300 : 0);
+  
 
   // Update the footer message
   footerStore.update(value => {
