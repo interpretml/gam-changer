@@ -1,9 +1,7 @@
 <script>
   import * as d3 from 'd3';
   import { onMount } from 'svelte';
-  import { config } from '../config';
-  import { round } from '../utils/utils';
-  import { drawCurve, drawClassificationBarChart, drawConfusionMatrix } from './draw-metric';
+  import { drawClassificationBarChart, drawConfusionMatrix } from './draw-metric';
 
   export let sidebarStore;
 
@@ -462,13 +460,7 @@
     </div>
 
   <div class='metrics'>
-
     <svg class='bar-svg'></svg>
-
-    <!-- <svg class='pr-curve-svg curve-svg'></svg>
-
-    <svg class='roc-curve-svg curve-svg'></svg> -->
-
   </div>
 
 </div>

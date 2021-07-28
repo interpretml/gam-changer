@@ -967,7 +967,6 @@
   };
 
 
-
   const initIsoModel = async () => {
     increasingISO = await initIsotonicRegression(true);
     decreasingISO = await initIsotonicRegression(false);
@@ -977,7 +976,7 @@
     // Enter the move mode
 
     // If users have done some other edits without committing, discard the changes
-    multiMenuSubItemCancelClicked(true);
+    multiMenuSubItemCancelClicked(null, true);
 
     // Step 1. create data clone buffers for user to change
     // We only do this when buffer has not been created --- it is possible that
@@ -1598,7 +1597,7 @@
   /**
    * Event handler when user clicks the cross icon in the sub-menu
    */
-  const multiMenuSubItemCancelClicked = (cancelFromMove = false) => {
+  const multiMenuSubItemCancelClicked = (e, cancelFromMove = false) => {
     console.log('sub item cancel clicked');
     if (!cancelFromMove && multiMenuControlInfo.subItemMode === null) {
       console.error('No sub item is selected but check is clicked!');
