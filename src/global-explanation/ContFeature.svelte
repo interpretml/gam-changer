@@ -644,6 +644,7 @@
 
     sidebarInfo.historyHead = historyList.length - 1;
     sidebarInfo.previewHistory = false;
+    sidebarStore.set(sidebarInfo);
   };
 
   const getEBMMetrics = async (scope='global') => {

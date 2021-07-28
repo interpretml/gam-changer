@@ -415,6 +415,18 @@
     sidebarInfo.sliceOptions = sliceOptions;
     
     sidebarStore.set(sidebarInfo);
+
+    // If the GAM View is initialized, then the 0 item in history stack has
+    // metrics from the dummy EBM. Need to update it here
+    if (historyList.length > 0) {
+      while (sidebarInfo.curGroup !== 'originalCompleted') {
+        await new Promise(r => setTimeout(r, 500));
+      }
+      historyList[0].metrics.barData = JSON.parse(JSON.stringify(sidebarInfo.barData));
+      historyList[0].metrics.confusionMatrixData = JSON.parse(JSON.stringify(sidebarInfo.confusionMatrixData));
+      historyStore.set(historyList);
+    }
+
   };
 
   const initData = async () => {

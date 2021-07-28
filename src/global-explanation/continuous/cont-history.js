@@ -107,11 +107,11 @@ export const undoHandler = async (state, svg, multiMenu, resetContextMenu, reset
   // clicks any editing, the orange line moves to current location)
   state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
 
-  // Step 7: If the current edit has changed the EBM bin definition, then we need
-  // to reset the definition in WASM
-  if (curCommit.type.includes('equal')) {
-    await setEBM('current', state.pointData);
-  }
+  // Step 7: Overwrite the EBM definition and score using the historical state
+  // One can update EBM partially to optimize the performance (e.g., this commit
+  // only moves the bins a bit), but it requires to save the selected bins and
+  // scores in the history stack
+  await setEBM('current', state.pointData);
 
   /**
    * Step 8: Update the metrics, last metrics
@@ -252,11 +252,11 @@ export const redoHandler = async (state, svg, multiMenu, resetContextMenu, reset
   // clicks any editing, the orange line moves to current location)
   state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
 
-  // If the current edit has changed the EBM bin definition, then we need
-  // to reset the definition in WASM
-  if (newCommit.type.includes('equal')) {
-    await setEBM('current', state.pointData);
-  }
+  // Overwrite the EBM definition and score using the undo state
+  // One can update EBM partially to optimize the performance (e.g., this commit
+  // only moves the bins a bit), but it requires to save the selected bins and
+  // scores in the history stack
+  await setEBM('current', state.pointData);
 
   /**
    * Update the metrics, last metrics
