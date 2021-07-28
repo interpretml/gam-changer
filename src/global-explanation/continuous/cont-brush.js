@@ -19,18 +19,6 @@ const idled = () => {
   idleTimeout = null;
 };
 
-/**
- * Stop animating all flowing lines
- */
-const stopAnimateLine = (svg) => {
-  d3.select(svg)
-    .select('g.line-chart-line-group')
-    .selectAll('path.additive-line-segment.flow-line')
-    .interrupt()
-    .attr('stroke-dasharray', '0 0')
-    .classed('flow-line', false);
-};
-
 export const brushDuring = (event, state, svg, multiMenu, ebm, footerStore) => {
   // Get the selection boundary
   let selection = event.selection;
@@ -127,7 +115,6 @@ export const brushDuring = (event, state, svg, multiMenu, ebm, footerStore) => {
 export const quitSelection = (svg, state, multiMenu, resetContextMenu, resetFeatureSidebar) => {
   let svgSelect = d3.select(svg);
 
-  stopAnimateLine();
   state.selectedInfo = new SelectedInfo();
 
   // De-highlight the paths associated with the selected dots
@@ -165,8 +152,6 @@ export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
 
   if (selection === null) {
     if (idleTimeout === null) {
-      // Clean up the previous flowing lines
-      stopAnimateLine();
 
       svgSelect.select('g.line-chart-content-group g.brush rect.overlay')
         .attr('cursor', null);

@@ -948,25 +948,6 @@
     }
   };
 
-  /**
-   * Animate teh dashed line infinitely
-   * @param initOffset The initial stroke-dashoffset
-   * @param offsetRate Use this to control the moving speed, each loop is 1 minute
-   */
-  const animateBBox = (d, i, g, initOffset, offsetRate) => {
-    let curPath = d3.select(g[i]);
-    curPath.transition()
-      .duration(60000)
-      .ease(d3.easeLinear)
-      .attr('stroke-dashoffset', initOffset + offsetRate)
-      .on('end', (d, i, g) => {
-        if (multiMenuControlInfo.moveMode || multiMenuControlInfo.subItemMode !== null) {
-          animateBBox(d, i, g, initOffset + offsetRate, offsetRate);
-        }
-      });
-  };
-
-
   const initIsoModel = async () => {
     increasingISO = await initIsotonicRegression(true);
     decreasingISO = await initIsotonicRegression(false);
@@ -1004,7 +985,7 @@
       );
     
     bboxGroup.select('rect.original-bbox')
-      .each((d, i, g) => animateBBox(d, i, g, 0, -500));
+      .classed('animated', true);
     
     // Show the last edit
     if (state.additiveDataLastEdit !== undefined) {
@@ -1050,7 +1031,7 @@
     
     // stop the animation
     bboxGroup.select('rect.original-bbox')
-      .interrupt();
+      .classed('animated', false);
 
     // Move the menu bar
     d3.select(multiMenu)
@@ -1133,7 +1114,7 @@
     
     // stop the animation
     bboxGroup.select('rect.original-bbox')
-      .interrupt();
+      .classed('animated', false);
     
     // Redraw the last edit if possible
     if (state.additiveDataLastLastEdit !== undefined){
@@ -1169,7 +1150,7 @@
     d3.select(svg)
       .select('g.line-chart-content-group g.select-bbox-group')
       .select('rect.original-bbox')
-      .each((d, i, g) => animateBBox(d, i, g, 0, -500));
+      .classed('animated', true);
 
     // Check if the selected nodes are in a continuous range
 
@@ -1201,8 +1182,7 @@
     // Update EBM
     sidebarInfo.curGroup = 'last';
     sidebarStore.set(sidebarInfo);
-    console.log('before ebm');
-    
+
     // Update the footer message
     footerStore.update(value => {
       value.state = `Made ${xs.length} bins <b>monotonically increasing</b>`;
@@ -1221,9 +1201,7 @@
     d3.select(svg)
       .select('g.line-chart-content-group g.select-bbox-group')
       .select('rect.original-bbox')
-      .each((d, i, g) => animateBBox(d, i, g, 0, -500));
-
-    // Check if the selected nodes are in a continuous range
+      .classed('animated', true);
 
     // Fit an isotonic regression model
     let xs = [];
@@ -1272,7 +1250,7 @@
     d3.select(svg)
       .select('g.line-chart-content-group g.select-bbox-group')
       .select('rect.original-bbox')
-      .each((d, i, g) => animateBBox(d, i, g, 0, -500));
+      .classed('animated', true);
 
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
@@ -1394,7 +1372,7 @@
     d3.select(svg)
       .select('g.line-chart-content-group g.select-bbox-group')
       .select('rect.original-bbox')
-      .each((d, i, g) => animateBBox(d, i, g, 0, -500));
+      .classed('animated', true);
 
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
@@ -1428,7 +1406,7 @@
     d3.select(svg)
       .select('g.line-chart-content-group g.select-bbox-group')
       .select('rect.original-bbox')
-      .each((d, i, g) => animateBBox(d, i, g, 0, -500));
+      .classed('animated', true);
 
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
@@ -1457,7 +1435,7 @@
     d3.select(svg)
       .select('g.line-chart-content-group g.select-bbox-group')
       .select('rect.original-bbox')
-      .each((d, i, g) => animateBBox(d, i, g, 0, -500));
+      .classed('animated', true);
 
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
     state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
@@ -1502,7 +1480,7 @@
     d3.select(svg)
       .select('g.line-chart-content-group g.select-bbox-group')
       .select('rect.original-bbox')
-      .interrupt();
+      .classed('animated', false);
 
     const binNum = state.selectedInfo.nodeData.length;
 
@@ -1612,7 +1590,7 @@
     d3.select(svg)
       .select('g.line-chart-content-group g.select-bbox-group')
       .select('rect.original-bbox')
-      .interrupt();
+      .classed('animated', false);
 
     // Discard the change
     state.pointDataBuffer = null;
@@ -1700,12 +1678,6 @@
     stroke: adjust-color($orange-400, $lightness: -8%);
   }
 
-  @keyframes dash {
-    to {
-      stroke-dashoffset: 1000;
-    }
-  }
-
   :global(.explain-panel .line-chart-content-group) {
     cursor: grab;
   }
@@ -1739,6 +1711,29 @@
 
   :global(.explain-panel .select-bbox-group) {
     pointer-events: all;
+  }
+
+  @keyframes dash {
+      to {
+      stroke-dashoffset: -1000;
+    }
+  }
+
+  @-moz-keyframes dash {
+      to {
+      stroke-dashoffset: -1000;
+    }
+  }
+
+  @-webkit-keyframes dash {
+      to {
+      stroke-dashoffset: -1000;
+    }
+  }
+
+  :global(.explain-panel rect.original-bbox.animated) {
+    -webkit-animation: dash 50s infinite linear;
+    animation: dash 50s infinite linear;
   }
 
   .context-menu-container {
