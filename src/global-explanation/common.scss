@@ -90,3 +90,27 @@
   dominant-baseline: hanging;
   font-size: 14px;
 }
+
+:global(.explain-panel rect.original) {
+  fill: $gray-300;
+}
+
+:global(.explain-panel rect.last) {
+  fill: $pastel1-orange;
+}
+
+:global(.explain-panel rect.current) {
+  fill: $pastel1-blue;
+}
+
+:global(.explain-panel svg text) {
+  cursor: default;
+}
+
+:global(.explain-panel .line-legend-title) {
+  dominant-baseline: hanging;
+  text-anchor: start;
+  font-size: 12px;
+  font-weight: 300;
+  fill: $indigo-dark;
+}

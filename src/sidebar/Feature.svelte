@@ -179,7 +179,7 @@
 
   .feature {
     will-change: transform, height;
-    margin: auto;
+    margin: 0 auto;
     border-bottom: 1px solid change-color($blue-500, $alpha: 0.3);
   }
 

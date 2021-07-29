@@ -6,6 +6,7 @@
 
   import { round } from '../utils/utils';
   import { config } from '../config';
+  import { drawLineLegend } from './draw';
 
   import { SelectedInfo } from './continuous/cont-class';
   import { createConfidenceData, createAdditiveData, createPointData, linkPointToAdditive } from './continuous/cont-data';
@@ -79,6 +80,7 @@
     curYScale: null,
     curTransform: null,
     selectedInfo: null,
+    lastSelectedInfo: null,
     pointData: null,
     additiveData: null,
     pointDataBuffer: null,
@@ -321,14 +323,8 @@
       event.preventDefault();
     });
 
-    // Draw a border for the svg
-    svgSelect.append('rect')
-      .attr('class', 'border')
-      .classed('hidden', !showRuler)
-      .attr('width', 600)
-      .attr('height', 400)
-      .style('fill', 'none')
-      .style('stroke', 'pink');
+    // Draw a legend for the line color
+    drawLineLegend(svgSelect, width, svgPadding);
 
     let content = svgSelect.append('g')
       .attr('class', 'content')

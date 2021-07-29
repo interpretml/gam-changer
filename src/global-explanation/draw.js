@@ -74,3 +74,72 @@ export const startLoading = (loadingBar) => {
 export const endLoading = (loadingBar) => {
   d3.select(loadingBar).classed('animated', false);
 };
+
+/**
+ * Draw a legend for the line colors
+ * @param {object} svgSelect svgSelect for the whole SVG
+ * @param {number} width SVG width (inside viewbox)
+ * @param {object} svgPadding SVG paddings
+ */
+export const drawLineLegend = (svgSelect, width, svgPadding) => {
+  let legendGroup = svgSelect.append('g')
+    .attr('class', 'legend-group')
+    .attr('transform', `translate(${width - svgPadding.right - 266}, 6)`);
+
+  const legendRectWidth = 22;
+  const legendRectHeight = 4;
+
+  const legendData = [
+    {
+      name: 'original',
+      class: 'original',
+      title: 'Original bins',
+      x: 0,
+      rectColor: '#D1D1D1',
+    },
+    {
+      name: 'last',
+      class: 'last',
+      title: 'Bins from last edit',
+      x: 76,
+      rectColor: '#FFDFB3',
+    },
+    {
+      name: 'current',
+      class: 'current',
+      title: 'Current bins',
+      x: 130,
+      rectColor: '#263B73',
+    },
+    {
+      name: 'editing',
+      class: 'editing',
+      title: 'Currently editing bins',
+      x: 204,
+      rectColor: '#D67D00',
+    },
+  ];
+
+  let items = legendGroup.selectAll('g.legend-item')
+    .data(legendData)
+    .join('g')
+    .style('cursor', 'default')
+    .attr('transform', d => `translate(${d.x}, 0)`);
+
+  items.append('title')
+    .text(d => d.title);
+
+  items.append('rect')
+    .attr('y', 6)
+    .attr('width', legendRectWidth)
+    .attr('height', legendRectHeight)
+    .attr('rx', 1)
+    .attr('class', d => d.class)
+    .style('fill', d => d.rectColor);
+
+  items.append('text')
+    .attr('class', 'line-legend-title')
+    .attr('y', 2)
+    .attr('x', legendRectWidth + 4)
+    .text(d => d.name);
+};
