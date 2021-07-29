@@ -14,6 +14,7 @@
   import ContextMenu from '../components/ContextMenu.svelte';
 
   export let featureData = null;
+  export let labelEncoder = null;
   export let scoreRange = null;
   export let svgHeight = 400;
 

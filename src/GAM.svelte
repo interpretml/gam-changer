@@ -868,6 +868,7 @@
           {#if selectedFeature.type === 'categorical'}
             <CatGlobalExplain
               featureData = {selectedFeature === null ? null : selectedFeature.data}
+              labelEncoder = {data === null ? null : data.labelEncoder[selectedFeature.name]}
               scoreRange = {data === null ? null : data.scoreRange}
               svgHeight = 500
               bind:this = {changer}
@@ -886,6 +887,7 @@
           {#if selectedFeature.type === 'cont-cat'}
             <InterContCatGlobalExplain
               featureData = {selectedFeature === null ? null : selectedFeature.data}
+              labelEncoder = {data === null ? null : data.labelEncoder}
               scoreRange = {data === null ? null : data.scoreRange}
               svgHeight = 500
               chartType = 'bar'
@@ -896,6 +898,7 @@
           {#if selectedFeature.type === 'cat-cat'}
             <InterCatCatGlobalExplain
               featureData = {selectedFeature === null ? null : selectedFeature.data}
+              labelEncoder = {data === null ? null : data.labelEncoder}
               scoreRange = {data === null ? null : data.scoreRange}
               svgHeight = 500
               bind:this = {changer}

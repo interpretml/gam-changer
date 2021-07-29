@@ -13,6 +13,7 @@
   import ContextMenu from '../components/ContextMenu.svelte';
 
   export let featureData = null;
+  export let labelEncoder = null;
   export let scoreRange = null;
   export let svgHeight = 400;
 
@@ -129,11 +130,11 @@
     let content = svgSelect.append('g')
       .attr('class', 'content')
       .attr('transform', `translate(${svgPadding.left}, ${svgPadding.top})`);
-
-    console.log(featureData.binLabel);
+    
+    let binValues = featureData.binLabel.map(d => labelEncoder[d]);
 
     let xScale = d3.scalePoint()
-      .domain(featureData.binLabel)
+      .domain(binValues)
       .padding(0.7)
       .range([0, chartWidth])
       .round(true);
@@ -151,14 +152,12 @@
 
     for (let i = 0; i < featureData.binLabel.length; i++) {
       additiveData.push({
-        x: featureData.binLabel[i],
+        x: labelEncoder[featureData.binLabel[i]],
         y: featureData.additive[i],
         id: i,
         error: featureData.error[i]
       });
     }
-
-    console.log(additiveData);
 
     // Create histogram chart group
     let histChart = content.append('g')
@@ -292,8 +291,8 @@
 
     for (let i = 0; i < histFrequency.length; i++) {
       histData.push({
-        x1: featureData.histEdge[i],
-        x2: featureData.histEdge[i + 1],
+        x1: labelEncoder[featureData.histEdge[i]],
+        x2: labelEncoder[featureData.histEdge[i + 1]],
         height: histFrequency[i]
       });
     }
