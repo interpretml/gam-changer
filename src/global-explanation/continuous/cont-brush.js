@@ -301,6 +301,95 @@ export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
   }
 };
 
+export const selectAllBins = (svg, state, bboxStrokeWidth, multiMenu, component,
+  updateFeatureSidebar, nullifyMetrics, computeSelectedEffects, brush) => {
+  let xRange = [-Infinity, Infinity];
+  let yRange = [-Infinity, Infinity];
+
+  let selectedBinIndexes = [];
+  let svgSelect = d3.select(svg);
+
+  // Highlight the selected dots
+  svgSelect.select('g.line-chart-node-group')
+    .selectAll('circle.node')
+    .classed('selected', d => {
+      if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
+        selectedBinIndexes.push(d.ebmID);
+        state.selectedInfo.nodeData.push({ x: d.x, y: d.y, id: d.id, ebmID: d.ebmID });
+        return true;
+      } else if (d.rightPointID !== null) {
+        let rd = state.pointData[d.rightPointID];
+        if (d.y >= yRange[0] && d.y <= yRange[1] && rd.x >= xRange[0] &&
+          rd.x <= xRange[1] && rd.y >= yRange[0] && rd.y <= yRange[1]) {
+          selectedBinIndexes.push(d.ebmID);
+          state.selectedInfo.nodeData.push({ x: d.x, y: d.y, id: d.id, ebmID: d.ebmID });
+          return true;
+        }
+      } else {
+        return false;
+      }
+    });
+
+  svgSelect.select('g.line-chart-line-group.real')
+    .selectAll('path')
+    .classed('selected', true);
+
+  svgSelect.select('g.line-chart-node-group')
+    .selectAll('circle.node')
+    .classed('selected', true);
+
+  // Compute the bounding box
+  state.selectedInfo.computeBBox(state.pointData);
+
+  let curPadding = rScale(state.curTransform.k) + state.bboxPadding * state.curTransform.k;
+
+  let bbox = svgSelect.select('g.line-chart-content-group')
+    .append('g')
+    .attr('class', 'select-bbox-group')
+    .selectAll('rect.select-bbox')
+    .data(state.selectedInfo.boundingBox)
+    .join('rect')
+    .attr('class', 'select-bbox original-bbox')
+    .attr('x', d => state.curXScale(d.x1) - curPadding)
+    .attr('y', d => state.curYScale(d.y1) - curPadding)
+    .attr('width', d => state.curXScale(d.x2) - state.curXScale(d.x1))
+    .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding)
+    .style('stroke-width', bboxStrokeWidth)
+    .style('stroke', 'hsl(230, 100%, 10%)')
+    .style('stroke-dasharray', '5 3');
+
+  bbox.clone(true)
+    .classed('original-bbox', false)
+    .style('stroke', config.colors.background)
+    .style('stroke-dasharray', null)
+    .style('stroke-width', bboxStrokeWidth * 3)
+    .lower();
+
+  state.selectedInfo.hasSelected = svgSelect.selectAll('g.line-chart-node-group circle.node.selected').size() > 0;
+
+  if (state.selectedInfo.hasSelected) {
+    // Show the context menu near the selected region
+    d3.select(multiMenu)
+      .call(moveMenubar, svg, component)
+      .classed('hidden', false);
+
+    // Trigger a counting of the feature distribution of the selected samples
+    updateFeatureSidebar(selectedBinIndexes);
+  }
+
+  // Nullify the metrics if in selected tab and no selection
+  nullifyMetrics();
+
+  // Recompute the selected effects if in selected tab and we do have selection
+  computeSelectedEffects();
+
+  // Remove the brush box
+  svgSelect.select('g.line-chart-content-group g.brush')
+    .call(brush.move, null)
+    .select('rect.overlay')
+    .attr('cursor', null);
+};
+
 export const brushEndZoom = (event, xScale, yScale, initXDomain, initYDomain, svg, brush) => {
   // Get the selection boundary
   let selection = event.selection;

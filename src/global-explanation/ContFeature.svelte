@@ -10,7 +10,7 @@
 
   import { SelectedInfo } from './continuous/cont-class';
   import { createConfidenceData, createAdditiveData, createPointData, linkPointToAdditive } from './continuous/cont-data';
-  import { brushDuring, brushEndSelect } from './continuous/cont-brush';
+  import { brushDuring, brushEndSelect, selectAllBins, quitSelection } from './continuous/cont-brush';
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './continuous/cont-zoom';
   import { dragged, redrawOriginal, redrawMonotone, inplaceInterpolate,
     stepInterpolate, merge, drawLastEdit, regressionInterpolate } from './continuous/cont-edit';
@@ -49,9 +49,6 @@
   // Real SVG width
   let svgWidth = svgHeight * (width / height);
 
-  // Show some hidden elements for development
-  const showRuler = false;
-
   // Some constant lengths of different elements
   let yAxisWidth;
   let lineChartWidth;
@@ -63,7 +60,6 @@
   const linePathWidth = 2.5;
   const bboxStrokeWidth = 1;
   const nodeStrokeWidth = 1;
-  const animationDuration = 600;
 
   // --- Interactions ---
   // Brush interactions
@@ -270,6 +266,20 @@
     
     case 'save':
       console.log('save clicked');
+      break;
+
+    case 'selectAll':
+      console.log('selectAll clicked');
+
+      // Select all bins if in select mode and nothing has been selected yet
+      if (selectMode) {
+        // Discard any existing selection
+        quitSelection(svg, state, multiMenu, resetContextMenu, resetFeatureSidebar);
+
+        // Cheeky way to select all nodes by fake a brush event
+        selectAllBins(svg, state, bboxStrokeWidth, multiMenu, component,
+          updateFeatureSidebar, nullifyMetrics, computeSelectedEffects, brush);
+      }
       break;
     
     default:

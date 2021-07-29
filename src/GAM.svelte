@@ -570,7 +570,9 @@
     toggle.reset();
   };
 
-  const bindUndoKey = (undoCallback, redoCallback) => {
+  // Bind command-z and command-shift-z for undo and redo
+  // Bind command-a as select all
+  const bindShortcutKey = (undoCallback, redoCallback, selectAllCallback) => {
     d3.select('body')
       .on('keydown', e => {
         if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === 'z') {
@@ -582,6 +584,10 @@
           e.preventDefault();
           e.stopPropagation();
           redoCallback();
+        } else if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === 'a') {
+          e.preventDefault();
+          e.stopPropagation();
+          selectAllCallback();
         }
       });
   };
@@ -590,7 +596,11 @@
 
   onMount(() => {
     bindInlineSVG();
-    bindUndoKey(() => footerActionTriggered('undo'), () => footerActionTriggered('redo'));
+    bindShortcutKey(
+      () => footerActionTriggered('undo'),
+      () => footerActionTriggered('redo'),
+      () => footerActionTriggered('selectAll')
+    );
   });
 
 </script>
