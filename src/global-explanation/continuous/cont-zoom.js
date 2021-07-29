@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import { moveMenubar } from './cont-bbox';
 
 export const rExtent = [2, 16];
-export const zoomScaleExtent = [1, 30];
+export const zoomScaleExtent = [0.95, 30];
 
 export const zoomStart = (state, multiMenu) => {
   if (state.selectedInfo.hasSelected) {
@@ -60,7 +60,7 @@ export const zoomed = (event, state, xScale, yScale, svg,
   // Transform the nodes
   let nodeGroup = svgSelect.select('g.line-chart-node-group');
 
-  if (transform.k === 1 && nodeGroup.style('visibility') === 'visible') {
+  if (transform.k <= 1 && nodeGroup.style('visibility') === 'visible') {
     nodeGroup.transition()
       .duration(300)
       .style('opacity', 0)
@@ -70,7 +70,7 @@ export const zoomed = (event, state, xScale, yScale, svg,
       });
   }
 
-  if (transform.k !== 1 && nodeGroup.style('visibility') === 'hidden') {
+  if (transform.k > 1 && nodeGroup.style('visibility') === 'hidden') {
     nodeGroup.style('opacity', 0);
     nodeGroup.style('visibility', 'visible')
       .transition()

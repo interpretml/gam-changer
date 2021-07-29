@@ -641,6 +641,13 @@
     sidebarInfo.historyHead = historyList.length - 1;
     sidebarInfo.previewHistory = false;
     sidebarStore.set(sidebarInfo);
+
+    // Use animation as a signifier for zoom affordance
+    setTimeout(() => {
+      lineChartContent.transition()
+        .duration(400)
+        .call(zoom.scaleTo, 0.95);
+    }, 400);
   };
 
   const getEBMMetrics = async (scope='global') => {
