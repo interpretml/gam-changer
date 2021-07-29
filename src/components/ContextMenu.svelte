@@ -128,6 +128,7 @@
 
     controlInfo.moveMode = !controlInfo.moveMode;
     switchMoveMode();
+    hideToolTipDuringSubMenu();
 
     dispatch('moveCheckClicked');
   };
@@ -135,6 +136,7 @@
   const moveCancelClicked = () => {
     controlInfo.moveMode = !controlInfo.moveMode;
     switchMoveMode();
+    hideToolTipDuringSubMenu();
 
     dispatch('moveCancelClicked');
   };
@@ -225,11 +227,13 @@
 
   const subItemCheckClicked = (e) => {
     e.stopPropagation();
+    hideToolTipDuringSubMenu();
     dispatch('subItemCheckClicked');
   };
 
   const subItemCancelClicked = (e) => {
     e.stopPropagation();
+    hideToolTipDuringSubMenu();
     dispatch('subItemCancelClicked');
   };
 
