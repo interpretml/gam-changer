@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import { config } from '../config';
 
 /**
  * Create a horizontal color legend.
@@ -44,9 +45,11 @@ export const drawHorizontalColorLegend = (legendGroup, legendConfig, largestAbs)
     .domain([-largestAbs, largestAbs])
     .range([0, legendConfig.width]);
 
-  legendGroup.append('g')
+  let axisGroup = legendGroup.append('g')
     .attr('transform', `translate(${0}, ${legendConfig.height})`)
     .call(d3.axisBottom(legendScale).ticks(5));
+  
+  axisGroup.attr('font-family', config.defaultFont);
 
   legendGroup.append('text')
     .attr('class', 'legend-title')
@@ -54,6 +57,7 @@ export const drawHorizontalColorLegend = (legendGroup, legendConfig, largestAbs)
     .attr('y', 0)
     .style('dominant-baseline', 'hanging')
     .style('text-anchor', 'end')
+    .style('font-weight', 300)
     .text('Score');
 };
 

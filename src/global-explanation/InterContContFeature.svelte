@@ -75,9 +75,9 @@
       startColor: '#b2182b',
       endColor: '#2166ac',
       width: 180,
-      height: 8
+      height: 6
     };
-    const legendHeight = legendConfig.height + 15;
+    const legendHeight = legendConfig.height;
     
     const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
     const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight - legendHeight;
@@ -218,7 +218,7 @@
     let legendGroup = content.append('g')
       .attr('class', 'legend-group')
       .attr('transform', `translate(${width - legendConfig.width -
-        svgPadding.right - svgPadding.left}, ${-10})`);
+        svgPadding.right - svgPadding.left}, ${-20})`);
     
     drawHorizontalColorLegend(legendGroup, legendConfig, maxAbsScore);
 

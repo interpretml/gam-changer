@@ -187,19 +187,17 @@
     // as lines. Need to figure out individual variable type.
     let data = preProcessData(featureData);
 
-    console.log(data);
-
     // Some constant lengths of different elements
     // Approximate the longest width of score (y-axis)
     const yAxisWidth = 5 * d3.max(data.catHistEdge.map(d => String(d).length));
-    const barHeight = 10;
+
     const legendConfig = {
       startColor: '#b2182b',
       endColor: '#2166ac',
       width: 180,
-      height: barHeight * 0.8
+      height: 6
     };
-    const legendHeight = legendConfig.height + 15;
+    const legendHeight = legendConfig.height;
     
     const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
     const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight - legendHeight;
@@ -213,9 +211,10 @@
       .range([0, chartWidth]);
 
     // Categorical variable on the y-axis
-    let yScale = d3.scalePoint()
+    let yScale = d3.scaleBand()
       .domain(data.catHistEdge)
-      .padding(0.7)
+      .paddingInner(0.4)
+      .paddingOuter(0.3)
       .range([chartHeight, 0])
       .round(true);
 
@@ -238,7 +237,6 @@
     histChart.attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-hist-chart-clip)`);
 
     let additiveData = createAdditiveData(featureData, data);
-    console.log(additiveData);
 
     // Create color scale for the bar chart
     let maxAbsScore = 0;
@@ -247,7 +245,6 @@
         if (Math.abs(d.sAdditive) > maxAbsScore) maxAbsScore = Math.abs(d.sAdditive);
       });
     });
-    console.log(maxAbsScore);
 
     // One can consider to use the color scale to encode the global range
     // let maxAbsScore = Math.max(Math.abs(scoreRange[0]), Math.abs(scoreRange[1]));
@@ -306,9 +303,9 @@
         .join('rect')
         .attr('class', 'bar')
         .attr('x', d => xScale(d.sx))
-        .attr('y', - barHeight / 2)
+        .attr('y', 0)
         .attr('width', d => xScale(d.tx) - xScale(d.sx))
-        .attr('height', barHeight)
+        .attr('height', yScale.bandwidth())
         .style('fill', d => colorScale(d.sAdditive));
     }
 
@@ -377,7 +374,7 @@
     // Draw a color legend
     let legendGroup = content.append('g')
       .attr('class', 'legend-group')
-      .attr('transform', `translate(${width - legendConfig.width - svgPadding.right - svgPadding.left}, ${-5})`);
+      .attr('transform', `translate(${width - legendConfig.width - svgPadding.right - svgPadding.left}, ${-20})`);
     
     drawHorizontalColorLegend(legendGroup, legendConfig, maxAbsScore);
 

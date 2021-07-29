@@ -138,14 +138,13 @@
     // Approximate the longest width of score (y-axis)
     const yAxisWidth = 5 * d3.max(data.shortBinLabel.map(d => String(d).length));
 
-    const barHeight = 10;
     const legendConfig = {
       startColor: '#b2182b',
       endColor: '#2166ac',
       width: 180,
-      height: barHeight * 0.8
+      height: 6
     };
-    const legendHeight = legendConfig.height + 15;
+    const legendHeight = legendConfig.height;
     
     const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
     const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight - legendHeight;
@@ -298,9 +297,8 @@
     // Draw a color legend
     let legendGroup = content.append('g')
       .attr('class', 'legend-group')
-      .attr('transform', `translate(${width - legendConfig.width -
-        xScale.step() * config.scalePointPadding - svgPadding.right -
-        svgPadding.left}, ${-5})`);
+      .attr('transform', `translate(${width - legendConfig.width - svgPadding.right -
+        svgPadding.left}, ${-20})`);
     
     drawHorizontalColorLegend(legendGroup, legendConfig, maxAbsScore);
 
