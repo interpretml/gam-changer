@@ -172,6 +172,12 @@
     }
   }
 
+  .feature-cont {
+    .feature {
+      border-bottom: 1px solid $pastel1-red;
+    }
+  }
+
   .feature-legend {
     position: relative;
     padding: 5px 0 4px 0;
@@ -180,7 +186,6 @@
   .feature {
     will-change: transform, height;
     margin: 0 auto;
-    border-bottom: 1px solid change-color($blue-500, $alpha: 0.3);
   }
 
   .scope-selection.field {

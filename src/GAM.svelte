@@ -432,14 +432,14 @@
   const initData = async () => {
     console.log('loading data');
     isClassification = true;
-    data = await d3.json('/data/iow-house-ebm-binary.json');
-    // data = await d3.json('/data/mimic2-model.json');
+    // data = await d3.json('/data/iow-house-ebm-binary.json');
+    data = await d3.json('/data/mimic2-model.json');
     // let loadedData = await d3.json('/data/iow-house-ebm.json');
     // let loadedData = await d3.json('/data/medical-ebm.json');
     console.log(data);
 
-    sampleData = await d3.json('/data/iow-house-sample-binary.json');
-    // sampleData = await d3.json('/data/mimic2-sample-1000.json');
+    // sampleData = await d3.json('/data/iow-house-sample-binary.json');
+    sampleData = await d3.json('/data/mimic2-sample-1000.json');
 
     console.log(sampleData);
     console.log('loaded data');

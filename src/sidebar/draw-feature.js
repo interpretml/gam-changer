@@ -193,7 +193,7 @@ export const initCatFeature = (component, f, svgCatPadding, totalSampleNum,
   // histEdge, histCount, histDensity
   let xScale = d3.scaleBand()
     .domain(curData.map(d => d.edge))
-    .padding(0)
+    .paddingInner(0.1)
     .range([0, width - svgCatPadding.left - svgCatPadding.right]);
 
   let yScale = d3.scaleLinear()
@@ -205,6 +205,17 @@ export const initCatFeature = (component, f, svgCatPadding, totalSampleNum,
     .attr('class', 'feature-title')
     .attr('x', xScale(curData[0].edge))
     .text(f.name);
+
+  // Draw a short pink rectangle as baseline (to signal missing value / small value)
+  lowContent.selectAll('rect.base-bar')
+    .data(curData)
+    .join('rect')
+    .attr('class', 'base-bar')
+    .attr('x', d => xScale(d.edge))
+    .attr('y', svgHeight - svgCatPadding.bottom - 1)
+    .attr('width', xScale.bandwidth())
+    .attr('height', 1)
+    .style('fill', 'hsl(329, 90%, 92%)');
 
   // Draw the global histogram
   lowContent.selectAll('rect.global-bar')
