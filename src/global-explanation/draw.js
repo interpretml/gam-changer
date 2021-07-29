@@ -66,3 +66,11 @@ export const fadeRemove = (g, time = 500, ease = d3.easeCubicInOut) => {
       d3.select(g[i]).remove();
     });
 };
+
+export const startLoading = (loadingBar) => {
+  d3.select(loadingBar).classed('animated', true);
+};
+
+export const endLoading = (loadingBar) => {
+  d3.select(loadingBar).classed('animated', false);
+};

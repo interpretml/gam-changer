@@ -158,8 +158,8 @@ export const initContFeature = (component, f, svgContPadding, totalSampleNum,
  * @param {number} svgHeight SVG Height
  * @param {number} titleHeight Feature name text height
  */
-export const initCatFeature = (component, f, svgCatPadding, catBarWidth, totalSampleNum,
-  width, svgHeight, titleHeight) => {
+export const initCatFeature = (component, f, svgCatPadding, totalSampleNum,
+  width, catBarWidth, svgHeight, titleHeight) => {
   let svg = d3.select(component)
     .select(`.feature-${f.id}`)
     .select('svg');
@@ -176,12 +176,6 @@ export const initCatFeature = (component, f, svgCatPadding, catBarWidth, totalSa
     .attr('class', 'top-content')
     .attr('transform', `translate(${svgCatPadding.left}, ${svgCatPadding.top})`);
 
-  // Add the feature title
-  topContent.append('text')
-    .attr('class', 'feature-title')
-    .attr('x', -catBarWidth / 2)
-    .text(f.name);
-
   // Sort the bins from high count to low count, and save the sorting order
   // (needed to update selected bins)
   let curData = f.histEdge.map((d, i) => ({
@@ -197,7 +191,7 @@ export const initCatFeature = (component, f, svgCatPadding, catBarWidth, totalSa
 
   // Create the axis scales
   // histEdge, histCount, histDensity
-  let xScale = d3.scalePoint()
+  let xScale = d3.scaleBand()
     .domain(curData.map(d => d.edge))
     .padding(0)
     .range([0, width - svgCatPadding.left - svgCatPadding.right]);
@@ -206,14 +200,20 @@ export const initCatFeature = (component, f, svgCatPadding, catBarWidth, totalSa
     .domain([0, d3.max(curData, d => d.density)])
     .range([svgHeight - svgCatPadding.bottom, svgCatPadding.top + titleHeight]);
 
+  // Add the feature title
+  topContent.append('text')
+    .attr('class', 'feature-title')
+    .attr('x', xScale(curData[0].edge))
+    .text(f.name);
+
   // Draw the global histogram
   lowContent.selectAll('rect.global-bar')
     .data(curData)
     .join('rect')
     .attr('class', 'global-bar')
-    .attr('x', d => xScale(d.edge) - catBarWidth / 2)
+    .attr('x', d => xScale(d.edge))
     .attr('y', d => yScale(d.density))
-    .attr('width', catBarWidth)
+    .attr('width', xScale.bandwidth())
     .attr('height', d => svgHeight - svgCatPadding.bottom - yScale(d.density));
 
   // Draw overlay layer
@@ -225,9 +225,9 @@ export const initCatFeature = (component, f, svgCatPadding, catBarWidth, totalSa
     .data(curData)
     .join('rect')
     .attr('class', 'selected-bar')
-    .attr('x', d => xScale(d.edge) - catBarWidth / 2)
+    .attr('x', d => xScale(d.edge))
     .attr('y', d => yScaleSelected(d.selectedDensity))
-    .attr('width', catBarWidth)
+    .attr('width', xScale.bandwidth())
     .attr('height', d => svgHeight - svgCatPadding.bottom - yScaleSelected(d.selectedDensity));
 };
 

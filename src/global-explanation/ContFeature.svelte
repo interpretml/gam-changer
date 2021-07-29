@@ -1176,7 +1176,9 @@
     // Update the last edit graph
     drawLastEdit(state, svg);
 
-    redrawMonotone(state, svg, isoYs, () => {updateEBM('current');});
+    redrawMonotone(state, svg, isoYs, () => {
+      updateEBM('current');
+    });
     myContextMenu.showConfirmation('increasing', 600);
 
     // Update EBM

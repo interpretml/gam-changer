@@ -3,12 +3,10 @@
   import * as d3 from 'd3';
   import { onMount, afterUpdate } from 'svelte';
   import { flip } from 'svelte/animate';
-  import { quadInOut, expoInOut, cubicInOut } from 'svelte/easing';
-  import { round, shuffle } from '../utils/utils';
   import { initLegend, initContFeature, initCatFeature, updateContFeature, updateCatFeature } from './draw-feature';
 
   export let sidebarStore;
-  // export let width = 0;
+  export let width = 0;
 
   let component = null;
   let selectedTab = 'cont';
@@ -18,7 +16,6 @@
   let featureInitialized = false;
   let waitingToDrawDIV = false;
   
-  let width = 0;
   let height = 0;
 
   const svgHeight = 40;
@@ -34,7 +31,7 @@
 
 
   onMount(() => {
-    width = component.getBoundingClientRect().width;
+    // width = component.getBoundingClientRect().width;
     height = component.getBoundingClientRect().height;
 
     let instance = d3.select(component)
@@ -62,11 +59,12 @@
       });
 
       // Find the max equal bar width
-      catBarWidth = (width - svgCatPadding.left - svgCatPadding.right) / d3.max(sortedCatFeatures, d => d.histCount.length);
+      catBarWidth = (width - svgCatPadding.left - svgCatPadding.right) /
+        d3.max(sortedCatFeatures, d => d.histCount.length);
 
       sortedCatFeatures.forEach(f => {
-        initCatFeature(component, f, svgCatPadding, catBarWidth, totalSampleNum,
-          width, svgHeight, titleHeight);
+        initCatFeature(component, f, svgCatPadding, totalSampleNum, width,
+          catBarWidth, svgHeight, titleHeight);
       });
 
       waitingToDrawDIV = false;

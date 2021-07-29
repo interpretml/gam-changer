@@ -165,7 +165,7 @@
 
     <div class='tab' class:hidden={sidebarInfo.selectedTab !== 'feature'}>
       {#if sampleDataInitialized}
-        <Feature sidebarStore={sidebarStore}/>
+        <Feature sidebarStore={sidebarStore} width={width}/>
       {:else}
         <Dropzone sidebarStore={sidebarStore} dataType={'sampleData'}/>
       {/if}

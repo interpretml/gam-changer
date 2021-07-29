@@ -7,6 +7,7 @@
 
   let component = null;
   let sliceSelect = null;
+  let loadingBar = null;
   let sidebarInfo = {};
   let width = 0;
   let height = 0;
@@ -48,6 +49,10 @@
       .attr('width', width)
       .attr('height', 455);
 
+    // Expose loading bar to other components
+    sidebarInfo.loadingBar = loadingBar;
+    d3.select(loadingBar).classed('animated', false);
+    sidebarStore.set(sidebarInfo);
   });
 
   const copyMetricData = (barData, confusionMatrixData, fromIndex, toIndex) => {
@@ -286,11 +291,14 @@
 
   .metrics {
     height: 100%;
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
     overflow-y: scroll;
+    overflow-x: hidden;
+    position: relative;
     background-color: $brown-50;
     border-top: 1px solid $blue-50;
 
