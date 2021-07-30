@@ -4,7 +4,7 @@ import { state } from './cat-cat-state';
 import { config } from '../../config';
 
 export const rExtent = [3, 16];
-export const zoomScaleExtent = [1, 4];
+export const zoomScaleExtent = [0.95, 4];
 
 export const zoomStart = (multiMenu) => {
   // if (state.selectedInfo.hasSelected) {

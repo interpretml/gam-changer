@@ -117,6 +117,8 @@
 
   const drawFeature = (featureData) => {
     console.log(featureData);
+    initialized = true;
+
     let svgSelect = d3.select(svg);
 
     // Set svg viewBox (3:2 WH ratio)
@@ -147,8 +149,8 @@
     const yAxisWidth = 8 * d3.max(data.shortBinName.map(d => String(d).length));
 
     const legendConfig = {
-      startColor: '#b2182b',
-      endColor: '#2166ac',
+      startColor: '#2166ac',
+      endColor: '#b2182b',
       width: 180,
       height: 6
     };
@@ -402,6 +404,13 @@
     scatterPlotContent.call(zoom)
       .call(zoom.transform, d3.zoomIdentity);
 
+    // Use animation as a signifier for zoom affordance
+    // setTimeout(() => {
+    //   scatterPlotContent.transition()
+    //     .duration(400)
+    //     .call(zoom.scaleTo, 0.95);
+    // }, 400);
+
     scatterPlotContent.on('dblclick.zoom', null);
     
     // Listen to double click to reset zoom
@@ -411,8 +420,6 @@
         .ease(d3.easeCubicInOut)
         .call(zoom.transform, d3.zoomIdentity);
     });
-
-    initialized = true;
 
   };
 

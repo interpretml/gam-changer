@@ -3,7 +3,7 @@ import { moveMenubar } from '../continuous/cont-bbox';
 import { state } from './cont-cat-state';
 
 export const rExtent = [3, 16];
-export const zoomScaleExtent = [1, 4];
+export const zoomScaleExtent = [0.95, 4];
 
 export const zoomStart = (multiMenu) => {
   // if (state.selectedInfo.hasSelected) {

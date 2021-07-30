@@ -166,7 +166,10 @@
   onMount(() => {mounted = true;});
 
   const drawFeatureBar = (featureData) => {
+    initialized = true;
+
     console.log(featureData);
+
     let svgSelect = d3.select(svg);
 
     // Set svg viewBox (3:2 WH ratio)
@@ -197,8 +200,8 @@
     const yAxisWidth = 7 * d3.max(data.catHistEdgeName.map(d => String(d).length));
 
     const legendConfig = {
-      startColor: '#b2182b',
-      endColor: '#2166ac',
+      startColor: '#2166ac',
+      endColor: '#b2182b',
       width: 180,
       height: 6
     };
@@ -367,6 +370,13 @@
       .call(zoom.transform, d3.zoomIdentity);
 
     barChartContent.on('dblclick.zoom', null);
+
+    // Use animation as a signifier for zoom affordance
+    setTimeout(() => {
+      barChartContent.transition()
+        .duration(400)
+        .call(zoom.scaleTo, 0.95);
+    }, 400);
     
     // Listen to double click to reset zoom
     barChartContent.on('dblclick', () => {
@@ -445,8 +455,6 @@
       .attr('class', 'y-axis-text')
       .text('Density')
       .style('fill', colors.histAxis);
-
-    initialized = true;
   };
 
   let drawFeature = null;
