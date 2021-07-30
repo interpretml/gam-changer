@@ -448,12 +448,28 @@
     display: none;
   }
 
+  .empty-history {
+    display: flex;
+    height: 100%;
+
+    span {
+      margin: auto;
+    }
+
+    &.hidden {
+      display: none;
+    }
+  }
+
 </style>
 
 <div class='history-tab' bind:this={component}>
 
   <div class='icon-loading'>
+  </div>
 
+  <div class='empty-history' class:hidden={historyList.length > 0}>
+    <span>No GAM is changed :(</span>
   </div>
 
   <div class='history' bind:this={historyDIV}>

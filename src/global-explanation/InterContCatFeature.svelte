@@ -156,6 +156,10 @@
       console.error('The interaction is not continuous x categorical.');
     }
 
+    // Encode the cat var level
+    data.catBinName = data.catBinLabel.map(d => labelEncoder[data.catName][d]);
+    data.catHistEdgeName = data.catHistEdge.map(d => labelEncoder[data.catName][d]);
+
     return data;
   };
 
@@ -190,7 +194,7 @@
 
     // Some constant lengths of different elements
     // Approximate the longest width of score (y-axis)
-    const yAxisWidth = 5 * d3.max(data.catHistEdge.map(d => String(d).length));
+    const yAxisWidth = 7 * d3.max(data.catHistEdgeName.map(d => String(d).length));
 
     const legendConfig = {
       startColor: '#b2182b',
@@ -213,7 +217,7 @@
 
     // Categorical variable on the y-axis
     let yScale = d3.scaleBand()
-      .domain(data.catHistEdge)
+      .domain(data.catHistEdgeName)
       .paddingInner(0.4)
       .paddingOuter(0.3)
       .range([chartHeight, 0])
@@ -298,7 +302,7 @@
     for (let l = 0; l < additiveData.length; l++) {
       barGroup.append('g')
         .attr('class', `bar-group-${l}`)
-        .attr('transform', `translate(${0}, ${yScale(data.catHistEdge[l])})`)
+        .attr('transform', `translate(${0}, ${yScale(data.catBinName[l])})`)
         .selectAll('rect.bar')
         .data(additiveData[l])
         .join('rect')

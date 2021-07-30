@@ -71,7 +71,7 @@
 
     // Some constant lengths of different elements
     // Approximate the longest width of score (y-axis)
-    const yAxisWidth = 5 * d3.max(featureData.binLabel2.map(d => String(round(d, 1)).length));
+    const yAxisWidth = 5 * d3.max(featureData.binLabel2.map(d => String(round(d, 2)).length + 1));
     const legendConfig = {
       startColor: '#b2182b',
       endColor: '#2166ac',

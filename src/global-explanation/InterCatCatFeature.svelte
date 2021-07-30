@@ -58,7 +58,9 @@
       for (let j = 0; j < featureData.additive[i].length; j++) {
         additiveData.push({
           longLabel: data.longDim === 0 ? data.longBinLabel[i] : data.longBinLabel[j],
+          longLabelName: data.longDim === 0 ? data.longBinName[i] : data.longBinName[j],
           shortLabel: data.longDim === 0 ? data.shortBinLabel[j] : data.shortBinLabel[i],
+          shortLabelName: data.longDim === 0 ? data.shortBinName[j] : data.shortBinName[i],
           additive: featureData.additive[i][j],
           error: featureData.error[i][j]
         });
@@ -101,6 +103,13 @@
       data.shortDim = 0;
     }
 
+    // Encode the categorical level names
+    data.longBinName = data.longBinLabel.map(d => labelEncoder[data.longName][d]);
+    data.shortBinName = data.shortBinLabel.map(d => labelEncoder[data.shortName][d]);
+
+    data.longHistEdgeName = data.longHistEdge.map(d => labelEncoder[data.longName][d]);
+    data.shortHistEdgeName = data.shortHistEdge.map(d => labelEncoder[data.shortName][d]);
+
     return data;
   };
 
@@ -133,11 +142,9 @@
     // and the other one on the y-axis
     let data = preProcessData(featureData);
 
-    console.log(data);
-
     // Some constant lengths of different elements
     // Approximate the longest width of score (y-axis)
-    const yAxisWidth = 5 * d3.max(data.shortBinLabel.map(d => String(d).length));
+    const yAxisWidth = 8 * d3.max(data.shortBinName.map(d => String(d).length));
 
     const legendConfig = {
       startColor: '#b2182b',
@@ -152,13 +159,13 @@
 
     // We put longer categorical variable on the x-axis
     let xScale = d3.scalePoint()
-      .domain(data.longBinLabel)
+      .domain(data.longBinName)
       .padding(config.scalePointPadding)
       .range([0, chartWidth]);
 
     // Shorter categorical variable on the y-axis
     let yScale = d3.scalePoint()
-      .domain(data.shortBinLabel)
+      .domain(data.shortBinName)
       .padding(config.scalePointPadding)
       .range([chartHeight, 0]);
 
@@ -181,7 +188,6 @@
     histChart.attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-hist-chart-clip)`);
 
     let additiveData = createAdditiveData(featureData, data);
-    console.log(additiveData);
 
     // Create color scale for the bar chart
     let maxAbsScore = 0;
@@ -190,7 +196,6 @@
         if (Math.abs(d) > maxAbsScore) maxAbsScore = Math.abs(d);
       });
     });
-    console.log(maxAbsScore);
 
     // One can consider to use the color scale to encode the global range
     // let maxAbsScore = Math.max(Math.abs(scoreRange[0]), Math.abs(scoreRange[1]));
@@ -253,8 +258,8 @@
       .data(additiveData)
       .join('circle')
       .attr('class', 'dot')
-      .attr('cx', d => xScale(d.longLabel))
-      .attr('cy', d => yScale(d.shortLabel))
+      .attr('cx', d => xScale(d.longLabelName))
+      .attr('cy', d => yScale(d.shortLabelName))
       .attr('r', config.catDotRadius)
       .style('fill', d => colorScale(d.additive));
 
@@ -271,11 +276,21 @@
     xAxisGroup.attr('font-family', config.defaultFont);
 
     xAxisGroup.append('g')
-      .attr('transform', `translate(${chartWidth / 2}, ${25})`)
+      .attr('transform', `translate(${chartWidth / 2}, ${data.longBinName.length > 6 ? 65 : 25})`)
       .append('text')
       .attr('class', 'x-axis-text')
       .text(data.longName)
       .style('fill', 'black');
+
+    // Rotate the x axis label if there are too many values
+    if (data.longBinName.length > 6) {
+      xAxisGroup.selectAll('g.tick text')
+        .attr('y', 0)
+        .attr('x', 9)
+        .attr('dy', '-0.6em')
+        .attr('transform', 'rotate(90)')
+        .style('text-anchor', 'start');
+    }
     
     // Draw the line chart Y axis
     let yAxisGroup = axisGroup.append('g')
@@ -312,8 +327,8 @@
 
     for (let i = 0; i < histFrequency.length; i++) {
       histData.push({
-        x1: data.longHistEdge[i],
-        x2: data.longHistEdge[i + 1],
+        x1: data.longHistEdgeName[i],
+        x2: data.longHistEdgeName[i + 1],
         height: histFrequency[i]
       });
     }

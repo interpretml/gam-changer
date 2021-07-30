@@ -49,7 +49,8 @@ export const drawHorizontalColorLegend = (legendGroup, legendConfig, largestAbs)
     .attr('transform', `translate(${0}, ${legendConfig.height})`)
     .call(d3.axisBottom(legendScale).ticks(5));
   
-  axisGroup.attr('font-family', config.defaultFont);
+  axisGroup.attr('font-family', config.defaultFont)
+    .style('stroke-width', 0.5);
 
   legendGroup.append('text')
     .attr('class', 'legend-title')
