@@ -174,7 +174,7 @@
 
   .feature-cont {
     .feature {
-      border-bottom: 1px solid $pastel1-red;
+      border-bottom: 1px solid $pastel2-gray;
     }
   }
 

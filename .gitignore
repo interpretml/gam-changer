@@ -7,6 +7,6 @@ package-lock.json
 .vercel
 deploy-gh-page.sh
 dist
-/public/data/medical-ebm.json
+/public/data/medical*
 
 mimic*

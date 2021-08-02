@@ -8,6 +8,7 @@
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent, rScale } from './categorical/cat-zoom';
   import { brushDuring, brushEndSelect } from './categorical/cat-brush';
   import { moveMenubar } from './continuous/cont-bbox';
+  import { drawLastEdit, drawBufferGraph, grayOutConfidenceLine } from './categorical/cat-edit';
 
   import ToggleSwitch from '../components/ToggleSwitch.svelte';
   import ContextMenu from '../components/ContextMenu.svelte';
@@ -229,7 +230,7 @@
       .style('opacity', 0);
 
     // Create a group to draw grids
-    scatterPlotContent.append('g')
+    let gridGroup = scatterPlotContent.append('g')
       .attr('class', 'scatter-plot-grid-group');
 
     let confidenceGroup = scatterPlotContent.append('g')
@@ -277,18 +278,47 @@
     confidenceGroup.lower();
 
     barGroup.clone(true)
-      .classed('last-edit', true)
+      .classed('last-edit-back', true)
       .classed('real', false)
       .lower()
       .selectAll('rect')
       .remove();
 
     barGroup.clone(true)
+      .classed('last-edit-front', true)
+      .classed('real', false)
+      .raise()
+      .selectAll('rect')
+      .remove();
+
+    barGroup.clone(true)
       .classed('original', true)
       .classed('real', false)
-      .style('fill', 'gray')
-      .style('opacity', 0.2)
+      .style('fill', 'hsl(0, 0%, 85%)')
+      .style('opacity', 1)
       .lower();
+    
+    // Add level lines to the original bar group
+    let originalFront = barGroup.clone(true)
+      .classed('original-front', true)
+      .classed('real', false)
+      .raise();
+
+    originalFront.selectAll('rect')
+      .remove();
+
+    originalFront.selectAll('path.original-line')
+      .data(Object.values(pointData), d => d.id)
+      .join('path')
+      .attr('class', 'original-line')
+      .style('stroke', 'hsl(0, 0%, 30%)')
+      .attr('d', d => `M ${state.oriXScale(d.x) - barWidth / 2}, ${state.oriYScale(d.y)} l ${barWidth}, 0`);
+
+    // Make sure the dots are on top
+    confidenceGroup.raise();
+    scatterGroup.raise();
+    gridGroup.lower();
+    
 
     // Draw the chart X axis
     // Hack: create a wrapper so we can apply clip before transformation
@@ -471,125 +501,6 @@
 
   };
 
-  const drawBufferGraph = (animated, duration, callback=() => {}) => {
-    const svgSelect = d3.select(svg);
-
-    let trans = d3.transition('buffer')
-      .duration(duration)
-      .ease(d3.easeCubicInOut)
-      .on('end', () => {
-        callback();
-      });
-    
-    let nodes = svgSelect.select('g.scatter-plot-dot-group')
-      .selectAll('.additive-dot');
-
-    let bars = svgSelect.select('g.scatter-plot-bar-group.real')
-      .selectAll('.additive-bar');
-    
-    // Only update, no enter or exit
-    if (animated) {
-      nodes.data(Object.values(state.pointDataBuffer), d => d.id)
-        .transition(trans)
-        .attr('cx', d => state.oriXScale(d.x))
-        .attr('cy', d => state.oriYScale(d.y));
-
-      bars.data(Object.values(state.pointDataBuffer), d => d.id)
-        .transition(trans)
-        .attr('y', d => d.y > 0 ? state.oriYScale(d.y) : state.oriYScale(0))
-        .attr('height',  d => Math.abs(state.oriYScale(d.y) - state.oriYScale(0)));
-    } else {
-      nodes.data(Object.values(state.pointDataBuffer), d => d.id)
-        .attr('cx', d => state.oriXScale(d.x))
-        .attr('cy', d => state.oriYScale(d.y));
-
-      bars.data(Object.values(state.pointDataBuffer), d => d.id)
-        .attr('y', d => d.y > 0 ? state.oriYScale(d.y) : state.oriYScale(0))
-        .attr('height',  d => Math.abs(state.oriYScale(d.y) - state.oriYScale(0)));
-    }
-
-    // Move the selected bbox
-    let curPadding = rScale(state.curTransform.k) + state.bboxPadding * state.curTransform.k;
-
-    if (animated) {
-      svgSelect.select('g.scatter-plot-content-group g.select-bbox-group')
-        .selectAll('rect.select-bbox')
-        .datum(state.selectedInfo.boundingBox[0])
-        .transition(trans)
-        .attr('y', d => state.curYScale(d.y1) - curPadding)
-        .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding);
-    } else {
-      svgSelect.select('g.scatter-plot-content-group g.select-bbox-group')
-        .selectAll('rect.select-bbox')
-        .datum(state.selectedInfo.boundingBox[0])
-        .attr('y', d => state.curYScale(d.y1) - curPadding)
-        .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding);
-    }
-  };
-
-  const drawLastEdit = () => {
-    if (state.pointDataLastEdit === undefined) {
-      return;
-    }
-
-    const svgSelect = d3.select(svg);
-
-    let trans = d3.transition('lastEdit')
-      .duration(400)
-      .ease(d3.easeCubicInOut);
-    
-    let bars = svgSelect.select('g.scatter-plot-bar-group.last-edit')
-      .selectAll('.additive-bar');
-
-    let lines = svgSelect.select('g.scatter-plot-bar-group.last-edit')
-      .selectAll('.additive-line');
-
-    bars.data(Object.values(state.pointDataLastEdit), d => d.id)
-      .join(
-        enter => enter.append('rect')
-          .attr('class', 'additive-bar')
-          .attr('x', d => state.oriXScale(d.x) - barWidth / 2)
-          .attr('y', state.oriYScale(0))
-          .attr('width', barWidth)
-          .attr('height', 0)
-          .call(enter => enter.transition(trans)
-            .attr('y', d => d.y > 0 ? state.oriYScale(d.y) : state.oriYScale(0))
-            .attr('height',  d => Math.abs(state.oriYScale(d.y) - state.oriYScale(0)))
-          ),
-        update => update.call(update => update.transition(trans)
-          .attr('y', d => d.y > 0 ? state.oriYScale(d.y) : state.oriYScale(0))
-          .attr('height',  d => Math.abs(state.oriYScale(d.y) - state.oriYScale(0)))
-        )
-      );
-
-    lines.data(Object.values(state.pointDataLastEdit), d => d.id)
-      .join(
-        enter => enter.append('path')
-          .attr('class', 'additive-line')
-          .attr('d', d => `M ${state.oriXScale(d.x) - barWidth / 2}, ${state.oriYScale(0)} l ${barWidth}, 0`)
-          .call(enter => enter.transition(trans)
-            .attr('d', d => `M ${state.oriXScale(d.x) - barWidth / 2}, ${state.oriYScale(d.y)} l ${barWidth}, 0`)
-          ),
-        update => update.call(update => update.transition(trans)
-          .attr('d', d => `M ${state.oriXScale(d.x) - barWidth / 2}, ${state.oriYScale(d.y)} l ${barWidth}, 0`)
-        )
-      );
-    
-  };
-
-  const grayOutConfidenceLine = () => {
-    let editingIDs = new Set();
-    state.selectedInfo.nodeData.forEach(d => editingIDs.add(d.id));
-
-    console.log(editingIDs);
-    let lines = d3.select(svg)
-      .selectAll('.scatter-plot-confidence-group .dot-confidence')
-      .filter(d => editingIDs.has(d.id))
-      .classed('edited', true);
-
-    console.log(lines);
-  };
-
   const dragged = (e) => {
     
     const dataYChange = state.curYScale.invert(e.y) - state.curYScale.invert(e.y - e.dy);
@@ -606,7 +517,7 @@
     state.selectedInfo.computeBBox(state.pointDataBuffer);
 
     // Draw the new graph
-    drawBufferGraph(false, 400);
+    drawBufferGraph(state, svg, false, 400);
 
     // Update the sidebar info
     // if (dragTimeout !== null) {
@@ -631,7 +542,7 @@
       .style('cursor', 'row-resize')
       .call(d3.drag()
         .on('start', () => {
-          grayOutConfidenceLine();
+          grayOutConfidenceLine(state, svg);
           //TODO: update footer
         })
         .on('drag', (e) => dragged(e))
@@ -642,7 +553,7 @@
     
     // Show the last edit
     if (state.pointDataLastEdit !== undefined) {
-      drawLastEdit();
+      drawLastEdit(state, svg, barWidth);
     }
 
   };
@@ -720,17 +631,17 @@
 
   :global(.explain-panel rect.additive-bar.selected) {
     fill: $orange-300;
-    opacity: 0.8;
+    opacity: 1;
   }
 
-  :global(.explain-panel .last-edit rect.additive-bar) {
+  :global(.explain-panel .last-edit-back rect.additive-bar) {
     fill: hsl(35, 100%, 85%);
-    opacity: 0.9;
+    opacity: 1;
   }
 
-  :global(.explain-panel .last-edit path.additive-line) {
-    stroke: hsl(34, 100%, 18%);
-    opacity: 0.9;
+  :global(.explain-panel .last-edit-front path.additive-line) {
+    stroke: hsl(35, 100%, 85%);
+    opacity: 1;
   }
 
   :global(.explain-panel circle.additive-dot) {

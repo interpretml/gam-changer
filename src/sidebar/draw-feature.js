@@ -215,7 +215,7 @@ export const initCatFeature = (component, f, svgCatPadding, totalSampleNum,
     .attr('y', svgHeight - svgCatPadding.bottom - 1)
     .attr('width', xScale.bandwidth())
     .attr('height', 1)
-    .style('fill', 'hsl(329, 90%, 92%)');
+    .style('fill', 'hsl(0, 0%, 95%)');
 
   // Draw the global histogram
   lowContent.selectAll('rect.global-bar')
