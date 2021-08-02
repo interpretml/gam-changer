@@ -4,13 +4,13 @@
   import { round } from '../utils/utils';
   import { config } from '../config';
 
+  import { drawBarLegend } from './draw';
   import { SelectedInfo } from './categorical/cat-class';
-  import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent, rScale } from './categorical/cat-zoom';
+  import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './categorical/cat-zoom';
   import { brushDuring, brushEndSelect } from './categorical/cat-brush';
   import { moveMenubar } from './continuous/cont-bbox';
-  import { drawLastEdit, drawBufferGraph, grayOutConfidenceLine } from './categorical/cat-edit';
+  import { drawLastEdit, drawBufferGraph, grayOutConfidenceLine, redrawOriginal } from './categorical/cat-edit';
 
-  import ToggleSwitch from '../components/ToggleSwitch.svelte';
   import ContextMenu from '../components/ContextMenu.svelte';
 
   export let featureData = null;
@@ -139,6 +139,9 @@
     const yAxisWidth = 5 * d3.max(scoreRange.map(d => String(round(d, 1)).length));
     const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
     const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
+
+    // Draw the bar legend
+    drawBarLegend(svgSelect, width, svgPadding);
 
     let content = svgSelect.append('g')
       .attr('class', 'content')
@@ -311,7 +314,7 @@
       .data(Object.values(pointData), d => d.id)
       .join('path')
       .attr('class', 'original-line')
-      .style('stroke', 'hsl(0, 0%, 30%)')
+      .style('stroke', 'hsl(0, 0%, 75%)')
       .attr('d', d => `M ${state.oriXScale(d.x) - barWidth / 2}, ${state.oriYScale(d.y)} l ${barWidth}, 0`);
 
     // Make sure the dots are on top
@@ -416,7 +419,7 @@
     // Add brush
     brush = d3.brush()
       .on('end', e => brushEndSelect(
-        e, state, svg, multiMenu, brush, component, resetContextMenu
+        e, state, svg, multiMenu, brush, component, resetContextMenu, barWidth
       ))
       .on('start brush', e => brushDuring(e, state, svg, multiMenu))
       .extent([[0, 0], [chartWidth, chartHeight]])
@@ -476,6 +479,9 @@
    * needs access to variable `multiMenuControlInfo`
    */
   const resetContextMenu = () => {
+    let moveMode = multiMenuControlInfo.moveMode;
+    let subItemMode = multiMenuControlInfo.subItemMode;
+
     if (multiMenuControlInfo.moveMode) {
       multiMenuControlInfo.moveMode = false;
       multiMenuControlInfo.toSwitchMoveMode = true;
@@ -495,6 +501,8 @@
       state.pointDataBuffer = null;
       state.additiveDataBuffer = null;
     }
+
+    return {moveMode: moveMode, subItemMode: subItemMode};
   };
 
   const multiMenuInputChanged = () => {
@@ -592,7 +600,43 @@
   };
 
   const multiMenuMoveCancelClicked = () => {
+    // Discard the changes
+    state.pointDataBuffer = null;
+    state.additiveDataBuffer = null;
 
+    // Recover the original graph
+    redrawOriginal(state, svg, true, () => {
+      // Move the menu bar after animation
+      d3.select(multiMenu)
+        .call(moveMenubar, svg, component);
+
+      // Recover the EBM
+      // updateEBM('recoverEBM');
+    });
+
+    redrawOriginal(state, svg);
+
+    // Remove the drag
+    let bboxGroup = d3.select(svg)
+      .select('g.scatter-plot-content-group g.select-bbox-group')
+      .style('cursor', null)
+      .on('.drag', null);
+    
+    // stop the animation
+    bboxGroup.select('rect.original-bbox')
+      .classed('animated', false);
+    
+    // Redraw the last edit if possible
+    if (state.additiveDataLastLastEdit !== undefined){
+      state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
+      drawLastEdit(state, svg);
+      // Prepare for next redrawing after recovering the last last edit graph
+      state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+    }
+
+    // Update the metrics
+    
+    // Update the footer message
   };
 
   const multiMenuSubItemCheckClicked = () => {
@@ -631,12 +675,12 @@
 
   :global(.explain-panel rect.additive-bar.selected) {
     fill: $orange-300;
-    opacity: 1;
+    opacity: 0.9;
   }
 
   :global(.explain-panel .last-edit-back rect.additive-bar) {
     fill: hsl(35, 100%, 85%);
-    opacity: 1;
+    opacity: 0.7;
   }
 
   :global(.explain-panel .last-edit-front path.additive-line) {

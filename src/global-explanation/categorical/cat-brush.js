@@ -2,7 +2,7 @@ import * as d3 from 'd3';
 import { SelectedInfo } from './cat-class';
 import { moveMenubar } from '../continuous/cont-bbox';
 import { rExtent } from './cat-zoom';
-// import { redrawOriginal, drawLastEdit } from './cont-edit';
+import { redrawOriginal, drawLastEdit } from './cat-edit';
 
 // Need a timer to avoid the brush event call after brush.move()
 let idleTimeout = null;
@@ -66,7 +66,7 @@ export const brushDuring = (event, state, svg, multiMenu) => {
 };
 
 export const brushEndSelect = (event, state, svg, multiMenu, brush, component,
-  resetContextMenu
+  resetContextMenu, barWidth
 ) => {
   // Get the selection boundary
   let selection = event.selection;
@@ -84,18 +84,20 @@ export const brushEndSelect = (event, state, svg, multiMenu, brush, component,
       d3.select(multiMenu)
         .classed('hidden', true);
 
-      resetContextMenu();
+      let modeInfo = resetContextMenu();
 
-      // Do not save the user's change (same as clicking the cancel button)
-      // Redraw the graph with original data
-      // redrawOriginal(svg);
+      if (modeInfo.moveMode || modeInfo.subItemMode !== null) {
+        // Do not save the user's change (same as clicking the cancel button)
+        // Redraw the graph with original data
+        redrawOriginal(state, svg);
 
-      // Redraw the last edit if possible
-      if (state.additiveDataLastLastEdit !== undefined) {
-        state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
-        // drawLastEdit(svg);
-        // Prepare for next redrawing after recovering the last last edit graph
-        state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+        // Redraw the last edit if possible
+        if (state.additiveDataLastLastEdit !== undefined) {
+          state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
+          drawLastEdit(state, svg, barWidth);
+          // Prepare for next redrawing after recovering the last last edit graph
+          state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+        }
       }
 
       // Remove the selection bbox
