@@ -2,7 +2,6 @@ import * as d3 from 'd3';
 import { SelectedInfo } from './cat-class';
 import { moveMenubar } from '../continuous/cont-bbox';
 import { rExtent } from './cat-zoom';
-import { state } from './cat-state';
 // import { redrawOriginal, drawLastEdit } from './cont-edit';
 
 // Need a timer to avoid the brush event call after brush.move()
@@ -28,7 +27,7 @@ const stopAnimateLine = (svg) => {
     .classed('flow-line', false);
 };
 
-export const brushDuring = (event, svg, multiMenu) => {
+export const brushDuring = (event, state, svg, multiMenu) => {
   // Get the selection boundary
   let selection = event.selection;
   let svgSelect = d3.select(svg);
@@ -59,19 +58,14 @@ export const brushDuring = (event, svg, multiMenu) => {
         state.curXScale(d.x) <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]));
 
     // Highlight the bars associated with the selected dots
-    svgSelect.select('g.scatter-plot-bar-group')
+    svgSelect.select('g.scatter-plot-bar-group.real')
       .selectAll('rect.additive-bar')
-      .classed('selected', d => (state.curXScale(d.x) >= xRange[0] &&
-        state.curXScale(d.x) <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]));
-
-    svgSelect.select('g.scatter-plot-confidence-group')
-      .selectAll('path.dot-confidence')
       .classed('selected', d => (state.curXScale(d.x) >= xRange[0] &&
         state.curXScale(d.x) <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]));
   }
 };
 
-export const brushEndSelect = (event, svg, multiMenu, brush, component,
+export const brushEndSelect = (event, state, svg, multiMenu, brush, component,
   resetContextMenu
 ) => {
   // Get the selection boundary

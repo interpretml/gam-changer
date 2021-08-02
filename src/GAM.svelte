@@ -252,14 +252,25 @@
       targetFeatureIndex = featureSelectList[tempSelectedFeature.type].map(d => d.name).indexOf(lastEditName);
     } else {
       // Initialize GAM Changer using the continuous variable with the highest importance
-      targetFeatureIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
-      tempSelectedFeature.type = 'continuous';
+
+      // targetFeatureIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
+      // tempSelectedFeature.type = 'continuous';
+
+      targetFeatureIndex = d3.maxIndex(featureSelectList.categorical, d => d.importance);
+      tempSelectedFeature.type = 'categorical';
     }
     
     tempSelectedFeature.data = data.features[featureSelectList[tempSelectedFeature.type][targetFeatureIndex].featureID];
     tempSelectedFeature.id = featureSelectList[tempSelectedFeature.type][targetFeatureIndex].featureID;
     tempSelectedFeature.name = featureSelectList[tempSelectedFeature.type][targetFeatureIndex].name;
-    featureSelect.selectedIndex = targetFeatureIndex;
+
+    // featureSelect has a different index system from the featureSelectList
+    // console.log(Array.from(featureSelect.options));
+    let selectElementTargetIndex = Array.from(featureSelect.options).reduce((a, d, i) => {
+      if (parseInt(d.value) === tempSelectedFeature.id) a.push(i);
+      return a;
+    }, [])[0];
+    featureSelect.selectedIndex = selectElementTargetIndex;
 
     resizeFeatureSelect();
 

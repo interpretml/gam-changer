@@ -4,10 +4,10 @@
   import { round } from '../utils/utils';
   import { config } from '../config';
 
-  import { state } from './categorical/cat-state';
   import { SelectedInfo } from './categorical/cat-class';
-  import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './categorical/cat-zoom';
+  import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent, rScale } from './categorical/cat-zoom';
   import { brushDuring, brushEndSelect } from './categorical/cat-brush';
+  import { moveMenubar } from './continuous/cont-bbox';
 
   import ToggleSwitch from '../components/ToggleSwitch.svelte';
   import ContextMenu from '../components/ContextMenu.svelte';
@@ -51,8 +51,20 @@
   // Some styles
   const colors = config.colors;
   const defaultFont = config.defaultFont;
+  let barWidth = null;
 
   // Select mode
+  let state = {
+    curXScale: null,
+    curYScale: null,
+    curTransform: null,
+    selectedInfo: null,
+    pointData: null,
+    pointDataBuffer: null,
+    oriXScale: null,
+    oriYScale: null,
+    bboxPadding: 5,
+  };
   let selectMode = false;
   state.selectedInfo = new SelectedInfo();
 
@@ -136,8 +148,7 @@
     let xScale = d3.scalePoint()
       .domain(binValues)
       .padding(0.7)
-      .range([0, chartWidth])
-      .round(true);
+      .range([0, chartWidth]);
 
     // For the y scale, it seems InterpretML presets the center at 0 (offset
     // doesn't really matter in EBM because we can modify intercept)
@@ -147,17 +158,24 @@
       .domain(scoreRange)
       .range([chartHeight, 0]);
 
+    state.oriXScale = xScale;
+    state.oriYScale = yScale;
+    state.curXScale = xScale;
+    state.curYScale = yScale;
+
     // Create a data array by combining the bin labels, additive terms, and errors
-    let additiveData = [];
+    let pointData = {};
 
     for (let i = 0; i < featureData.binLabel.length; i++) {
-      additiveData.push({
+      pointData[featureData.binLabel[i]] = {
         x: labelEncoder[featureData.binLabel[i]],
         y: featureData.additive[i],
-        id: i,
+        id: featureData.binLabel[i],
         error: featureData.error[i]
-      });
+      };
     }
+
+    state.pointData = pointData;
 
     // Create histogram chart group
     let histChart = content.append('g')
@@ -214,21 +232,21 @@
     scatterPlotContent.append('g')
       .attr('class', 'scatter-plot-grid-group');
 
-    let barGroup = scatterPlotContent.append('g')
-      .attr('class', 'scatter-plot-bar-group');
-
     let confidenceGroup = scatterPlotContent.append('g')
       .attr('class', 'scatter-plot-confidence-group');
+
+    let barGroup = scatterPlotContent.append('g')
+      .attr('class', 'scatter-plot-bar-group real');
 
     let scatterGroup = scatterPlotContent.append('g')
       .attr('class', 'scatter-plot-dot-group');
 
-    const barWidth = Math.min(30, xScale(additiveData[1].x) - xScale(additiveData[0].x));
+    barWidth = Math.min(30, xScale(pointData[2].x) - xScale(pointData[1].x));
 
     // We draw bars from the 0 baseline to the dot position
     barGroup.style('fill', colors.bar)
       .selectAll('rect')
-      .data(additiveData)
+      .data(Object.values(pointData), d => d.id)
       .join('rect')
       .attr('class', 'additive-bar')
       .attr('x', d => xScale(d.x) - barWidth / 2)
@@ -238,7 +256,7 @@
 
     // We draw the shape function with many line segments (path)
     scatterGroup.selectAll('circle')
-      .data(additiveData)
+      .data(Object.values(pointData), d => d.id)
       .join('circle')
       .attr('class', 'additive-dot')
       .attr('cx', d => xScale(d.x))
@@ -250,10 +268,27 @@
     confidenceGroup.style('stroke', colors.dotConfidence)
       .style('stroke-width', 2)
       .selectAll('path')
-      .data(additiveData)
+      .data(Object.values(pointData))
       .join('path')
       .attr('class', 'dot-confidence')
       .attr('d', d => createDotConfidencePath(d, 5, xScale, yScale));
+
+    // Clone the rects and dots for original and last edit
+    confidenceGroup.lower();
+
+    barGroup.clone(true)
+      .classed('last-edit', true)
+      .classed('real', false)
+      .lower()
+      .selectAll('rect')
+      .remove();
+
+    barGroup.clone(true)
+      .classed('original', true)
+      .classed('real', false)
+      .style('fill', 'gray')
+      .style('opacity', 0.2)
+      .lower();
 
     // Draw the chart X axis
     // Hack: create a wrapper so we can apply clip before transformation
@@ -265,7 +300,9 @@
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`)
       .call(d3.axisBottom(xScale));
     
-    xAxisGroup.attr('font-family', defaultFont);
+    xAxisGroup.attr('font-family', defaultFont)
+      .select('path')
+      .style('stroke-width', 1.5);
     
     // Draw the chart Y axis
     let yAxisGroup = axisGroup.append('g')
@@ -349,9 +386,9 @@
     // Add brush
     brush = d3.brush()
       .on('end', e => brushEndSelect(
-        e, svg, multiMenu, brush, component, resetContextMenu
+        e, state, svg, multiMenu, brush, component, resetContextMenu
       ))
-      .on('start brush', e => brushDuring(e, svg, multiMenu))
+      .on('start brush', e => brushDuring(e, state, svg, multiMenu))
       .extent([[0, 0], [chartWidth, chartHeight]])
       .filter((e) => {
         if (selectMode) {
@@ -373,10 +410,10 @@
     let zoom = d3.zoom()
       .scaleExtent(zoomScaleExtent)
       .translateExtent([[0, -Infinity], [width, Infinity]])
-      .on('zoom', e => zoomed(e, xScale, yScale, svg, 2,
+      .on('zoom', e => zoomed(e, state, xScale, yScale, svg, 2,
         1, yAxisWidth, chartWidth, chartHeight, multiMenu, component))
-      .on('start', () => zoomStart(multiMenu))
-      .on('end', () => zoomEnd(multiMenu))
+      .on('start', () => zoomStart(state, multiMenu))
+      .on('end', () => zoomEnd(state, multiMenu))
       .filter(e => {
         if (selectMode) {
           return (e.type === 'wheel' || e.button === 2);
@@ -434,7 +471,179 @@
 
   };
 
+  const drawBufferGraph = (animated, duration, callback=() => {}) => {
+    const svgSelect = d3.select(svg);
+
+    let trans = d3.transition('buffer')
+      .duration(duration)
+      .ease(d3.easeCubicInOut)
+      .on('end', () => {
+        callback();
+      });
+    
+    let nodes = svgSelect.select('g.scatter-plot-dot-group')
+      .selectAll('.additive-dot');
+
+    let bars = svgSelect.select('g.scatter-plot-bar-group.real')
+      .selectAll('.additive-bar');
+    
+    // Only update, no enter or exit
+    if (animated) {
+      nodes.data(Object.values(state.pointDataBuffer), d => d.id)
+        .transition(trans)
+        .attr('cx', d => state.oriXScale(d.x))
+        .attr('cy', d => state.oriYScale(d.y));
+
+      bars.data(Object.values(state.pointDataBuffer), d => d.id)
+        .transition(trans)
+        .attr('y', d => d.y > 0 ? state.oriYScale(d.y) : state.oriYScale(0))
+        .attr('height',  d => Math.abs(state.oriYScale(d.y) - state.oriYScale(0)));
+    } else {
+      nodes.data(Object.values(state.pointDataBuffer), d => d.id)
+        .attr('cx', d => state.oriXScale(d.x))
+        .attr('cy', d => state.oriYScale(d.y));
+
+      bars.data(Object.values(state.pointDataBuffer), d => d.id)
+        .attr('y', d => d.y > 0 ? state.oriYScale(d.y) : state.oriYScale(0))
+        .attr('height',  d => Math.abs(state.oriYScale(d.y) - state.oriYScale(0)));
+    }
+
+    // Move the selected bbox
+    let curPadding = rScale(state.curTransform.k) + state.bboxPadding * state.curTransform.k;
+
+    if (animated) {
+      svgSelect.select('g.scatter-plot-content-group g.select-bbox-group')
+        .selectAll('rect.select-bbox')
+        .datum(state.selectedInfo.boundingBox[0])
+        .transition(trans)
+        .attr('y', d => state.curYScale(d.y1) - curPadding)
+        .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding);
+    } else {
+      svgSelect.select('g.scatter-plot-content-group g.select-bbox-group')
+        .selectAll('rect.select-bbox')
+        .datum(state.selectedInfo.boundingBox[0])
+        .attr('y', d => state.curYScale(d.y1) - curPadding)
+        .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding);
+    }
+  };
+
+  const drawLastEdit = () => {
+    if (state.pointDataLastEdit === undefined) {
+      return;
+    }
+
+    const svgSelect = d3.select(svg);
+
+    let trans = d3.transition('lastEdit')
+      .duration(400)
+      .ease(d3.easeCubicInOut);
+    
+    let bars = svgSelect.select('g.scatter-plot-bar-group.last-edit')
+      .selectAll('.additive-bar');
+
+    let lines = svgSelect.select('g.scatter-plot-bar-group.last-edit')
+      .selectAll('.additive-line');
+
+    bars.data(Object.values(state.pointDataLastEdit), d => d.id)
+      .join(
+        enter => enter.append('rect')
+          .attr('class', 'additive-bar')
+          .attr('x', d => state.oriXScale(d.x) - barWidth / 2)
+          .attr('y', state.oriYScale(0))
+          .attr('width', barWidth)
+          .attr('height', 0)
+          .call(enter => enter.transition(trans)
+            .attr('y', d => d.y > 0 ? state.oriYScale(d.y) : state.oriYScale(0))
+            .attr('height',  d => Math.abs(state.oriYScale(d.y) - state.oriYScale(0)))
+          ),
+        update => update.call(update => update.transition(trans)
+          .attr('y', d => d.y > 0 ? state.oriYScale(d.y) : state.oriYScale(0))
+          .attr('height',  d => Math.abs(state.oriYScale(d.y) - state.oriYScale(0)))
+        )
+      );
+
+    lines.data(Object.values(state.pointDataLastEdit), d => d.id)
+      .join(
+        enter => enter.append('path')
+          .attr('class', 'additive-line')
+          .attr('d', d => `M ${state.oriXScale(d.x) - barWidth / 2}, ${state.oriYScale(0)} l ${barWidth}, 0`)
+          .call(enter => enter.transition(trans)
+            .attr('d', d => `M ${state.oriXScale(d.x) - barWidth / 2}, ${state.oriYScale(d.y)} l ${barWidth}, 0`)
+          ),
+        update => update.call(update => update.transition(trans)
+          .attr('d', d => `M ${state.oriXScale(d.x) - barWidth / 2}, ${state.oriYScale(d.y)} l ${barWidth}, 0`)
+        )
+      );
+    
+  };
+
+  const grayOutConfidenceLine = () => {
+    let editingIDs = new Set();
+    state.selectedInfo.nodeData.forEach(d => editingIDs.add(d.id));
+
+    console.log(editingIDs);
+    let lines = d3.select(svg)
+      .selectAll('.scatter-plot-confidence-group .dot-confidence')
+      .filter(d => editingIDs.has(d.id))
+      .classed('edited', true);
+
+    console.log(lines);
+  };
+
+  const dragged = (e) => {
+    
+    const dataYChange = state.curYScale.invert(e.y) - state.curYScale.invert(e.y - e.dy);
+
+    // Change the data based on the y-value changes, then redraw nodes (preferred method)
+    state.selectedInfo.nodeData.forEach(d => {
+
+      // Step 1.1: update point data
+      state.pointDataBuffer[d.id].y += dataYChange;
+    });
+
+    // Step 1.2: update the bbox info
+    state.selectedInfo.updateNodeData(state.pointDataBuffer);
+    state.selectedInfo.computeBBox(state.pointDataBuffer);
+
+    // Draw the new graph
+    drawBufferGraph(false, 400);
+
+    // Update the sidebar info
+    // if (dragTimeout !== null) {
+    //   clearTimeout(dragTimeout);
+    // }
+    // dragTimeout = setTimeout(() => {
+    //   updateEBM('current');
+    // }, useTimeout ? 300 : 0);
+  };
+
   const multiMenuMoveClicked = () => {
+
+    // Step 1. create data clone buffers for user to change
+    // We only do this when buffer has not been created --- it is possible that
+    // user switch to move from other editing mode
+    if (state.pointDataBuffer === null) {
+      state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+    }
+
+    let bboxGroup = d3.select(svg)
+      .select('g.scatter-plot-content-group g.select-bbox-group')
+      .style('cursor', 'row-resize')
+      .call(d3.drag()
+        .on('start', () => {
+          grayOutConfidenceLine();
+          //TODO: update footer
+        })
+        .on('drag', (e) => dragged(e))
+      );
+    
+    bboxGroup.select('rect.original-bbox')
+      .classed('animated', true);
+    
+    // Show the last edit
+    if (state.pointDataLastEdit !== undefined) {
+      drawLastEdit();
+    }
 
   };
 
@@ -447,7 +656,28 @@
   };
 
   const multiMenuMoveCheckClicked = () => {
+    // Save the changes
+    state.pointData = JSON.parse(JSON.stringify(state.pointDataBuffer));
 
+    // Remove the drag
+    let bboxGroup = d3.select(svg)
+      .select('g.scatter-plot-content-group g.select-bbox-group')
+      .style('cursor', null)
+      .on('.drag', null);
+    
+    // stop the animation
+    bboxGroup.select('rect.original-bbox')
+      .classed('animated', false);
+
+    // Move the menu bar
+    d3.select(multiMenu)
+      .call(moveMenubar, svg, component);
+
+    // Save this change to lastEdit, update lastEdit graph
+    if (state.pointDataLastEdit !== undefined) {
+      state.pointDataLastLastEdit = JSON.parse(JSON.stringify(state.pointDataLastEdit));
+    }
+    state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointData));
   };
 
   const multiMenuMoveCancelClicked = () => {
@@ -484,12 +714,23 @@
   @import '../define';
   @import './common.scss';
 
-  :global(.explain-panel path.dot-confidence.selected) {
-    stroke: $orange-100;
+  :global(.explain-panel path.dot-confidence.edited) {
+    stroke: hsl(0, 0%, 75%);
   }
 
   :global(.explain-panel rect.additive-bar.selected) {
     fill: $orange-300;
+    opacity: 0.8;
+  }
+
+  :global(.explain-panel .last-edit rect.additive-bar) {
+    fill: hsl(35, 100%, 85%);
+    opacity: 0.9;
+  }
+
+  :global(.explain-panel .last-edit path.additive-line) {
+    stroke: hsl(34, 100%, 18%);
+    opacity: 0.9;
   }
 
   :global(.explain-panel circle.additive-dot) {

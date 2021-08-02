@@ -372,11 +372,11 @@
     barChartContent.on('dblclick.zoom', null);
 
     // Use animation as a signifier for zoom affordance
-    setTimeout(() => {
-      barChartContent.transition()
-        .duration(400)
-        .call(zoom.scaleTo, 0.95);
-    }, 400);
+    // setTimeout(() => {
+    //   barChartContent.transition()
+    //     .duration(400)
+    //     .call(zoom.scaleTo, 0.95);
+    // }, 400);
     
     // Listen to double click to reset zoom
     barChartContent.on('dblclick', () => {
