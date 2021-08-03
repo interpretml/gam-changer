@@ -550,7 +550,7 @@
 
     // Update the ebm model
     // TODO: update the model for interaction term as well
-    if (!ebm.isDummy && curFeatureData.type !== 'interaction') {
+    if (curFeatureData.type !== 'interaction') {
       console.log('Change feature in ebm');
       ebm.setEditingFeature(selectedFeature.name);
       ebm = ebm;
@@ -576,6 +576,8 @@
     sidebarInfo.featureName = selectedFeature.name;
 
     sidebarStore.set(sidebarInfo);
+
+    console.log(selectedFeature);
 
     // Make sure all the updates are done before calling the following code
     // (It would trigger a view update)

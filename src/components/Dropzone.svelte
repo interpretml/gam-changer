@@ -279,7 +279,7 @@
     </div>
 
     <div class='help-message' on:click={(e) => {e.stopPropagation();}}>
-      <a href='https://interpret.ml' target="_blank">How to generate this file?</a>
+      <a href='https://gist.github.com/xiaohk/875b5374840c66689eb42a4b8820c3b5' target="_blank">How to generate this file?</a>
     </div>
 
     <span class='error-message'>

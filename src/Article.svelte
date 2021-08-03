@@ -3,7 +3,6 @@
   import { onMount } from 'svelte';
   import { fade, fly } from 'svelte/transition';
 
-  import Header from './Header.svelte';
   import GAM from './GAM.svelte';
   import Tooltip from './components/Tooltip.svelte';
 
@@ -210,8 +209,6 @@
       }
     }
   }
-
-
 
 </style>
 
