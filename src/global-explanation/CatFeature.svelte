@@ -336,6 +336,16 @@
     xAxisGroup.attr('font-family', defaultFont)
       .select('path')
       .style('stroke-width', 1.5);
+
+    // Rotate the x axis label if there are too many values
+    if (featureData.binLabel.length > 6) {
+      xAxisGroup.selectAll('g.tick text')
+        .attr('y', 0)
+        .attr('x', 9)
+        .attr('dy', '-0.6em')
+        .attr('transform', 'rotate(90)')
+        .style('text-anchor', 'start');
+    }
     
     // Draw the chart Y axis
     let yAxisGroup = axisGroup.append('g')

@@ -1,6 +1,7 @@
 <script>
   import * as d3 from 'd3';
   import { onMount } from 'svelte';
+  import { fade, fly } from 'svelte/transition';
 
   import Header from './Header.svelte';
   import GAM from './GAM.svelte';
@@ -19,7 +20,22 @@
   let tooltipConfig = null;
   tooltipConfigStore.subscribe(value => {tooltipConfig = value;});
 
+  // Set up tab interactions
   let tab = 'iowa';
+  let tabNames = {
+    iowa: {
+      modelName: 'iow-house-ebm-binary',
+      sampleName: 'iow-house-train-sample'
+    },
+    adult: {
+      modelName: 'adult-model',
+      sampleName: 'adult-sample'
+    },
+    my: {
+      modelName: null,
+      sampleName: null
+    }
+  };
 
   // Bind the SVGs
   const preProcessSVG = (svgString) => {
@@ -90,6 +106,7 @@
     grid-row: start / content-start;
     display: flex;
     align-items: center;
+    margin-left: 20px;
   }
 
   .logo-icon {
@@ -110,10 +127,11 @@
   .icon-container {
     grid-column: mid-end / end;
     grid-row: content-start / content-end;
+    width: 95px;
 
     display: flex;
     flex-direction: column;
-    padding-left: 25px;
+    margin: 20px 0 0 25px;
     gap: 10px;
 
     a {
@@ -216,9 +234,11 @@
       </div>
     </div>
 
-    <div class='gam-changer'>
-      <GAM />
-    </div>
+    {#key tab}
+      <div class='gam-changer' in:fly={{ x: 2000, duration: 800 }} out:fly={{ x : -2000, duration: 800 }}>
+        <GAM modelName={tabNames[tab].modelName} sampleName={tabNames[tab].sampleName}/>
+      </div>
+    {/key}
 
     <div class='icon-container'>
       <a target="_blank" href="https://interpret.ml">

@@ -146,7 +146,7 @@
 
     // Some constant lengths of different elements
     // Approximate the longest width of score (y-axis)
-    const yAxisWidth = 8 * d3.max(data.shortBinName.map(d => String(d).length));
+    const yAxisWidth = 6 * d3.max(data.shortBinName.map(d => String(d).length));
 
     const legendConfig = {
       startColor: '#2166ac',
@@ -282,7 +282,11 @@
       .append('text')
       .attr('class', 'x-axis-text')
       .text(data.longName)
-      .style('fill', 'black');
+      .style('fill', 'black')
+      .clone(true)
+      .style('stroke', 'white')
+      .style('stroke-width', 3)
+      .lower();
 
     // Rotate the x axis label if there are too many values
     if (data.longBinName.length > 6) {

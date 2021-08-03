@@ -21,6 +21,9 @@
   import undoIconSVG from './img/undo-icon.svg';
   import exportIconSVG from './img/export-icon.svg';
 
+  export let modelName = null;
+  export let sampleName = null;
+
   let data = null;
   let sampleData = null;
   let isClassification = null;
@@ -163,7 +166,6 @@
         });
       }
     }
-    
   });
 
   // Bind the SVGs
@@ -440,19 +442,20 @@
 
   };
 
-  const initData = async () => {
+  const initData = async (modelName='iow-house-ebm-binary', sampleName='iow-house-sample-binary') => {
     console.log('loading data');
     isClassification = true;
-    data = await d3.json('/data/iow-house-ebm-binary.json');
+    // data = await d3.json('/data/iow-house-ebm-binary.json');
     // data = await d3.json('/data/mimic2-model.json');
     // data = await d3.json('/data/iow-house-ebm.json');
     // data = await d3.json('/data/medical-ebm.json');
+    data = await d3.json(`/data/${modelName}.json`);
     console.log(data);
 
-    sampleData = await d3.json('/data/iow-house-sample-binary.json');
+    // sampleData = await d3.json('/data/iow-house-sample-binary.json');
     // sampleData = await d3.json('/data/mimic2-sample-1000.json');
     // sampleData = await d3.json('/data/medical-ebm-sample.json');
-
+    sampleData = await d3.json(`/data/${sampleName}.json`);
     console.log(sampleData);
     console.log('loaded data');
 
@@ -604,7 +607,7 @@
       });
   };
 
-  initData();
+  $: modelName && sampleName && initData(modelName, sampleName);
 
   onMount(() => {
     bindInlineSVG();

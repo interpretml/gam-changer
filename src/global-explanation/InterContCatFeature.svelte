@@ -197,7 +197,7 @@
 
     // Some constant lengths of different elements
     // Approximate the longest width of score (y-axis)
-    const yAxisWidth = 7 * d3.max(data.catHistEdgeName.map(d => String(d).length));
+    const yAxisWidth = 6 * d3.max(data.catHistEdgeName.map(d => String(d).length));
 
     const legendConfig = {
       startColor: '#2166ac',
