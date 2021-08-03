@@ -40,15 +40,15 @@
     display: flex;
     flex-direction: column;
     background: white;
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
+    border-top-right-radius: $my-border-radius;
+    border-bottom-right-radius: $my-border-radius;
   }
 
   .header {
     height: 53px;
     border-bottom: 1px solid $gray-border;
     padding: 10px 0;
-    border-top-right-radius: 5px;
+    border-top-right-radius: $my-border-radius;
     background: white;
 
     display: flex;

@@ -6,6 +6,7 @@
 
 <script>
 	import Main from './Main.svelte';
+	import Article from './Article.svelte';
 </script>
 
 <style type='text/scss'>
@@ -27,5 +28,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.1/css/all.min.css">
 
 <div class='stand-alone-page'>
-	<Main />
+	<!-- <Main /> -->
+	<Article />
 </div>

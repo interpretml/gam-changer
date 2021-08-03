@@ -253,11 +253,11 @@
     } else {
       // Initialize GAM Changer using the continuous variable with the highest importance
 
-      // targetFeatureIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
-      // tempSelectedFeature.type = 'continuous';
+      targetFeatureIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
+      tempSelectedFeature.type = 'continuous';
 
-      targetFeatureIndex = d3.maxIndex(featureSelectList.categorical, d => d.importance);
-      tempSelectedFeature.type = 'categorical';
+      // targetFeatureIndex = d3.maxIndex(featureSelectList.categorical, d => d.importance);
+      // tempSelectedFeature.type = 'categorical';
     }
     
     tempSelectedFeature.data = data.features[featureSelectList[tempSelectedFeature.type][targetFeatureIndex].featureID];
@@ -625,7 +625,7 @@
     display: flex;
     flex-direction: column;
     border: 1px solid $gray-border;
-    border-radius: 5px;
+    border-radius: $my-border-radius;
     background: white;
   }
 
@@ -641,7 +641,7 @@
     padding: 10px 10px;
     border-bottom: 1px solid $gray-border;
     background: white;
-    border-top-left-radius: 5px;
+    border-top-left-radius: $my-border-radius;
     height: 53px;
 
     .header__info {
@@ -656,7 +656,7 @@
 
     .header__history {
       background: hsl(225, 53%, 93%);
-      border-radius: 5px;
+      border-radius: $my-border-radius;
       padding: 1px 7px;
       font-size: 0.9em;
       color: $gray-900;
@@ -675,7 +675,7 @@
 
     select {
       height: 2em;
-      border-radius: 5px;
+      border-radius: $my-border-radius;
       padding-top: 0;
       padding-bottom: 0;
       padding-left: 10px;
@@ -714,8 +714,8 @@
     border-top: 1px solid $gray-border;
     height: 2em;
     align-items: center;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: $my-border-radius;
+    border-bottom-right-radius: $my-border-radius;
     padding: 5px 0px 5px 10px;
 
   }
@@ -742,7 +742,7 @@
   }
 
   .field {
-    border-bottom-right-radius: 5px;
+    border-bottom-right-radius: $my-border-radius;
   }
 
   .button {
@@ -761,7 +761,7 @@
 
     &.right-button {
       border-right: 0px;
-      border-bottom-right-radius: 5px;
+      border-bottom-right-radius: $my-border-radius;
       padding-right: 1em;
     }
 
@@ -792,7 +792,7 @@
 
   .feature-window {
     background-color: $brown-50;
-    border-radius: 5px;
+    border-radius: $my-border-radius;
   }
 
 </style>

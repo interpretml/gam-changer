@@ -1,12 +1,5 @@
 <script>
   import Header from './Header.svelte';
-  import ContGlobalExplain from './global-explanation/ContFeature.svelte';
-  import CatGlobalExplain from './global-explanation/CatFeature.svelte';
-  import InterContCatGlobalExplain from './global-explanation/InterContCatFeature.svelte';
-  import InterContContGlobalExplain from './global-explanation/InterContContFeature.svelte';
-  import InterCatCatGlobalExplain from './global-explanation/InterCatCatFeature.svelte';
-  import ToggleSwitch from './components/ToggleSwitch.svelte';
-  import ContextMenu from './components/ContextMenu.svelte';
   import GAM from './GAM.svelte';
   import Tooltip from './components/Tooltip.svelte';
 
@@ -61,66 +54,6 @@
   <div class='content'>
 
     <GAM />
-
-    <!-- <div class='feature-window'>
-      <CatGlobalExplain
-        featureData = {data === null ? null : data.features[26]}
-        scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 400
-      />
-    </div> -->
-
-    <!-- <ContextMenu /> -->
-
-    <!-- <div class='feature-window'>
-      <CatGlobalExplain
-        featureData = {data === null ? null : data.features[12]}
-        scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 500
-      />
-    </div> -->
-<!-- 
-    <div class='feature-window'>
-      <ContGlobalExplain
-        featureData = {data === null ? null : data.features[2]}
-        scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 500
-      />
-    </div> -->
-
-    <!-- <div class='feature-window'>
-      <InterContCatGlobalExplain
-        featureData = {data === null ? null : data.features[90]}
-        scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 500
-        chartType = 'line'
-      />
-    </div> -->
-
-    <!-- <div class='feature-window'>
-      <InterContCatGlobalExplain
-        featureData = {data === null ? null : data.features[89]}
-        scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 500
-        chartType = 'bar'
-      />
-    </div> -->
-
-    <!-- <div class='feature-window'>
-      <InterContContGlobalExplain
-        featureData = {data === null ? null : data.features[86]}
-        scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 500
-      />
-    </div> -->
-
-    <!-- <div class='feature-window'>
-      <InterCatCatGlobalExplain
-        featureData = {data === null ? null : data.features[81]}
-        scoreRange = {data === null ? null : data.scoreRange}
-        svgHeight = 500
-      />
-    </div> -->
 
   </div>
   
