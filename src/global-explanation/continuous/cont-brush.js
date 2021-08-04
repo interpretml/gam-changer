@@ -226,6 +226,7 @@ export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
     let yRange = [state.curYScale.invert(selection[1][1]), state.curYScale.invert(selection[0][1])];
 
     let selectedBinIndexes = [];
+    let selectedBinIDs = [];
 
     // Highlight the selected dots
     svgSelect.select('g.line-chart-node-group')
@@ -233,6 +234,7 @@ export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
       .classed('selected', d => {
         if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
           selectedBinIndexes.push(d.ebmID);
+          selectedBinIDs.push([d.id, d.x]);
           state.selectedInfo.nodeData.push({ x: d.x, y: d.y, id: d.id, ebmID: d.ebmID });
           return true;
         } else if (d.rightPointID !== null) {
@@ -240,6 +242,7 @@ export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
           if (d.y >= yRange[0] && d.y <= yRange[1] && rd.x >= xRange[0] &&
             rd.x <= xRange[1] && rd.y >= yRange[0] && rd.y <= yRange[1]) {
             selectedBinIndexes.push(d.ebmID);
+            selectedBinIDs.push([d.id, d.x]);
             state.selectedInfo.nodeData.push({ x: d.x, y: d.y, id: d.id, ebmID: d.ebmID });
             return true;
           }
@@ -247,6 +250,50 @@ export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
           return false;
         }
       });
+
+    // Force to select the missed middle nodes
+    const selectedXRange = d3.extent(selectedBinIDs.map(d => state.pointData[d[0]].x));
+
+    // Reset the IDs here because we will select all again with the new condition
+    selectedBinIndexes = [];
+    selectedBinIDs = [];
+
+    svgSelect.select('g.line-chart-node-group')
+      .selectAll('circle.node')
+      .classed('selected', d => {
+        if (d.x >= selectedXRange[0] && d.x <= selectedXRange[1]) {
+          selectedBinIndexes.push(d.ebmID);
+          selectedBinIDs.push([d.id, d.x]);
+          state.selectedInfo.nodeData.push({ x: d.x, y: d.y, id: d.id, ebmID: d.ebmID });
+          return true;
+        } else {
+          return false;
+        }
+      });
+
+    selectedBinIDs.sort((a, b) => a[1] - b[1]);
+
+    svgSelect.select('g.line-chart-line-group.real')
+      .selectAll('path.additive-line-segment')
+      .classed('selected', false);
+
+    selectedBinIDs.forEach((pair, i) => {
+      let id = pair[0];
+      svgSelect.select('g.line-chart-line-group.real')
+        .select(`#path-${id}-${state.pointData[id].rightPointID}-r`)
+        .classed('selected', true);
+
+      if (i !== selectedBinIDs.length - 1) {
+        svgSelect.select('g.line-chart-line-group.real')
+          .select(`#path-${id}-${state.pointData[id].rightPointID}-l`)
+          .classed('selected', true);
+      } else {
+        // Last path is named as something like path-99-99-r
+        svgSelect.select('g.line-chart-line-group.real')
+          .select(`#path-${id}-${id}-r`)
+          .classed('selected', true);
+      }
+    });
 
     // Compute the bounding box
     state.selectedInfo.computeBBox(state.pointData);
