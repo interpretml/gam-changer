@@ -1045,7 +1045,6 @@
       value.help = '<b>Drag</b> the <b>selected region</b> to change score';
       return value;
     });
-    
   };
 
   /**

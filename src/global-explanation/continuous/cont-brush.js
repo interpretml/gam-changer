@@ -235,7 +235,6 @@ export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
         if (d.x >= xRange[0] && d.x <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
           selectedBinIndexes.push(d.ebmID);
           selectedBinIDs.push([d.id, d.x]);
-          state.selectedInfo.nodeData.push({ x: d.x, y: d.y, id: d.id, ebmID: d.ebmID });
           return true;
         } else if (d.rightPointID !== null) {
           let rd = state.pointData[d.rightPointID];
@@ -243,7 +242,6 @@ export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
             rd.x <= xRange[1] && rd.y >= yRange[0] && rd.y <= yRange[1]) {
             selectedBinIndexes.push(d.ebmID);
             selectedBinIDs.push([d.id, d.x]);
-            state.selectedInfo.nodeData.push({ x: d.x, y: d.y, id: d.id, ebmID: d.ebmID });
             return true;
           }
         } else {
@@ -309,7 +307,13 @@ export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
       .attr('class', 'select-bbox original-bbox')
       .attr('x', d => state.curXScale(d.x1) - curPadding)
       .attr('y', d => state.curYScale(d.y1) - curPadding)
-      .attr('width', d => state.curXScale(d.x2) - state.curXScale(d.x1))
+      .attr('width', d => {
+        if (state.selectedInfo.nodeData.length === 1) {
+          return state.curXScale(d.x2) - state.curXScale(d.x1) + 2 * curPadding;
+        } else {
+          return state.curXScale(d.x2) - state.curXScale(d.x1) + curPadding;
+        }
+      })
       .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding)
       .style('stroke-width', bboxStrokeWidth)
       .style('stroke', 'hsl(230, 100%, 10%)')
@@ -399,7 +403,7 @@ export const selectAllBins = (svg, state, bboxStrokeWidth, multiMenu, component,
     .attr('class', 'select-bbox original-bbox')
     .attr('x', d => state.curXScale(d.x1) - curPadding)
     .attr('y', d => state.curYScale(d.y1) - curPadding)
-    .attr('width', d => state.curXScale(d.x2) - state.curXScale(d.x1))
+    .attr('width', d => state.curXScale(d.x2) - state.curXScale(d.x1) + curPadding)
     .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding)
     .style('stroke-width', bboxStrokeWidth)
     .style('stroke', 'hsl(230, 100%, 10%)')
