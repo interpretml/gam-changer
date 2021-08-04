@@ -1,6 +1,8 @@
 import * as d3 from 'd3';
 
 import mergeIconSVG from '../img/merge-icon.svg';
+import mergeRightIconSVG from '../img/merge-right-icon.svg';
+import mergeAverageIconSVG from '../img/merge-average-icon.svg';
 import increasingIconSVG from '../img/increasing-icon.svg';
 import decreasingIconSVG from '../img/decreasing-icon.svg';
 import upDownIconSVG from '../img/updown-icon.svg';
@@ -36,6 +38,14 @@ export const bindInlineSVG = (component) => {
   d3.select(component)
     .selectAll('.svg-icon.icon-merge')
     .html(preProcessSVG(mergeIconSVG));
+
+  d3.select(component)
+    .selectAll('.svg-icon.icon-merge-average')
+    .html(mergeAverageIconSVG.replaceAll('black', 'currentcolor'));
+
+  d3.select(component)
+    .selectAll('.svg-icon.icon-merge-right')
+    .html(mergeRightIconSVG.replaceAll('black', 'currentcolor'));
 
   d3.select(component)
     .selectAll('.svg-icon.icon-increasing')

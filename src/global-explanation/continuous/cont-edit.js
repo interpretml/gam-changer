@@ -399,6 +399,9 @@ export const merge = (state, svg, value, callBack) => {
   let leftPoint = { x: Infinity, y: null, id: null };
   let rightPoint = { x: -Infinity, y: null, id: null };
 
+  let sum = 0;
+  let count = 0;
+
   state.selectedInfo.nodeData.forEach(d => {
     if (d.x < leftPoint.x) {
       leftPoint = state.pointDataBuffer[d.id];
@@ -406,15 +409,31 @@ export const merge = (state, svg, value, callBack) => {
     if (d.x > rightPoint.x) {
       rightPoint = state.pointDataBuffer[d.id];
     }
+    sum += state.pointDataBuffer[d.id].y * state.pointDataBuffer[d.id].count;
+    count += state.pointDataBuffer[d.id].count;
   });
+
+  const average = sum / count;
 
   // Step 2: Iterate through all nodes in the region and assign left node value
   // or the given value to them
   let curPoint = state.pointDataBuffer[leftPoint.id];
 
+  let target = 0;
+
+  if (value === 'left') {
+    target = leftPoint.y;
+  } else if (value === 'right') {
+    target = rightPoint.y;
+  } else if (value === 'average') {
+    target = average;
+  } else {
+    target = value;
+  }
+
   while (curPoint.id !== rightPoint.rightPointID) {
     const nextID = curPoint.rightPointID;
-    state.pointDataBuffer[curPoint.id].y = value === undefined ? leftPoint.y : value;
+    state.pointDataBuffer[curPoint.id].y = target;
 
     if (nextID === null) {
       break;
@@ -431,6 +450,8 @@ export const merge = (state, svg, value, callBack) => {
 
   // Step 5: Update the graph using new data
   drawBufferGraph(state, svg, true, 500, callBack);
+
+  return target;
 };
 
 export const drawBufferGraph = (state, svg, animated, duration,

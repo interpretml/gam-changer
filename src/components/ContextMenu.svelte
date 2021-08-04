@@ -68,7 +68,7 @@
     if (controlInfo.setValue === null) {
       controlInfo.setValue = 0;
     } else {
-      controlInfo.setValue++;
+      controlInfo.setValue += controlInfo.changeUnit;
     }
 
     dispatch('inputChanged');
@@ -80,7 +80,7 @@
     if (controlInfo.setValue === null) {
       controlInfo.setValue = 0;
     } else {
-      controlInfo.setValue--;
+      controlInfo.setValue -= controlInfo.changeUnit;
     }
 
     dispatch('inputChanged');
@@ -206,8 +206,26 @@
 
   const mergeClicked = () => {
     prepareSubMenu('merge');
-
+    controlInfo.mergeMode = 'left';
     dispatch('mergeClicked');
+  };
+
+  const mergeToLeftClicked = (e) => {
+    e.stopPropagation();
+    controlInfo.mergeMode = 'left';
+    dispatch('mergeUpdated');
+  };
+
+  const mergeToAverageClicked = (e) => {
+    e.stopPropagation();
+    controlInfo.mergeMode = 'average';
+    dispatch('mergeUpdated');
+  };
+
+  const mergeToRightClicked = (e) => {
+    e.stopPropagation();
+    controlInfo.mergeMode = 'right';
+    dispatch('mergeUpdated');
   };
 
   const deleteClicked = () => {
@@ -813,30 +831,30 @@
       <div class='sub-item sub-item-merge hidden'>
 
         <div class='item sub-item-child show-tooltip'
-          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode === 'regression'}
+          class:selected={controlInfo.subItemMode==='merge' && controlInfo.mergeMode === 'left'}
           on:mouseenter={(e) => mouseoverHandler(e, 'to left', 70, 30)}
           on:mouseleave={mouseleaveHandler}
-          on:click={null}
+          on:click={mergeToLeftClicked}
         >
           <div class='svg-icon icon-merge'></div>
         </div>
 
         <div class='item sub-item-child show-tooltip'
-          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode === 'equal'}
-          on:mouseenter={(e) => mouseoverHandler(e, 'to average', 85, 30)}
+          class:selected={controlInfo.subItemMode==='merge' && controlInfo.mergeMode === 'average'}
+          on:mouseenter={(e) => mouseoverHandler(e, 'to average', 90, 30)}
           on:mouseleave={mouseleaveHandler}
-          on:click={null}
+          on:click={mergeToAverageClicked}
         >
-          <div class='svg-icon icon-merge'></div>
+          <div class='svg-icon icon-merge-average'></div>
         </div>
 
         <div class='item sub-item-child show-tooltip'
-          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode === 'equal'}
+          class:selected={controlInfo.subItemMode==='merge' && controlInfo.mergeMode === 'right'}
           on:mouseenter={(e) => mouseoverHandler(e, 'to right', 70, 30)}
           on:mouseleave={mouseleaveHandler}
-          on:click={null}
+          on:click={mergeToRightClicked}
         >
-          <div class='svg-icon icon-merge'></div>
+          <div class='svg-icon icon-merge-right'></div>
         </div>
 
         <div class='separator'></div>

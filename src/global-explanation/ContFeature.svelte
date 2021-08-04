@@ -374,6 +374,10 @@
     state.oriYScale = yScale;
     state.curXScale = xScale;
     state.curYScale = yScale;
+
+    // Use the # of ticks and y score range to set the default change unit for
+    // the up and down in the context menu bar
+    multiMenuControlInfo.changeUnit = round((scoreRange[1] - scoreRange[0]) / yScale.ticks().length, 4);
     
     // Store the initial domain for zooming
     initXDomain = [xMin, xMax];
@@ -1425,7 +1429,7 @@
     // Update the last edit graph
     drawLastEdit(state, svg);
 
-    merge(state, svg, undefined, callBack);
+    merge(state, svg, 'left', callBack);
 
     myContextMenu.showConfirmation('merge', 600);
 
@@ -1442,8 +1446,6 @@
   };
 
   const multiMenuInputChanged = () => {
-    console.log(multiMenuControlInfo.setValue);
-
     // Animate the bbox
     d3.select(svg)
       .select('g.line-chart-content-group g.select-bbox-group')
@@ -1462,10 +1464,34 @@
     sidebarInfo.curGroup = 'last';
     sidebarStore.set(sidebarInfo);
 
+    const target = round(multiMenuControlInfo.setValue, 4);
+
     // Update the footer message
     footerStore.update(value => {
-      value.type = 'merge';
-      value.state = `Set scores of ${state.selectedInfo.nodeData.length} bins to <b>${multiMenuControlInfo.setValue}</b>`;
+      value.type = 'align';
+      value.state = `Set scores of ${state.selectedInfo.nodeData.length} bins to <b>${target}</b>`;
+      return value;
+    });
+  };
+
+  const multiMenuMergeUpdated = () => {
+    state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+    state.additiveDataBuffer = JSON.parse(JSON.stringify(state.additiveData));
+
+    // Update EBM
+    const callBack = () => {updateEBM('current');};
+    let target = merge(state, svg, multiMenuControlInfo.mergeMode, callBack);
+    target = round(target, 4);
+
+    myContextMenu.showConfirmation('change', 600);
+
+    sidebarInfo.curGroup = 'last';
+    sidebarStore.set(sidebarInfo);
+
+    // Update the footer message
+    footerStore.update(value => {
+      value.type = 'align';
+      value.state = `Set scores of ${state.selectedInfo.nodeData.length} bins to <b>${target}</b>`;
       return value;
     });
   };
@@ -1802,6 +1828,7 @@
         on:decreasingClicked={multiMenuDecreasingClicked}
         on:interpolationClicked={multiMenuInterpolationClicked}
         on:mergeClicked={multiMenuMergeClicked}
+        on:mergeUpdated={multiMenuMergeUpdated}
         on:deleteClicked={multiMenuDeleteClicked}
         on:moveCheckClicked={multiMenuMoveCheckClicked}
         on:moveCancelClicked={multiMenuMoveCancelClicked}

@@ -228,11 +228,11 @@
     font-size: 0.9em;
     color: hsl(0, 0%, 50%);
     padding: 2px 8px;
-    background: hsla(0, 0%, 50%, 0.05);
+    background: change-color($blue-dark, $alpha: 0.1);
     border-radius: 5px;
 
     &:hover {
-      background: hsla(0, 0%, 50%, 0.09);
+      background: change-color($blue-dark, $alpha: 0.2);
 
       a {
         text-decoration: none;
@@ -241,7 +241,7 @@
 
     a {
       font-style: italic;
-      color: hsl(0, 0%, 60%);
+      color: hsl(0, 0%, 35%);
     }
   }
 

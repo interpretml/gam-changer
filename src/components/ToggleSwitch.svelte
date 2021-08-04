@@ -195,7 +195,7 @@
     </div>
 
     <div class='right-label' class:select-mode = {selectMode}
-      on:mouseenter={(e) => mouseoverHandler(e, 'select nodes', 100, 30)}
+      on:mouseenter={(e) => mouseoverHandler(e, 'select nodes', 110, 30)}
       on:mouseleave={mouseleaveHandler}
     >
       <div class='svg-icon' id='toggle-button-select'></div>
