@@ -155,25 +155,32 @@
         // Here we reset the EBM model completely, because
         // the intermediate historical events might update() different portions
         // of the EBM
-        await setEBM('original-only', historyList[0].state.pointData);
+        // Be careful! The first commit might be on a different feature!
+        // It is way too complicated to load the initial edit then come back (need to revert
+        // every edit on every feature!)
+        // Here we just use ignore it [better than confusing the users with some other "original"]
+        // await setEBM('original-only', historyList[0].state.pointData);
+
+        // Nullify the original
+        sidebarInfo.curGroup = 'nullify';
+        sidebarStore.set(sidebarInfo);
+        while (sidebarInfo.curGroup !== 'nullifyCompleted') {
+          await new Promise(r => setTimeout(r, 300));
+        }
 
         // Step 2.2: Last edit
-        if (historyList.length > 1) {
-          await setEBM('last-only', historyList[historyList.length - 2].state.pointData);
+        if (sidebarInfo.historyHead - 1 >= 0 &&
+          historyList[sidebarInfo.historyHead - 1].type !== 'original' &&
+          historyList[sidebarInfo.historyHead - 1].featureName === state.featureName) {
+          await setEBM('last-only', historyList[sidebarInfo.historyHead - 1].state.pointData);
         }
 
         // Step 2.3: Current edit
         let curPointData = state.pointDataBuffer === null ?
-          historyList[historyList.length - 1].state.pointData :
+          historyList[sidebarInfo.historyHead].state.pointData :
           state.pointDataBuffer;
 
         await setEBM('current-only', curPointData);
-
-        // Step 2.2.5: If we didn't restore the last edit, use the current edit as last
-        if (historyList.length === 1) {
-          sidebarInfo.curGroup = 'last';
-          sidebarStore.set(sidebarInfo);
-        }
       }
 
       break;
@@ -196,25 +203,28 @@
       // Here we reset the EBM model completely, because
       // the intermediate historical events might update() different portions
       // of the EBM
-      await setEBM('original-only', historyList[0].state.pointData);
+      // await setEBM('original-only', historyList[0].state.pointData);
+
+      // Nullify the original
+      sidebarInfo.curGroup = 'nullify';
+      sidebarStore.set(sidebarInfo);
+      while (sidebarInfo.curGroup !== 'nullifyCompleted') {
+        await new Promise(r => setTimeout(r, 300));
+      }
 
       // Step 2.2: Last edit
-      if (historyList.length > 1) {
-        await setEBM('last-only', historyList[historyList.length - 2].state.pointData);
+      if (sidebarInfo.historyHead - 1 >= 0 &&
+        historyList[sidebarInfo.historyHead - 1].type !== 'original' &&
+        historyList[sidebarInfo.historyHead - 1].featureName === state.featureName) { 
+        await setEBM('last-only', historyList[sidebarInfo.historyHead - 1].state.pointData);
       }
 
       // Step 2.3: Current edit
       let curPointData = state.pointDataBuffer === null ?
-        historyList[historyList.length - 1].state.pointData :
+        historyList[sidebarInfo.historyHead].state.pointData :
         state.pointDataBuffer;
 
       await setEBM('current-only', curPointData);
-
-      // Step 2.2.5: If we didn't restore the last edit, use the current edit as last
-      if (historyList.length === 1) {
-        sidebarInfo.curGroup = 'last';
-        sidebarStore.set(sidebarInfo);
-      }
 
       break;
     }
@@ -832,15 +842,32 @@
   const computeSelectedEffects = async () => {
     if (sidebarInfo.effectScope === 'selected' && state.selectedInfo.hasSelected) {
       // Step 1: compute the original metrics
-      await setEBM('original-only', historyList[0].state.pointData);
+      // Be careful! The first commit might be on a different feature!
+      // It is way too complicated to load the initial edit then come back (need to revert
+      // every edit on every feature!)
+      // Here we just use ignore it [better than confusing the users with some other "original"]
+      // if (historyList[0].featureName !== state.featureName) {
+      //   ebm.setEditingFeature(historyList[0].featureName);
+      // }
+      // await setEBM('original-only', historyList[0].state.pointData);
+      // ebm.setEditingFeature(state.featureName);
+
+      // Nullify the original
+      sidebarInfo.curGroup = 'nullify';
+      sidebarStore.set(sidebarInfo);
+      while (sidebarInfo.curGroup !== 'nullifyCompleted') {
+        await new Promise(r => setTimeout(r, 300));
+      }
 
       // Step 2: Last edit
-      if (historyList.length > 1) {
-        await setEBM('last-only', historyList[historyList.length - 2].state.pointData);
+      if (sidebarInfo.historyHead - 1 >= 0 &&
+        historyList[sidebarInfo.historyHead - 1].type !== 'original' &&
+        historyList[sidebarInfo.historyHead - 1].featureName === state.featureName) {
+        await setEBM('last-only', historyList[sidebarInfo.historyHead - 1].state.pointData);
       }
 
       // Step 3: Current edit
-      await setEBM('current-only', historyList[historyList.length - 1].state.pointData);
+      await setEBM('current-only', historyList[sidebarInfo.historyHead].state.pointData);
     }
   };
 

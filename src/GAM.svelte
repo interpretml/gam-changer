@@ -556,6 +556,14 @@
       ebm = ebm;
     }
 
+    // Restore and recover the metrics (need this step other wise the metrics
+    // is forgotten if user switches feature during selected tab mode)
+    sidebarInfo.curGroup = 'overwrite';
+    sidebarStore.set(sidebarInfo);
+    while (sidebarInfo.curGroup !== 'overwriteCompleted') {
+      await new Promise(r => setTimeout(r, 300));
+    }
+
     // Update the metrics
     let metrics = ebm.getMetrics();
 

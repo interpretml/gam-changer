@@ -227,6 +227,9 @@
     case 'overwrite':
       barData = JSON.parse(JSON.stringify(sidebarInfo.barData));
       confusionMatrixData = JSON.parse(JSON.stringify(sidebarInfo.confusionMatrixData));
+
+      sidebarInfo.curGroup = 'overwriteCompleted';
+      sidebarStore.set(sidebarInfo);
       break;
 
     case 'nullify':
@@ -242,6 +245,9 @@
         rocAuc: [null, null, null, null],
         balancedAccuracy: [null, null, null, null]
       };
+
+      sidebarInfo.curGroup = 'nullifyCompleted';
+      sidebarStore.set(sidebarInfo);
       break;
 
     case 'nullify-last':
