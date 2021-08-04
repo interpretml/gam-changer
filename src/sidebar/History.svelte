@@ -23,7 +23,7 @@
     'increasing': 'icon-increasing',
     'decreasing': 'icon-decreasing',
     'move': 'icon-updown',
-    'merge': 'icon-merge',
+    'align': 'icon-merge',
     'equal-interpolate': 'icon-interpolation',
     'inplace-interpolate': 'icon-inplace',
     'equal-regression': 'icon-interpolation',

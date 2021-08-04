@@ -1434,7 +1434,7 @@
 
     // Update the footer message
     footerStore.update(value => {
-      value.type = 'merge';
+      value.type = 'align';
       value.state = `Set scores of ${state.selectedInfo.nodeData.length} bins to
         <b>${round(state.selectedInfo.nodeData[0].y, 4)}</b>`;
       return value;
@@ -1598,7 +1598,7 @@
     case 'equal-regression':
       description = `Regression transformed ${binNum} bins (${binRange}) into ${multiMenuControlInfo.step} equal-size bins.`;
       break;
-    case 'merge':
+    case 'align':
       description = `Set ${binNum} bins (${binRange}) to score ${round(state.selectedInfo.nodeData[0].y, 4)}.`;
       break;
     case 'delete':

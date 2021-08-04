@@ -805,12 +805,42 @@
     <div class='item'
       class:selected={controlInfo.subItemMode==='merge'}
       on:click={mergeClicked}
-      on:mouseenter={(e) => mouseoverHandler(e, 'merge', 60, 30)}
+      on:mouseenter={(e) => mouseoverHandler(e, 'align', 60, 30)}
       on:mouseleave={mouseleaveHandler}
     >
       <div class='svg-icon icon-merge'></div>
 
       <div class='sub-item sub-item-merge hidden'>
+
+        <div class='item sub-item-child show-tooltip'
+          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode === 'regression'}
+          on:mouseenter={(e) => mouseoverHandler(e, 'to left', 70, 30)}
+          on:mouseleave={mouseleaveHandler}
+          on:click={null}
+        >
+          <div class='svg-icon icon-merge'></div>
+        </div>
+
+        <div class='item sub-item-child show-tooltip'
+          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode === 'equal'}
+          on:mouseenter={(e) => mouseoverHandler(e, 'to average', 85, 30)}
+          on:mouseleave={mouseleaveHandler}
+          on:click={null}
+        >
+          <div class='svg-icon icon-merge'></div>
+        </div>
+
+        <div class='item sub-item-child show-tooltip'
+          class:selected={controlInfo.subItemMode==='interpolation' && controlInfo.interpolationMode === 'equal'}
+          on:mouseenter={(e) => mouseoverHandler(e, 'to right', 70, 30)}
+          on:mouseleave={mouseleaveHandler}
+          on:click={null}
+        >
+          <div class='svg-icon icon-merge'></div>
+        </div>
+
+        <div class='separator'></div>
+
         <!-- Check button -->
         <div class='item sub-item-child show-tooltip' on:click={subItemCheckClicked}
           on:mouseenter={(e) => mouseoverHandler(e, 'commit', 65, 30)}
