@@ -898,24 +898,6 @@
         on:click={inputMinus}
       ></div>
 
-      <div class='sub-item sub-item-change hidden'>
-        <!-- Check button -->
-        <div class='item sub-item-child show-tooltip' on:click={subItemCheckClicked}
-          on:mouseenter={(e) => mouseoverHandler(e, 'commit', 65, 30)}
-          on:mouseleave={mouseleaveHandler}
-        >
-          <div class='svg-icon icon-check'></div>
-        </div>
-
-        <!-- Cancel button -->
-        <div class='item sub-item-child show-tooltip' on:click={subItemCancelClicked}
-          on:mouseenter={(e) => mouseoverHandler(e, 'cancel', 65, 30)}
-          on:mouseleave={mouseleaveHandler}
-        >
-          <div class='svg-icon icon-refresh'></div>
-        </div>
-
-      </div>
     </div>
 
     <div class='separator'></div>
