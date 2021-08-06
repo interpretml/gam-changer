@@ -121,8 +121,6 @@
     background: white;
     border-radius: 10px;
     box-shadow: 0px 10px 40px hsla(0, 0%, 0%, 0.2);
-
-    padding: 20px 80px;
   }
 
   .icon-container {

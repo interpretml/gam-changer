@@ -271,11 +271,13 @@
     align-items: baseline;
     justify-content: space-between;
     cursor: default;
+    gap: 5px;
   }
 
   .commit-feature {
     font-weight: 400;
     color: $gray-700;
+    word-break: break-all;
 
     &.current {
       font-weight: 600;
@@ -286,6 +288,7 @@
   .commit-time {
     font-size: 0.9em;
     color: $gray-700;
+    flex-shrink: 0;
   }
 
   .commit-content {

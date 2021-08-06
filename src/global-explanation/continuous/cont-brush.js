@@ -142,9 +142,10 @@ export const quitSelection = (svg, state, multiMenu, resetContextMenu, resetFeat
   resetFeatureSidebar();
 };
 
-export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
-  brush, component, resetContextMenu, sidebarStore, setEBM, updateEBM,
-  updateFeatureSidebar, resetFeatureSidebar, nullifyMetrics, computeSelectedEffects
+export const brushEndSelect = (event, state, svg, multiMenu, myContextMenu,
+  bboxStrokeWidth, brush, component, resetContextMenu, sidebarStore, setEBM,
+  updateEBM, updateFeatureSidebar, resetFeatureSidebar, nullifyMetrics,
+  computeSelectedEffects, cancelTooltip
 ) => {
   // Get the selection boundary
   let selection = event.selection;
@@ -158,6 +159,8 @@ export const brushEndSelect = (event, state, svg, multiMenu, bboxStrokeWidth,
 
       d3.select(multiMenu)
         .classed('hidden', true);
+
+      myContextMenu.mouseleaveHandler();
 
       // End move mode
       let modeInfo = resetContextMenu();

@@ -592,9 +592,9 @@
     // Add brush
     brush = d3.brush()
       .on('end', e => brushEndSelect(
-        e, state, svg, multiMenu, bboxStrokeWidth, brush, component, resetContextMenu,
-        sidebarStore, setEBM, updateEBM, updateFeatureSidebar, resetFeatureSidebar,
-        nullifyMetrics, computeSelectedEffects
+        e, state, svg, multiMenu, myContextMenu, bboxStrokeWidth, brush, component,
+        resetContextMenu, sidebarStore, setEBM, updateEBM, updateFeatureSidebar,
+        resetFeatureSidebar, nullifyMetrics, computeSelectedEffects
       ))
       .on('start brush', e => brushDuring(e, state, svg, multiMenu, ebm, footerStore))
       .extent([[0, 0], [lineChartWidth, lineChartHeight]])
@@ -951,6 +951,8 @@
       state.pointDataBuffer = null;
       state.additiveDataBuffer = null;
     }
+
+    multiMenuControlInfo.setValue = null;
 
     // Update the footer message
     footerStore.update(value => {
@@ -1482,8 +1484,6 @@
     let target = merge(state, svg, multiMenuControlInfo.mergeMode, callBack);
     target = round(target, 4);
 
-    myContextMenu.showConfirmation('change', 600);
-
     sidebarInfo.curGroup = 'last';
     sidebarStore.set(sidebarInfo);
 
@@ -1577,6 +1577,7 @@
     
     // Exit the sub-item mode
     multiMenuControlInfo.subItemMode = null;
+    multiMenuControlInfo.setValue = null;
 
     // Update metrics
     sidebarInfo.curGroup = 'commit';
@@ -1705,6 +1706,7 @@
 
     // Exit the sub-item mode
     multiMenuControlInfo.subItemMode = null;
+    multiMenuControlInfo.setValue = null;
 
     // Update the footer message
     footerStore.update(value => {

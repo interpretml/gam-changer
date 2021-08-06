@@ -1,6 +1,7 @@
 <script>
   import * as d3 from 'd3';
   import { onMount, createEventDispatcher } from 'svelte';
+  import { round } from '../utils/utils';
 
   // Stores
   import { tooltipConfigStore } from '../store';
@@ -69,6 +70,7 @@
       controlInfo.setValue = 0;
     } else {
       controlInfo.setValue += controlInfo.changeUnit;
+      controlInfo.setValue = round(controlInfo.setValue, 3);
     }
 
     dispatch('inputChanged');
@@ -81,6 +83,7 @@
       controlInfo.setValue = 0;
     } else {
       controlInfo.setValue -= controlInfo.changeUnit;
+      controlInfo.setValue = round(controlInfo.setValue, 3);
     }
 
     dispatch('inputChanged');
@@ -324,7 +327,7 @@
     }, 400);
   };
 
-  const mouseleaveHandler = () => {
+  export const mouseleaveHandler = () => {
     clearTimeout(mouseoverTimeout);
     mouseoverTimeout = null;
     tooltipConfig.show = false;
@@ -897,6 +900,25 @@
       <div class='svg-icon item-input-down icon-input-down'
         on:click={inputMinus}
       ></div>
+
+      <div class='sub-item sub-item-change hidden'>
+        <!-- Check button -->
+        <div class='item sub-item-child show-tooltip' on:click={subItemCheckClicked}
+          on:mouseenter={(e) => mouseoverHandler(e, 'commit', 65, 30)}
+          on:mouseleave={mouseleaveHandler}
+        >
+          <div class='svg-icon icon-check'></div>
+        </div>
+
+        <!-- Cancel button -->
+        <div class='item sub-item-child show-tooltip' on:click={subItemCancelClicked}
+          on:mouseenter={(e) => mouseoverHandler(e, 'cancel', 65, 30)}
+          on:mouseleave={mouseleaveHandler}
+        >
+          <div class='svg-icon icon-refresh'></div>
+        </div>
+
+      </div>
 
     </div>
 
