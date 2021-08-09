@@ -4,4 +4,4 @@
 
 An interactive visualization system designed to helps domain experts responsibly edit Generalized Additive Models (GAMs).
 
-![build](https://github.com/xiaohk/gam-changer/workflows/build/badge.svg)
+[![build](https://github.com/xiaohk/gam-changer/workflows/build/badge.svg)](https://github.com/xiaohk/gam-changer/actions)
