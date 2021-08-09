@@ -11,7 +11,7 @@
   import { moveMenubar } from './continuous/cont-bbox';
   import { drawLastEdit, dragged, grayOutConfidenceLine, redrawOriginal } from './categorical/cat-edit';
   import { getEBMMetrics, transferMetricToSidebar, setEBM } from './categorical/cat-ebm';
-  import { pushCurStateToHistoryStack } from './categorical/cat-history';
+  import { pushCurStateToHistoryStack, undoHandler, redoHandler } from './categorical/cat-history';
 
   import ContextMenu from '../components/ContextMenu.svelte';
 
@@ -204,20 +204,20 @@
     case 'undo': {
       console.log('undo clicked');
 
-      // if (historyList.length > 1) {
-      //   undoHandler(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
-      //     historyStore, redoStack, setEBM, sidebarStore);
-      // }
+      if (historyList.length > 1) {
+        undoHandler(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+          historyStore, redoStack, ebm, sidebarStore, barWidth);
+      }
       break;
     }
 
     case 'redo': {
       console.log('redo clicked');
 
-      // if (redoStack.length > 0) {
-      //   redoHandler(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
-      //     historyStore, redoStack, setEBM, sidebarStore);
-      // }
+      if (redoStack.length > 0) {
+        redoHandler(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+          historyStore, redoStack, ebm, sidebarStore);
+      }
       break;
     }
     

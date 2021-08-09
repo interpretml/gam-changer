@@ -190,3 +190,41 @@ export const brushEndSelect = (event, state, svg, multiMenu, brush, component,
       .attr('cursor', null);
   }
 };
+
+/**
+ * Discard the current marquee selection. This function does not handle any graph
+ * drawing/redrawing.
+ * @param {object} svg The svg object
+ * @param {object} multiMenu The multimenu object
+ * @param {func} resetContextMenu Function to reset the context menu
+ * @param {func} resetFeatureSidebar Function to reset the feature sidebar
+ */
+export const quitSelection = (svg, state, multiMenu, resetContextMenu, resetFeatureSidebar) => {
+  let svgSelect = d3.select(svg);
+
+  state.selectedInfo = new SelectedInfo();
+
+  // De-highlight the paths associated with the selected dots
+  svgSelect.select('g.scatter-plot-dot-group')
+    .selectAll('circle')
+    .classed('selected', false);
+
+  svgSelect.select('g.scatter-plot-bar-group.real')
+    .selectAll('rect')
+    .classed('selected', false);
+
+  svgSelect.select('g.scatter-plot-content-group g.brush rect.overlay')
+    .attr('cursor', null);
+
+  d3.select(multiMenu)
+    .classed('hidden', true);
+
+  // End move mode
+  resetContextMenu();
+
+  // Remove the selection bbox
+  svgSelect.selectAll('g.scatter-plot-content-group g.select-bbox-group').remove();
+
+  // Reset the feature sidebar
+  resetFeatureSidebar();
+};
