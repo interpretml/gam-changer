@@ -1,6 +1,6 @@
 <script>
   import * as d3 from 'd3';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { round } from '../utils/utils';
   import { config } from '../config';
 
@@ -9,7 +9,8 @@
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './categorical/cat-zoom';
   import { brushDuring, brushEndSelect } from './categorical/cat-brush';
   import { moveMenubar } from './continuous/cont-bbox';
-  import { drawLastEdit, drawBufferGraph, grayOutConfidenceLine, redrawOriginal } from './categorical/cat-edit';
+  import { drawLastEdit, dragged, grayOutConfidenceLine, redrawOriginal } from './categorical/cat-edit';
+  import { getEBMMetrics, transferMetricToSidebar, setEBM } from './categorical/cat-ebm';
 
   import ContextMenu from '../components/ContextMenu.svelte';
 
@@ -17,6 +18,8 @@
   export let labelEncoder = null;
   export let scoreRange = null;
   export let svgHeight = 400;
+  export let ebm = null;
+  export let sidebarStore = null;
 
   let svg = null;
   let component = null;
@@ -42,6 +45,144 @@
     subItemMode: null,
     setValue: null
   };
+
+  // Sidebar store
+  let sidebarInfo = null;
+  let sidebarStoreUnsubscribe = sidebarStore.subscribe(async value => {
+    sidebarInfo = value;
+
+    // Listen to events ['globalClicked', 'selectedClicked', 'sliceClicked']
+    // from the sidebar
+    switch(value.curGroup) {
+    case 'globalClicked':
+      console.log('globalClicked');
+
+      // footerStore.update(value => {
+      //   if (value.sample.includes(',')) {
+      //     value.sample = value.sample.slice(0, -1);
+      //   }
+      //   value.slice = '';
+      //   return value;
+      // });
+
+      // We keep track of the global metrics in history in any current scope
+      // To restore the global tab, we just need to query the history stack
+      sidebarInfo.curGroup = 'overwrite';
+      sidebarStore.set(sidebarInfo);
+      break;
+
+    case 'selectedClicked':
+      console.log('selectedClicked');
+
+      // footerStore.update(value => {
+      //   if (value.sample.includes(',')) {
+      //     value.sample = value.sample.slice(0, -1);
+      //   }
+      //   value.slice = '';
+      //   return value;
+      // });
+
+      // Step 1: If there is no selected nodes, then the metrics are all NAs
+      if (!state.selectedInfo.hasSelected) {
+        sidebarInfo.curGroup = 'nullify';
+        sidebarStore.set(sidebarInfo);
+      } else {
+        // Step 2: Reset/Update EBM 3 times and compute three metrics on the selected nodes
+
+        // Step 2.1: Original
+        // Here we reset the EBM model completely, because
+        // the intermediate historical events might update() different portions
+        // of the EBM
+        // Be careful! The first commit might be on a different feature!
+        // It is way too complicated to load the initial edit then come back (need to revert
+        // every edit on every feature!)
+        // Here we just use ignore it [better than confusing the users with some other "original"]
+        // await setEBM('original-only', historyList[0].state.pointData);
+
+        // Nullify the original
+        sidebarInfo.curGroup = 'nullify';
+        sidebarStore.set(sidebarInfo);
+        while (sidebarInfo.curGroup !== 'nullifyCompleted') {
+          await new Promise(r => setTimeout(r, 300));
+        }
+
+        // Step 2.2: Last edit
+        // if (sidebarInfo.historyHead - 1 >= 0 &&
+        //   historyList[sidebarInfo.historyHead - 1].type !== 'original' &&
+        //   historyList[sidebarInfo.historyHead - 1].featureName === state.featureName) {
+        //   await setEBM('last-only', historyList[sidebarInfo.historyHead - 1].state.pointData);
+        // }
+
+        // // Step 2.3: Current edit
+        // let curPointData = state.pointDataBuffer === null ?
+        //   historyList[sidebarInfo.historyHead].state.pointData :
+        //   state.pointDataBuffer;
+
+        // await setEBM('current-only', curPointData);
+      }
+
+      break;
+
+    case 'sliceClicked': {
+      console.log('sliceClicked');
+
+      // Step 1: set the slice feature ID and level ID to EBM
+      let sliceSize = ebm.setSliceData(sidebarInfo.sliceInfo.featureID, sidebarInfo.sliceInfo.level);
+
+      // footerStore.update(value => {
+      //   if (!value.sample.includes(',')) value.sample += ',';
+      //   value.slice = `<b>${sliceSize}</b> sliced`;
+      //   return value;
+      // });
+
+      // Step 2: Reset/Update EBM 3 times and compute three metrics on the selected nodes
+
+      // Step 2.1: Original
+      // Here we reset the EBM model completely, because
+      // the intermediate historical events might update() different portions
+      // of the EBM
+      // await setEBM('original-only', historyList[0].state.pointData);
+
+      // Nullify the original
+      sidebarInfo.curGroup = 'nullify';
+      sidebarStore.set(sidebarInfo);
+      while (sidebarInfo.curGroup !== 'nullifyCompleted') {
+        await new Promise(r => setTimeout(r, 300));
+      }
+
+      // Step 2.2: Last edit
+      // if (sidebarInfo.historyHead - 1 >= 0 &&
+      //   historyList[sidebarInfo.historyHead - 1].type !== 'original' &&
+      //   historyList[sidebarInfo.historyHead - 1].featureName === state.featureName) { 
+      //   await setEBM('last-only', historyList[sidebarInfo.historyHead - 1].state.pointData);
+      // }
+
+      // // Step 2.3: Current edit
+      // let curPointData = state.pointDataBuffer === null ?
+      //   historyList[sidebarInfo.historyHead].state.pointData :
+      //   state.pointDataBuffer;
+
+      // await setEBM(state, ebm, 'current-only', curPointData, sidebarStore, sidebarInfo);
+
+      break;
+    }
+
+    // User clicks to preview a previous edit
+    case 'headChanged': {
+      // const headFeatureName = historyList[value.historyHead].featureName;
+      // // Only checkout the commit if it is still on the same feature
+      // // Otherwise, this component should wait for its parent to kill it
+      // if (headFeatureName === state.featureName) {
+      //   checkoutCommitHead(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+      //     historyStore, setEBM, setEBMEditingFeature, sidebarStore);
+      // }
+      break;
+    }
+
+    default:
+      break;
+    }
+  });
 
   // Real width (depends on the svgHeight prop)
   let svgWidth = svgHeight * (width / height);
@@ -101,6 +242,10 @@
   };
 
   onMount(() => {mounted = true;});
+
+  onDestroy(() => {
+    sidebarStoreUnsubscribe();
+  });
 
   /**
    * Draw the plot in the SVG component
@@ -429,7 +574,8 @@
     // Add brush
     brush = d3.brush()
       .on('end', e => brushEndSelect(
-        e, state, svg, multiMenu, brush, component, resetContextMenu, barWidth
+        e, state, svg, multiMenu, brush, component, resetContextMenu, barWidth,
+        ebm, sidebarStore, sidebarInfo, resetFeatureSidebar, nullifyMetrics
       ))
       .on('start brush', e => brushDuring(e, state, svg, multiMenu))
       .extent([[0, 0], [chartWidth, chartHeight]])
@@ -519,33 +665,6 @@
 
   };
 
-  const dragged = (e) => {
-    
-    const dataYChange = state.curYScale.invert(e.y) - state.curYScale.invert(e.y - e.dy);
-
-    // Change the data based on the y-value changes, then redraw nodes (preferred method)
-    state.selectedInfo.nodeData.forEach(d => {
-
-      // Step 1.1: update point data
-      state.pointDataBuffer[d.id].y += dataYChange;
-    });
-
-    // Step 1.2: update the bbox info
-    state.selectedInfo.updateNodeData(state.pointDataBuffer);
-    state.selectedInfo.computeBBox(state.pointDataBuffer);
-
-    // Draw the new graph
-    drawBufferGraph(state, svg, false, 400);
-
-    // Update the sidebar info
-    // if (dragTimeout !== null) {
-    //   clearTimeout(dragTimeout);
-    // }
-    // dragTimeout = setTimeout(() => {
-    //   updateEBM('current');
-    // }, useTimeout ? 300 : 0);
-  };
-
   const multiMenuMoveClicked = () => {
 
     // Step 1. create data clone buffers for user to change
@@ -563,7 +682,7 @@
           grayOutConfidenceLine(state, svg);
           //TODO: update footer
         })
-        .on('drag', (e) => dragged(e))
+        .on('drag', (e) => dragged(e, state, svg, sidebarStore, sidebarInfo, ebm, setEBM))
       );
     
     bboxGroup.select('rect.original-bbox')
@@ -573,6 +692,10 @@
     if (state.pointDataLastEdit !== undefined) {
       drawLastEdit(state, svg, barWidth);
     }
+
+    // Copy current metrics as last metrics
+    sidebarInfo.curGroup = 'last';
+    sidebarStore.set(sidebarInfo);
 
   };
 
@@ -584,7 +707,7 @@
 
   };
 
-  const multiMenuMoveCheckClicked = () => {
+  const multiMenuMoveCheckClicked = async () => {
     // Save the changes
     state.pointData = JSON.parse(JSON.stringify(state.pointDataBuffer));
 
@@ -607,6 +730,27 @@
       state.pointDataLastLastEdit = JSON.parse(JSON.stringify(state.pointDataLastEdit));
     }
     state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointData));
+
+    // Update metrics
+    sidebarInfo.curGroup = 'commit';
+    sidebarStore.set(sidebarInfo);
+
+    // Query the global metrics and save it in the history if the scope is not in global
+    if (sidebarInfo.effectScope !== 'global') {
+      let metrics = await getEBMMetrics('global');
+      transferMetricToSidebar(metrics, 'commit-not-global');
+    }
+
+    // Wait until the the effect sidebar is updated
+    if (ebm.isDummy === undefined) {
+      while (sidebarInfo.curGroup !== 'commitCompleted') {
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+
+    // Update the footer
+
+    // Save to the history stack
   };
 
   const multiMenuMoveCancelClicked = () => {
@@ -621,10 +765,8 @@
         .call(moveMenubar, svg, component);
 
       // Recover the EBM
-      // updateEBM('recoverEBM');
+      setEBM(state, ebm, 'recoverEBM', state.pointData, sidebarStore, sidebarInfo, undefined, false);
     });
-
-    redrawOriginal(state, svg);
 
     // Remove the drag
     let bboxGroup = d3.select(svg)
@@ -645,6 +787,8 @@
     }
 
     // Update the metrics
+    sidebarInfo.curGroup = 'recover';
+    sidebarStore.set(sidebarInfo);
     
     // Update the footer message
   };
@@ -669,6 +813,36 @@
     
     lineChartContent.select('g.brush rect.overlay')
       .attr('cursor', null);
+  };
+
+  /**
+   * Reset the feature count of selected samples to 0
+   */
+  const resetFeatureSidebar = async () => {
+    if (ebm.isDummy !== undefined) return;
+
+    for (let i = 0; i < sidebarInfo.featurePlotData.cont.length; i++) {
+      sidebarInfo.featurePlotData.cont[i].histSelectedCount = new Array(
+        sidebarInfo.featurePlotData.cont[i].histSelectedCount.length).fill(0);
+    }
+
+    for (let i = 0; i < sidebarInfo.featurePlotData.cat.length; i++) {
+      sidebarInfo.featurePlotData.cat[i].histSelectedCount = new Array(
+        sidebarInfo.featurePlotData.cat[i].histSelectedCount.length).fill(0);
+    }
+
+    sidebarInfo.curGroup = 'updateFeature';
+    sidebarStore.set(sidebarInfo);
+  };
+
+  /**
+   * Set all metrics to null if there is no selection and the scope is 'selected'.
+  */
+  const nullifyMetrics = () => {
+    if (!state.selectedInfo.hasSelected && sidebarInfo.effectScope === 'selected') {
+      sidebarInfo.curGroup = 'nullify';
+      sidebarStore.set(sidebarInfo);
+    }
   };
 
   $: featureData && mounted && !initialized && drawFeature(featureData);

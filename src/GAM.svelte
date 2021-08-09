@@ -255,11 +255,11 @@
     } else {
       // Initialize GAM Changer using the continuous variable with the highest importance
 
-      targetFeatureIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
-      tempSelectedFeature.type = 'continuous';
+      // targetFeatureIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
+      // tempSelectedFeature.type = 'continuous';
 
-      // targetFeatureIndex = d3.maxIndex(featureSelectList.categorical, d => d.importance);
-      // tempSelectedFeature.type = 'categorical';
+      targetFeatureIndex = d3.maxIndex(featureSelectList.categorical, d => d.importance);
+      tempSelectedFeature.type = 'categorical';
     }
     
     tempSelectedFeature.data = data.features[featureSelectList[tempSelectedFeature.type][targetFeatureIndex].featureID];
@@ -891,6 +891,8 @@
               featureData = {selectedFeature === null ? null : selectedFeature.data}
               labelEncoder = {data === null ? null : data.labelEncoder[selectedFeature.name]}
               scoreRange = {data === null ? null : data.scoreRange}
+              sidebarStore = {sidebarStore}
+              bind:ebm = {ebm}
               svgHeight = 500
               bind:this = {changer}
             />

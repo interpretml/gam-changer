@@ -3,6 +3,7 @@ import { SelectedInfo } from './cat-class';
 import { moveMenubar } from '../continuous/cont-bbox';
 import { rExtent } from './cat-zoom';
 import { redrawOriginal, drawLastEdit } from './cat-edit';
+import { setEBM } from './cat-ebm';
 
 // Need a timer to avoid the brush event call after brush.move()
 let idleTimeout = null;
@@ -66,7 +67,8 @@ export const brushDuring = (event, state, svg, multiMenu) => {
 };
 
 export const brushEndSelect = (event, state, svg, multiMenu, brush, component,
-  resetContextMenu, barWidth
+  resetContextMenu, barWidth, ebm, sidebarStore, sidebarInfo, resetFeatureSidebar,
+  nullifyMetrics
 ) => {
   // Get the selection boundary
   let selection = event.selection;
@@ -89,7 +91,9 @@ export const brushEndSelect = (event, state, svg, multiMenu, brush, component,
       if (modeInfo.moveMode || modeInfo.subItemMode !== null) {
         // Do not save the user's change (same as clicking the cancel button)
         // Redraw the graph with original data
-        redrawOriginal(state, svg);
+        redrawOriginal(state, svg, true, () => {
+          setEBM(state, ebm, 'recoverEBM', state.pointData, sidebarStore, sidebarInfo, undefined, false);
+        });
 
         // Redraw the last edit if possible
         if (state.additiveDataLastLastEdit !== undefined) {
@@ -100,8 +104,27 @@ export const brushEndSelect = (event, state, svg, multiMenu, brush, component,
         }
       }
 
+      // Recover the metrics if user is quitting context menu without committing
+      sidebarStore.update(value => {
+        // Svelte would trigger an update when update() is called
+        // So if we want to avoid call 'recover' twice, we need to set another
+        // message
+        if (modeInfo.moveMode || modeInfo.subItemMode !== null) {
+          value.curGroup = 'recover';
+        } else {
+          value.curGroup = 'no action';
+        }
+        return value;
+      });
+
       // Remove the selection bbox
       svgSelect.selectAll('g.scatter-plot-content-group g.select-bbox-group').remove();
+
+      // Reset the feature sidebar
+      resetFeatureSidebar();
+
+      // Nullify the metrics if in selected tab
+      nullifyMetrics();
 
       return idleTimeout = setTimeout(idled, idleDelay);
     }

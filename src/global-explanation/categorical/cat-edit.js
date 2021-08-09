@@ -1,6 +1,38 @@
 import * as d3 from 'd3';
 import { rScale } from './cat-zoom';
 
+let dragTimeout = null;
+
+export const dragged = (e, state, svg, sidebarStore, sidebarInfo, ebm, setEBM) => {
+
+  const dataYChange = state.curYScale.invert(e.y) - state.curYScale.invert(e.y - e.dy);
+
+  // Change the data based on the y-value changes, then redraw nodes (preferred method)
+  state.selectedInfo.nodeData.forEach(d => {
+
+    // Step 1.1: update point data
+    state.pointDataBuffer[d.id].y += dataYChange;
+  });
+
+  // Step 1.2: update the bbox info
+  state.selectedInfo.updateNodeData(state.pointDataBuffer);
+  state.selectedInfo.computeBBox(state.pointDataBuffer);
+
+  // Draw the new graph
+  drawBufferGraph(state, svg, false, 400);
+
+  const useTimeout = sidebarInfo.totalSampleNum > 2000;
+
+  // Update the sidebar info
+  if (dragTimeout !== null) {
+    clearTimeout(dragTimeout);
+  }
+
+  dragTimeout = setTimeout(() => {
+    setEBM(state, ebm, 'current', state.pointDataBuffer, sidebarStore, sidebarInfo);
+  }, useTimeout ? 300 : 0);
+};
+
 export const drawBufferGraph = (state, svg, animated, duration, callback = () => { }) => {
   const svgSelect = d3.select(svg);
 
