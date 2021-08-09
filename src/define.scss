@@ -1,3 +1,5 @@
+@use "sass:math";
+
 // Colors
 $brown-dark: hsl(27, 47%, 13%);
 $brown-reg: hsl(27, 47%, 26%);
@@ -52,5 +54,5 @@ $pastel1-red: hsl(329, 90%, 92%);
 // Lengths
 $explanation-header-height: 1.5em;
 $svg-height: 500px;
-$svg-width: $svg-height * 600 / 400;
+$svg-width: math.div($svg-height * 600, 400);
 $my-border-radius: 10px;

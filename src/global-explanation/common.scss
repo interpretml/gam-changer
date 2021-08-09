@@ -57,7 +57,13 @@
   pointer-events: none;
 }
 
-:global(.explain-panel .grid-line-x, .explain-panel .grid-line-y) {
+:global(.explain-panel .grid-line-x) {
+  stroke-width: 1;
+  stroke: black;
+  stroke-opacity: 0.08;
+}
+
+:global(.explain-panel .grid-line-y) {
   stroke-width: 1;
   stroke: black;
   stroke-opacity: 0.08;
