@@ -11,6 +11,7 @@
   import { moveMenubar } from './continuous/cont-bbox';
   import { drawLastEdit, dragged, grayOutConfidenceLine, redrawOriginal } from './categorical/cat-edit';
   import { getEBMMetrics, transferMetricToSidebar, setEBM } from './categorical/cat-ebm';
+  import { pushCurStateToHistoryStack } from './categorical/cat-history';
 
   import ContextMenu from '../components/ContextMenu.svelte';
 
@@ -20,6 +21,9 @@
   export let svgHeight = 400;
   export let ebm = null;
   export let sidebarStore = null;
+  export let footerStore = null;
+  export let footerActionStore = null;
+  export let historyStore = null;
 
   let svg = null;
   let component = null;
@@ -45,6 +49,11 @@
     subItemMode: null,
     setValue: null
   };
+
+  // Subscribe the history store
+  let redoStack = [];
+  let historyList = null;
+  let historyStoreUnsubscribe = historyStore.subscribe(value => {historyList = value;});
 
   // Sidebar store
   let sidebarInfo = null;
@@ -184,6 +193,59 @@
     }
   });
 
+  let footerValue = null;
+  let footerValueUnsubscribe = footerStore.subscribe(value => {
+    footerValue = value;
+  });  
+
+  // Listen to footer buttons
+  let footerActionUnsubscribe = footerActionStore.subscribe(message => {
+    switch(message){
+    case 'undo': {
+      console.log('undo clicked');
+
+      // if (historyList.length > 1) {
+      //   undoHandler(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+      //     historyStore, redoStack, setEBM, sidebarStore);
+      // }
+      break;
+    }
+
+    case 'redo': {
+      console.log('redo clicked');
+
+      // if (redoStack.length > 0) {
+      //   redoHandler(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+      //     historyStore, redoStack, setEBM, sidebarStore);
+      // }
+      break;
+    }
+    
+    case 'save':
+      console.log('save clicked');
+      break;
+
+    case 'selectAll':
+      console.log('selectAll clicked');
+
+      // Select all bins if in select mode and nothing has been selected yet
+      if (selectMode) {
+        // // Discard any existing selection
+        // quitSelection(svg, state, multiMenu, resetContextMenu, resetFeatureSidebar);
+
+        // // Cheeky way to select all nodes by fake a brush event
+        // selectAllBins(svg, state, bboxStrokeWidth, multiMenu, component,
+        //   updateFeatureSidebar, nullifyMetrics, computeSelectedEffects, brush);
+      }
+      break;
+    
+    default:
+      break;
+    }
+
+    footerActionStore.set('');
+  });
+
   // Real width (depends on the svgHeight prop)
   let svgWidth = svgHeight * (width / height);
 
@@ -245,6 +307,9 @@
 
   onDestroy(() => {
     sidebarStoreUnsubscribe();
+    footerActionUnsubscribe();
+    footerValueUnsubscribe();
+    historyStoreUnsubscribe();
   });
 
   /**
@@ -253,6 +318,12 @@
    */
   const drawFeature = (featureData) => {
     console.log(featureData);
+
+    initialized = true;
+
+    // Register the feature name
+    state.featureName = featureData.name;
+
     let svgSelect = d3.select(svg);
 
     // For categorical variables, the width depends on the number of levels
@@ -624,7 +695,13 @@
         .call(zoom.transform, d3.zoomIdentity);
     });
 
-    initialized = true;
+    // Update the footer for more instruction
+    footerStore.update(value => {
+      value.help = '<b>Drag</b> to pan view, <b>Scroll</b> to zoom';
+      return value;
+    });
+
+    pushCurStateToHistoryStack(state, 'original', 'Original graph', historyStore, sidebarStore);
   };
 
   // ---- Interaction Functions ----
@@ -680,9 +757,17 @@
       .call(d3.drag()
         .on('start', () => {
           grayOutConfidenceLine(state, svg);
-          //TODO: update footer
+          // Update footer
+          footerStore.update(value => {
+            if (!value.baselineInit) {
+              value.baseline = 0;
+              value.baselineInit = true;
+            }
+            return value;
+          });
         })
-        .on('drag', (e) => dragged(e, state, svg, sidebarStore, sidebarInfo, ebm, setEBM))
+        .on('drag', (e) => dragged(e, state, svg, sidebarStore, sidebarInfo,
+          ebm, setEBM, footerStore))
       );
     
     bboxGroup.select('rect.original-bbox')
@@ -696,6 +781,12 @@
     // Copy current metrics as last metrics
     sidebarInfo.curGroup = 'last';
     sidebarStore.set(sidebarInfo);
+
+    // Update the footer message
+    footerStore.update(value => {
+      value.help = '<b>Drag</b> the <b>selected bars</b> to change score';
+      return value;
+    });
 
   };
 
@@ -748,9 +839,31 @@
       }
     }
 
-    // Update the footer
+    // Update the footer message
+    let curEditBaseline = 0;
+    footerStore.update(value => {
+      // Reset the baseline
+      curEditBaseline = value.baseline;
+      value.baseline = 0;
+      value.baselineInit = false;
+      value.type = '';
+      value.state = '';
+      value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
+      return value;
+    });
 
-    // Save to the history stack
+    // Save into the history
+    // Generate the description message
+    const selectedBins = state.selectedInfo.nodeData.map(d => d.x);
+    const binRange = `[${selectedBins.join(', ')}]`;
+
+    const message = `${curEditBaseline >= 0 ? 'Increased' : 'Decreased'} scores of ${binRange} ` +
+      `by ${round(Math.abs(curEditBaseline), 2)}.`;
+
+    pushCurStateToHistoryStack(state, 'move', message, historyStore, sidebarStore);
+
+    // Any new commit purges the redo stack
+    redoStack = [];
   };
 
   const multiMenuMoveCancelClicked = () => {

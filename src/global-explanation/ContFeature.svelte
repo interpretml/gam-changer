@@ -247,7 +247,7 @@
   });
 
   let footerValue = null;
-  footerStore.subscribe(value => {
+  let footerValueUnsubscribe = footerStore.subscribe(value => {
     footerValue = value;
   });
 
@@ -307,6 +307,7 @@
   onDestroy(() => {
     sidebarStoreUnsubscribe();
     footerActionUnsubscribe();
+    footerValueUnsubscribe();
     historyStoreUnsubscribe();
   });
 

@@ -892,6 +892,9 @@
               labelEncoder = {data === null ? null : data.labelEncoder[selectedFeature.name]}
               scoreRange = {data === null ? null : data.scoreRange}
               sidebarStore = {sidebarStore}
+              footerStore = {footerStore}
+              footerActionStore = {footerActionStore}
+              historyStore = {historyStore}
               bind:ebm = {ebm}
               svgHeight = 500
               bind:this = {changer}

@@ -1,9 +1,10 @@
 import * as d3 from 'd3';
 import { rScale } from './cat-zoom';
+import { round } from '../../utils/utils';
 
 let dragTimeout = null;
 
-export const dragged = (e, state, svg, sidebarStore, sidebarInfo, ebm, setEBM) => {
+export const dragged = (e, state, svg, sidebarStore, sidebarInfo, ebm, setEBM, footerStore) => {
 
   const dataYChange = state.curYScale.invert(e.y) - state.curYScale.invert(e.y - e.dy);
 
@@ -31,6 +32,13 @@ export const dragged = (e, state, svg, sidebarStore, sidebarInfo, ebm, setEBM) =
   dragTimeout = setTimeout(() => {
     setEBM(state, ebm, 'current', state.pointDataBuffer, sidebarStore, sidebarInfo);
   }, useTimeout ? 300 : 0);
+
+  // Update the footer message
+  footerStore.update(value => {
+    value.baseline += dataYChange;
+    value.state = `Scores <b>${value.baseline >= 0 ? 'increased' : 'decreased'}</b> by <b>${round(Math.abs(value.baseline), 2)}</b>`;
+    return value;
+  });
 };
 
 export const drawBufferGraph = (state, svg, animated, duration, callback = () => { }) => {

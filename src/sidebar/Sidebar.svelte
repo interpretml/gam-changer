@@ -128,11 +128,11 @@
 
   <div class='header'>
     <div class='tab-button'
-      data-text='Effect'
+      data-text='Metrics'
       class:selected={sidebarInfo.selectedTab === 'effect'}
       on:click={() => {updateSelectedTab('effect');}}
     >
-      Effect
+      Metrics
     </div>
 
     <div class='tab-button'
