@@ -651,8 +651,7 @@
     });
 
     // Try to restore the last edit if possible
-    let hasBeenCreated = await tryRestoreLastEdit(state, svg, multiMenu, resetContextMenu,
-      resetFeatureSidebar, historyStore, redoStack, setEBM, sidebarStore);
+    let hasBeenCreated = await tryRestoreLastEdit(state, svg, historyStore, setEBM);
 
     if (!hasBeenCreated) {
       // Push the initial state into the history stack

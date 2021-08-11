@@ -382,17 +382,11 @@ export const pushCurStateToHistoryStack = (state, type, description, historyStor
  * Try to restore the graph to last edit (if possible)
  * @param {object} state Global state
  * @param {element} svg SVG element
- * @param {element} multiMenu multiMenu element
- * @param {func} resetContextMenu function to reset context menu bar
- * @param {func} resetFeatureSidebar function to reset the feature side bar
  * @param {object} historyStore History store
- * @param {list} redoStack List of commits to redo
  * @param {func} setEBM function to set EBM bin definitions
- * @param {object} sidebarStore sidebar store object
  * @returns last edit's hash if found a last edit, false otherwise
  */
-export const tryRestoreLastEdit = async (state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
-  historyStore, redoStack, setEBM, sidebarStore) => {
+export const tryRestoreLastEdit = async (state, svg, historyStore, setEBM) => {
 
   let lastCommit = null;
   let lastCommitID = -1;

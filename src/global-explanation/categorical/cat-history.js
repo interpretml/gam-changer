@@ -340,3 +340,90 @@ export const redoHandler = async (state, svg, multiMenu, resetContextMenu, reset
   // Redraw the graph
   redrawOriginal(state, svg);
 };
+
+/**
+ * Try to restore the graph to last edit (if possible)
+ * @param {object} state Global state
+ * @param {element} svg SVG element
+ * @param {object} historyStore History store
+ * @param {object} ebm function to set EBM bin definitions
+ * @param {object} sidebarStore sidebar store object
+ * @param {number} barWidth width of each bar in the plot for categorical variables
+ * @returns last edit's hash if found a last edit, false otherwise
+ */
+export const tryRestoreLastEdit = async (state, svg, historyStore, ebm,
+  sidebarStore, barWidth) => {
+
+  let lastCommit = null;
+  let lastCommitID = -1;
+  let lastLastCommit = null;
+  let curHistoryStoreValue;
+
+  historyStore.update(value => {
+    curHistoryStoreValue = value;
+    return value;
+  });
+
+  // Try to find the last edit
+  for (let i = curHistoryStoreValue.length - 1; i >= 0; i--) {
+    if (curHistoryStoreValue[i].featureName === state.featureName) {
+      lastCommit = curHistoryStoreValue[i];
+      lastCommitID = i;
+      break;
+    }
+  }
+
+  if (lastCommit === null) {
+    return false;
+  }
+
+  // If we have found an edit, try to find the edit before it (to restore last
+  // edit info)
+  for (let i = lastCommitID - 1; i >= 0; i--) {
+    if (curHistoryStoreValue[i].featureName === state.featureName) {
+      lastLastCommit = curHistoryStoreValue[i];
+      break;
+    }
+  }
+
+  // Replace the current state with last edit
+  state.pointData = lastCommit.state.pointData;
+  state.pointDataBuffer = null;
+
+  // Update the last edit state, redraw the last edit graphs
+  if (lastLastCommit !== null) {
+    state.pointDataLastEdit = lastLastCommit.state.pointData;
+    drawLastEdit(state, svg, barWidth);
+  } else {
+    // If there is no last edit, then it is the origin
+    state.pointDataLastEdit = undefined;
+  }
+
+  // Update the last last edit state
+  // Note lastLastEdit is *only* used to restore lastEdit after user enters editing mode then cancel
+  // So when we restore it, it is the same as lastEdit
+  if (lastLastCommit !== null) {
+    state.pointDataLastLastEdit = lastLastCommit.state.pointData;
+  } else {
+    // If there is no last last edit, then it is the origin or the first edit
+    state.pointDataLastLastEdit = undefined;
+  }
+
+  // After drawing the lastEdit curve, change lastEdit to curEdit (so when user
+  // clicks any editing, the orange line moves to current location)
+  state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointData));
+
+  // Restore the bin definition
+  let sidebarInfo = null;
+  sidebarStore.update(value => {
+    sidebarInfo = value;
+    return value;
+  });
+
+  await setEBM(state, ebm, 'current', state.pointData, sidebarStore, sidebarInfo);
+
+  // Redraw the graph
+  redrawOriginal(state, svg);
+
+  return lastCommit.hash;
+};

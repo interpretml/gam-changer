@@ -11,7 +11,7 @@
   import { moveMenubar } from './continuous/cont-bbox';
   import { drawLastEdit, dragged, grayOutConfidenceLine, redrawOriginal } from './categorical/cat-edit';
   import { getEBMMetrics, transferMetricToSidebar, setEBM } from './categorical/cat-ebm';
-  import { pushCurStateToHistoryStack, undoHandler, redoHandler } from './categorical/cat-history';
+  import { pushCurStateToHistoryStack, undoHandler, redoHandler, tryRestoreLastEdit } from './categorical/cat-history';
 
   import ContextMenu from '../components/ContextMenu.svelte';
 
@@ -316,7 +316,7 @@
    * Draw the plot in the SVG component
    * @param featureData
    */
-  const drawFeature = (featureData) => {
+  const drawFeature = async (featureData) => {
     console.log(featureData);
 
     initialized = true;
@@ -701,7 +701,22 @@
       return value;
     });
 
-    pushCurStateToHistoryStack(state, 'original', 'Original graph', historyStore, sidebarStore);
+    // Try to restore the last edit if possible
+    let hasBeenCreated = await tryRestoreLastEdit(state, svg, historyStore, ebm,
+      sidebarStore, barWidth);
+
+    if (!hasBeenCreated) {
+      // Push the initial state into the history stack
+      pushCurStateToHistoryStack(state, 'original', 'Original graph', historyStore, sidebarStore);
+    } else {
+      pushCurStateToHistoryStack(state, 'original',
+        `Reloaded commit ${hasBeenCreated.substring(0, 7)}`,
+        historyStore, sidebarStore);
+    }
+
+    sidebarInfo.historyHead = historyList.length - 1;
+    sidebarInfo.previewHistory = false;
+    sidebarStore.set(sidebarInfo);
   };
 
   // ---- Interaction Functions ----
