@@ -21,8 +21,10 @@ export const moveMenubar = (menubar, svg, component) => {
 
   // Do not move the bar out of its parent
   left = Math.max(0, left);
+  left = Math.min(panelBboxPosition.width - menuWidth, left);
   top = Math.max(0, top);
 
   menubar.style('left', `${left}px`)
     .style('top', `${top}px`);
+  
 };

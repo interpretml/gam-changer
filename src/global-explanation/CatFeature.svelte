@@ -755,6 +755,16 @@
       state.additiveDataBuffer = null;
     }
 
+    // Update the footer message
+    footerStore.update(value => {
+      // Reset the baseline
+      value.baseline = 0;
+      value.baselineInit = false;
+      value.state = '';
+      value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
+      return value;
+    });
+
     return {moveMode: moveMode, subItemMode: subItemMode};
   };
 
@@ -935,6 +945,15 @@
     sidebarStore.set(sidebarInfo);
     
     // Update the footer message
+    footerStore.update(value => {
+      // Reset the baseline
+      value.baseline = 0;
+      value.baselineInit = false;
+      value.state = '';
+      value.type = '';
+      value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
+      return value;
+    });
   };
 
   const multiMenuSubItemCheckClicked = () => {
