@@ -84,8 +84,8 @@ export const brushDuring = (event, state, svg, multiMenu, ebm, footerStore) => {
 };
 
 export const brushEndSelect = (event, state, svg, multiMenu, brush, component,
-  resetContextMenu, barWidth, ebm, sidebarStore, sidebarInfo, resetFeatureSidebar,
-  nullifyMetrics
+  resetContextMenu, barWidth, ebm, sidebarStore, sidebarInfo, updateFeatureSidebar,
+  resetFeatureSidebar, nullifyMetrics, computeSelectedEffects
 ) => {
   // Get the selection boundary
   let selection = event.selection;
@@ -152,12 +152,15 @@ export const brushEndSelect = (event, state, svg, multiMenu, brush, component,
     let xRange = [selection[0][0], selection[1][0]];
     let yRange = [state.curYScale.invert(selection[1][1]), state.curYScale.invert(selection[0][1])];
 
+    let selectedBinIndexes = [];
+
     // Highlight the selected dots
     svgSelect.select('g.scatter-plot-dot-group')
       .selectAll('circle.additive-dot')
       .classed('selected', d => {
         if (state.curXScale(d.x) >= xRange[0] && state.curXScale(d.x) <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
           state.selectedInfo.nodeData.push({ x: d.x, y: d.y, id: d.id });
+          selectedBinIndexes.push(d.id - 1);
           return true;
         } else {
           return false;
@@ -198,7 +201,16 @@ export const brushEndSelect = (event, state, svg, multiMenu, brush, component,
       d3.select(multiMenu)
         .call(moveMenubar, svg, component)
         .classed('hidden', false);
+
+      // Trigger a counting of the feature distribution of the selected sampels
+      updateFeatureSidebar(selectedBinIndexes);
     }
+
+    // Nullify the metrics if in selected tab and no selection
+    nullifyMetrics();
+
+    // Recompute the selected effects if in selected tab and we do have selection
+    computeSelectedEffects();
 
     // Remove the brush box
     svgSelect.select('g.scatter-plot-content-group g.brush')
@@ -244,4 +256,91 @@ export const quitSelection = (svg, state, multiMenu, resetContextMenu, resetFeat
 
   // Reset the feature sidebar
   resetFeatureSidebar();
+};
+
+export const selectAllBins = (svg, state, multiMenu, component, updateFeatureSidebar,
+  brush, nullifyMetrics, computeSelectedEffects, footerStore, ebm) => {
+  let svgSelect = d3.select(svg);
+
+  let xRange = [-Infinity, Infinity];
+  let yRange = [-Infinity, Infinity];
+
+  let selectedBinIndexes = [];
+
+  // Highlight the selected dots
+  svgSelect.select('g.scatter-plot-dot-group')
+    .selectAll('circle.additive-dot')
+    .classed('selected', d => {
+      if (state.curXScale(d.x) >= xRange[0] && state.curXScale(d.x) <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]) {
+        state.selectedInfo.nodeData.push({ x: d.x, y: d.y, id: d.id });
+        selectedBinIndexes.push(d.id - 1);
+        return true;
+      } else {
+        return false;
+      }
+    });
+
+  // Highlight the bars associated with the selected dots
+  svgSelect.select('g.scatter-plot-bar-group.real')
+    .selectAll('rect.additive-bar')
+    .classed('selected', d => (state.curXScale(d.x) >= xRange[0] &&
+      state.curXScale(d.x) <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]));
+
+  // Update the footer message
+  footerStore.update(value => {
+    let sampleNum = ebm.getSelectedSampleNum(selectedBinIndexes);
+    value.sample = `<b>${sampleNum}/${value.totalSampleNum}</b> test samples selected`;
+    return value;
+  });
+
+  // Compute the bounding box
+  state.selectedInfo.computeBBox();
+
+  let curPadding = (rExtent[0] + state.bboxPadding) * state.curTransform.k;
+
+  let bbox = svgSelect.select('g.scatter-plot-content-group')
+    .append('g')
+    .attr('class', 'select-bbox-group')
+    .selectAll('rect.select-bbox')
+    .data(state.selectedInfo.boundingBox)
+    .join('rect')
+    .attr('class', 'select-bbox original-bbox')
+    .attr('x', d => state.curXScale(d.x1) - curPadding)
+    .attr('y', d => state.curYScale(d.y1) - curPadding)
+    .attr('width', d => state.curXScale(d.x2) - state.curXScale(d.x1) + 2 * curPadding)
+    .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding)
+    .style('stroke-width', 1)
+    .style('stroke', 'hsl(230, 100%, 10%)')
+    .style('stroke-dasharray', '5 3');
+
+  bbox.clone(true)
+    .classed('original-bbox', false)
+    .style('stroke', 'white')
+    .style('stroke-dasharray', null)
+    .style('stroke-width', 1 * 3)
+    .lower();
+
+  state.selectedInfo.hasSelected = svgSelect.selectAll('g.scatter-plot-dot-group circle.additive-dot.selected').size() > 0;
+
+  if (state.selectedInfo.hasSelected) {
+    // Show the context menu near the selected region
+    d3.select(multiMenu)
+      .call(moveMenubar, svg, component)
+      .classed('hidden', false);
+
+    // Trigger a counting of the feature distribution of the selected samples
+    updateFeatureSidebar(selectedBinIndexes);
+  }
+
+  // Nullify the metrics if in selected tab and no selection
+  nullifyMetrics();
+
+  // Recompute the selected effects if in selected tab and we do have selection
+  computeSelectedEffects();
+
+  // Remove the brush box
+  svgSelect.select('g.scatter-plot-content-group g.brush')
+    .call(brush.move, null)
+    .select('rect.overlay')
+    .attr('cursor', null);
 };

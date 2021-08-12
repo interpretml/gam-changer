@@ -7,7 +7,7 @@
   import { drawBarLegend } from './draw';
   import { SelectedInfo } from './categorical/cat-class';
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './categorical/cat-zoom';
-  import { brushDuring, brushEndSelect, quitSelection } from './categorical/cat-brush';
+  import { brushDuring, brushEndSelect, quitSelection, selectAllBins } from './categorical/cat-brush';
   import { moveMenubar } from './continuous/cont-bbox';
   import { drawLastEdit, dragged, grayOutConfidenceLine, redrawOriginal } from './categorical/cat-edit';
   import { getEBMMetrics, transferMetricToSidebar, setEBM } from './categorical/cat-ebm';
@@ -238,8 +238,8 @@
         quitSelection(svg, state, multiMenu, resetContextMenu, resetFeatureSidebar);
 
         // Cheeky way to select all nodes by fake a brush event
-        // selectAllBins(svg, state, bboxStrokeWidth, multiMenu, component,
-        //   updateFeatureSidebar, nullifyMetrics, computeSelectedEffects, brush);
+        selectAllBins(svg, state, multiMenu, component, updateFeatureSidebar,
+          brush, nullifyMetrics, computeSelectedEffects, footerStore, ebm);
       }
       break;
     
@@ -650,7 +650,8 @@
     brush = d3.brush()
       .on('end', e => brushEndSelect(
         e, state, svg, multiMenu, brush, component, resetContextMenu, barWidth,
-        ebm, sidebarStore, sidebarInfo, resetFeatureSidebar, nullifyMetrics
+        ebm, sidebarStore, sidebarInfo, updateFeatureSidebar, resetFeatureSidebar,
+        nullifyMetrics, computeSelectedEffects
       ))
       .on('start brush', e => brushDuring(e, state, svg, multiMenu, ebm, footerStore))
       .extent([[0, 0], [chartWidth, chartHeight]])
@@ -956,6 +957,68 @@
     
     lineChartContent.select('g.brush rect.overlay')
       .attr('cursor', null);
+  };
+
+  /**
+   * Count the feature distribution for the selected test samples
+   * @param {[number]} binIndexes Selected bin indexes
+   */
+  const updateFeatureSidebar = async (binIndexes) => {
+    if (ebm.isDummy !== undefined) return;
+
+    // Get the selected counts
+    let selectedHistCounts = ebm.getSelectedSampleDist(binIndexes);
+
+    // Update the counts in the store
+    for (let i = 0; i < sidebarInfo.featurePlotData.cont.length; i++) {
+      let curID = sidebarInfo.featurePlotData.cont[i].id;
+      sidebarInfo.featurePlotData.cont[i].histSelectedCount = selectedHistCounts[curID];
+    }
+
+    for (let i = 0; i < sidebarInfo.featurePlotData.cat.length; i++) {
+      let curID = sidebarInfo.featurePlotData.cat[i].id;
+      sidebarInfo.featurePlotData.cat[i].histSelectedCount = selectedHistCounts[curID];
+    }
+
+    sidebarInfo.curGroup = 'updateFeature';
+    sidebarStore.set(sidebarInfo);
+  };
+
+  /**
+   * Update the selected scope metrics
+  */
+  const computeSelectedEffects = async () => {
+    if (sidebarInfo.effectScope === 'selected' && state.selectedInfo.hasSelected) {
+      // Step 1: compute the original metrics
+      // Be careful! The first commit might be on a different feature!
+      // It is way too complicated to load the initial edit then come back (need to revert
+      // every edit on every feature!)
+      // Here we just use ignore it [better than confusing the users with some other "original"]
+      // if (historyList[0].featureName !== state.featureName) {
+      //   ebm.setEditingFeature(historyList[0].featureName);
+      // }
+      // await setEBM('original-only', historyList[0].state.pointData);
+      // ebm.setEditingFeature(state.featureName);
+
+      // Nullify the original
+      sidebarInfo.curGroup = 'nullify';
+      sidebarStore.set(sidebarInfo);
+      while (sidebarInfo.curGroup !== 'nullifyCompleted') {
+        await new Promise(r => setTimeout(r, 300));
+      }
+
+      // Step 2: Last edit
+      if (sidebarInfo.historyHead - 1 >= 0 &&
+        historyList[sidebarInfo.historyHead - 1].type !== 'original' &&
+        historyList[sidebarInfo.historyHead - 1].featureName === state.featureName) {
+        await setEBM(state, ebm, 'last-only', historyList[sidebarInfo.historyHead - 1].state.pointData,
+          sidebarStore, sidebarInfo);
+      }
+
+      // Step 3: Current edit
+      await setEBM(state, ebm, 'current-only', historyList[sidebarInfo.historyHead].state.pointData,
+        sidebarStore, sidebarInfo);
+    }
   };
 
   /**

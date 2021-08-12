@@ -356,7 +356,7 @@ export const brushEndSelect = (event, state, svg, multiMenu, myContextMenu,
 };
 
 export const selectAllBins = (svg, state, bboxStrokeWidth, multiMenu, component,
-  updateFeatureSidebar, nullifyMetrics, computeSelectedEffects, brush) => {
+  updateFeatureSidebar, nullifyMetrics, computeSelectedEffects, brush, footerStore, ebm) => {
   let xRange = [-Infinity, Infinity];
   let yRange = [-Infinity, Infinity];
 
@@ -391,6 +391,13 @@ export const selectAllBins = (svg, state, bboxStrokeWidth, multiMenu, component,
   svgSelect.select('g.line-chart-node-group')
     .selectAll('circle.node')
     .classed('selected', true);
+
+  // Update the footer message
+  footerStore.update(value => {
+    let sampleNum = ebm.getSelectedSampleNum(selectedBinIndexes);
+    value.sample = `<b>${sampleNum}/${value.totalSampleNum}</b> test samples selected`;
+    return value;
+  });
 
   // Compute the bounding box
   state.selectedInfo.computeBBox(state.pointData);

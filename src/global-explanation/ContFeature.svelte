@@ -288,7 +288,8 @@
 
         // Cheeky way to select all nodes by fake a brush event
         selectAllBins(svg, state, bboxStrokeWidth, multiMenu, component,
-          updateFeatureSidebar, nullifyMetrics, computeSelectedEffects, brush);
+          updateFeatureSidebar, nullifyMetrics, computeSelectedEffects, brush,
+          footerStore, ebm);
       }
       break;
     
