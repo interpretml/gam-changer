@@ -7,7 +7,7 @@
   import { drawBarLegend } from './draw';
   import { SelectedInfo } from './categorical/cat-class';
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './categorical/cat-zoom';
-  import { brushDuring, brushEndSelect } from './categorical/cat-brush';
+  import { brushDuring, brushEndSelect, quitSelection } from './categorical/cat-brush';
   import { moveMenubar } from './continuous/cont-bbox';
   import { drawLastEdit, dragged, grayOutConfidenceLine, redrawOriginal } from './categorical/cat-edit';
   import { getEBMMetrics, transferMetricToSidebar, setEBM } from './categorical/cat-ebm';
@@ -84,13 +84,13 @@
     case 'selectedClicked':
       console.log('selectedClicked');
 
-      // footerStore.update(value => {
-      //   if (value.sample.includes(',')) {
-      //     value.sample = value.sample.slice(0, -1);
-      //   }
-      //   value.slice = '';
-      //   return value;
-      // });
+      footerStore.update(value => {
+        if (value.sample.includes(',')) {
+          value.sample = value.sample.slice(0, -1);
+        }
+        value.slice = '';
+        return value;
+      });
 
       // Step 1: If there is no selected nodes, then the metrics are all NAs
       if (!state.selectedInfo.hasSelected) {
@@ -117,18 +117,20 @@
         }
 
         // Step 2.2: Last edit
-        // if (sidebarInfo.historyHead - 1 >= 0 &&
-        //   historyList[sidebarInfo.historyHead - 1].type !== 'original' &&
-        //   historyList[sidebarInfo.historyHead - 1].featureName === state.featureName) {
-        //   await setEBM('last-only', historyList[sidebarInfo.historyHead - 1].state.pointData);
-        // }
+        if (sidebarInfo.historyHead - 1 >= 0 &&
+          historyList[sidebarInfo.historyHead - 1].type !== 'original' &&
+          historyList[sidebarInfo.historyHead - 1].featureName === state.featureName) {
+          await setEBM(state, ebm, 'last-only', historyList[sidebarInfo.historyHead - 1].state.pointData,
+            sidebarStore, sidebarInfo);
+        }
 
         // // Step 2.3: Current edit
-        // let curPointData = state.pointDataBuffer === null ?
-        //   historyList[sidebarInfo.historyHead].state.pointData :
-        //   state.pointDataBuffer;
+        let curPointData = state.pointDataBuffer === null ?
+          historyList[sidebarInfo.historyHead].state.pointData :
+          state.pointDataBuffer;
 
         // await setEBM('current-only', curPointData);
+        await setEBM(state, ebm, 'current-only', curPointData, sidebarStore, sidebarInfo);
       }
 
       break;
@@ -139,11 +141,11 @@
       // Step 1: set the slice feature ID and level ID to EBM
       let sliceSize = ebm.setSliceData(sidebarInfo.sliceInfo.featureID, sidebarInfo.sliceInfo.level);
 
-      // footerStore.update(value => {
-      //   if (!value.sample.includes(',')) value.sample += ',';
-      //   value.slice = `<b>${sliceSize}</b> sliced`;
-      //   return value;
-      // });
+      footerStore.update(value => {
+        if (!value.sample.includes(',')) value.sample += ',';
+        value.slice = `<b>${sliceSize}</b> sliced`;
+        return value;
+      });
 
       // Step 2: Reset/Update EBM 3 times and compute three metrics on the selected nodes
 
@@ -161,18 +163,19 @@
       }
 
       // Step 2.2: Last edit
-      // if (sidebarInfo.historyHead - 1 >= 0 &&
-      //   historyList[sidebarInfo.historyHead - 1].type !== 'original' &&
-      //   historyList[sidebarInfo.historyHead - 1].featureName === state.featureName) { 
-      //   await setEBM('last-only', historyList[sidebarInfo.historyHead - 1].state.pointData);
-      // }
+      if (sidebarInfo.historyHead - 1 >= 0 &&
+        historyList[sidebarInfo.historyHead - 1].type !== 'original' &&
+        historyList[sidebarInfo.historyHead - 1].featureName === state.featureName) { 
+        await setEBM(state, ebm, 'last-only', historyList[sidebarInfo.historyHead - 1].state.pointData,
+          sidebarStore, sidebarInfo);
+      }
 
-      // // Step 2.3: Current edit
-      // let curPointData = state.pointDataBuffer === null ?
-      //   historyList[sidebarInfo.historyHead].state.pointData :
-      //   state.pointDataBuffer;
+      // Step 2.3: Current edit
+      let curPointData = state.pointDataBuffer === null ?
+        historyList[sidebarInfo.historyHead].state.pointData :
+        state.pointDataBuffer;
 
-      // await setEBM(state, ebm, 'current-only', curPointData, sidebarStore, sidebarInfo);
+      await setEBM(state, ebm, 'current-only', curPointData, sidebarStore, sidebarInfo);
 
       break;
     }
@@ -231,10 +234,10 @@
 
       // Select all bins if in select mode and nothing has been selected yet
       if (selectMode) {
-        // // Discard any existing selection
-        // quitSelection(svg, state, multiMenu, resetContextMenu, resetFeatureSidebar);
+        // Discard any existing selection
+        quitSelection(svg, state, multiMenu, resetContextMenu, resetFeatureSidebar);
 
-        // // Cheeky way to select all nodes by fake a brush event
+        // Cheeky way to select all nodes by fake a brush event
         // selectAllBins(svg, state, bboxStrokeWidth, multiMenu, component,
         //   updateFeatureSidebar, nullifyMetrics, computeSelectedEffects, brush);
       }
@@ -649,7 +652,7 @@
         e, state, svg, multiMenu, brush, component, resetContextMenu, barWidth,
         ebm, sidebarStore, sidebarInfo, resetFeatureSidebar, nullifyMetrics
       ))
-      .on('start brush', e => brushDuring(e, state, svg, multiMenu))
+      .on('start brush', e => brushDuring(e, state, svg, multiMenu, ebm, footerStore))
       .extent([[0, 0], [chartWidth, chartHeight]])
       .filter((e) => {
         if (selectMode) {
@@ -855,8 +858,8 @@
 
     // Query the global metrics and save it in the history if the scope is not in global
     if (sidebarInfo.effectScope !== 'global') {
-      let metrics = await getEBMMetrics('global');
-      transferMetricToSidebar(metrics, 'commit-not-global');
+      let metrics = await getEBMMetrics(state, ebm, 'global');
+      transferMetricToSidebar(metrics, 'commit-not-global', ebm, sidebarStore, sidebarInfo);
     }
 
     // Wait until the the effect sidebar is updated

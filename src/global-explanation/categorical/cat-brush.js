@@ -28,7 +28,7 @@ const stopAnimateLine = (svg) => {
     .classed('flow-line', false);
 };
 
-export const brushDuring = (event, state, svg, multiMenu) => {
+export const brushDuring = (event, state, svg, multiMenu, ebm, footerStore) => {
   // Get the selection boundary
   let selection = event.selection;
   let svgSelect = d3.select(svg);
@@ -52,17 +52,34 @@ export const brushDuring = (event, state, svg, multiMenu) => {
     d3.select(multiMenu)
       .classed('hidden', true);
 
+    // Track the selected bins
+    let selectedBinIndexes = [];
+
     // Highlight the selected dots
     svgSelect.select('g.scatter-plot-dot-group')
       .selectAll('circle.additive-dot')
-      .classed('selected', d => (state.curXScale(d.x) >= xRange[0] &&
-        state.curXScale(d.x) <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]));
+      .classed('selected', d => {
+        if (state.curXScale(d.x) >= xRange[0] && state.curXScale(d.x) <= xRange[1]
+          && d.y >= yRange[0] && d.y <= yRange[1]) {
+          // For categorical data, the ID is from Interpret's label encoder (starting from 1)
+          // EBM.js uses 0-based indexes
+          selectedBinIndexes.push(d.id - 1);
+          return true;
+        }
+      });
 
     // Highlight the bars associated with the selected dots
     svgSelect.select('g.scatter-plot-bar-group.real')
       .selectAll('rect.additive-bar')
       .classed('selected', d => (state.curXScale(d.x) >= xRange[0] &&
         state.curXScale(d.x) <= xRange[1] && d.y >= yRange[0] && d.y <= yRange[1]));
+
+    // Update the footer message
+    footerStore.update(value => {
+      let sampleNum = ebm.getSelectedSampleNum(selectedBinIndexes);
+      value.sample = `<b>${sampleNum}/${value.totalSampleNum}</b> test samples selected`;
+      return value;
+    });
   }
 };
 
