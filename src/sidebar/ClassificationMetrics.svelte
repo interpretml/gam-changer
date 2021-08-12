@@ -176,6 +176,13 @@
     case 'last':
       // Copy current to last
       copyMetricData(barData, confusionMatrixData, 2, 1);
+
+      // Handle edge case: users can use multiple editing methods without committing
+      // or canceling, and the last metrics should not be updated when user switch
+      // the editing tool during one editing sequence
+      // Solution: use a state to track if user enters/leaves one editing sequence
+      // Make sure sidebarInfo.hasUpdatedLastMetrics is updated when calling
+      // sidebar update with 'last'
       break;
 
     case 'commit': 

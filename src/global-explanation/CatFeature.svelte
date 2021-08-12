@@ -9,7 +9,7 @@
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './categorical/cat-zoom';
   import { brushDuring, brushEndSelect, quitSelection, selectAllBins } from './categorical/cat-brush';
   import { moveMenubar } from './continuous/cont-bbox';
-  import { drawLastEdit, dragged, grayOutConfidenceLine, redrawOriginal } from './categorical/cat-edit';
+  import { drawLastEdit, dragged, grayOutConfidenceLine, redrawOriginal, merge } from './categorical/cat-edit';
   import { getEBMMetrics, transferMetricToSidebar, setEBM } from './categorical/cat-ebm';
   import { pushCurStateToHistoryStack, undoHandler, redoHandler, checkoutCommitHead,
     tryRestoreLastEdit } from './categorical/cat-history';
@@ -387,6 +387,10 @@
     state.curXScale = xScale;
     state.curYScale = yScale;
 
+    // Use the # of ticks and y score range to set the default change unit for
+    // the up and down in the context menu bar
+    multiMenuControlInfo.changeUnit = round((scoreRange[1] - scoreRange[0]) / yScale.ticks().length, 4);
+
     // Create a data array by combining the bin labels, additive terms, and errors
     let pointData = {};
 
@@ -395,7 +399,8 @@
         x: labelEncoder[featureData.binLabel[i]],
         y: featureData.additive[i],
         id: featureData.binLabel[i],
-        error: featureData.error[i]
+        error: featureData.error[i],
+        count: featureData.count[i]
       };
     }
 
@@ -755,6 +760,8 @@
       state.additiveDataBuffer = null;
     }
 
+    multiMenuControlInfo.setValue = null;
+
     // Update the footer message
     footerStore.update(value => {
       // Reset the baseline
@@ -766,10 +773,6 @@
     });
 
     return {moveMode: moveMode, subItemMode: subItemMode};
-  };
-
-  const multiMenuInputChanged = () => {
-
   };
 
   const multiMenuMoveClicked = () => {
@@ -809,8 +812,11 @@
     }
 
     // Copy current metrics as last metrics
-    sidebarInfo.curGroup = 'last';
-    sidebarStore.set(sidebarInfo);
+    if (!sidebarInfo.hasUpdatedLastMetrics) {
+      sidebarInfo.curGroup = 'last';
+      sidebarInfo.hasUpdatedLastMetrics = true;
+      sidebarStore.set(sidebarInfo);
+    }
 
     // Update the footer message
     footerStore.update(value => {
@@ -821,7 +827,95 @@
   };
 
   const multiMenuMergeClicked = () => {
+    console.log('merge clicked');
 
+    // Animate the bbox
+    d3.select(svg)
+      .select('g.scatter-plot-content-group g.select-bbox-group')
+      .select('rect.original-bbox')
+      .classed('animated', true);
+
+    state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+
+    // Update EBM
+    const callBack = () => {
+      console.log(state.pointDataBuffer);
+      setEBM(state, ebm, 'current', state.pointDataBuffer, sidebarStore, sidebarInfo);
+    };
+
+    // Update the last edit graph
+    drawLastEdit(state, svg);
+
+    merge(state, svg, 'left', callBack);
+
+    myContextMenu.showConfirmation('merge', 600);
+
+    if (!sidebarInfo.hasUpdatedLastMetrics) {
+      sidebarInfo.curGroup = 'last';
+      sidebarInfo.hasUpdatedLastMetrics = true;
+      sidebarStore.set(sidebarInfo);
+    }
+
+
+    // Update the footer message
+    footerStore.update(value => {
+      value.type = 'align';
+      value.state = `Set scores of ${state.selectedInfo.nodeData.length} bins to
+        <b>${round(state.selectedInfo.nodeData[0].y, 4)}</b>`;
+      return value;
+    });
+  };
+
+  const multiMenuInputChanged = () => {
+    // Animate the bbox
+    d3.select(svg)
+      .select('g.scatter-plot-content-group g.select-bbox-group')
+      .select('rect.original-bbox')
+      .classed('animated', true);
+
+    state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+
+    if (!sidebarInfo.hasUpdatedLastMetrics) {
+      sidebarInfo.curGroup = 'last';
+      sidebarInfo.hasUpdatedLastMetrics = true;
+      sidebarStore.set(sidebarInfo);
+    }
+
+    // Update EBM
+    const callBack = () => {
+      setEBM(state, ebm, 'current', state.pointDataBuffer, sidebarStore, sidebarInfo);
+    };
+    merge(state, svg, multiMenuControlInfo.setValue, callBack);
+
+    myContextMenu.showConfirmation('change', 600);
+
+    const target = round(multiMenuControlInfo.setValue, 4);
+
+    // Update the footer message
+    footerStore.update(value => {
+      value.type = 'align';
+      value.state = `Set scores of ${state.selectedInfo.nodeData.length} bins to <b>${target}</b>`;
+      return value;
+    });
+  };
+
+  const multiMenuMergeUpdated = () => {
+    state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+
+    // Update EBM
+    const callBack = () => {
+      setEBM(state, ebm, 'current', state.pointDataBuffer, sidebarStore, sidebarInfo);
+    };
+
+    let target = merge(state, svg, multiMenuControlInfo.mergeMode, callBack);
+    target = round(target, 4);
+
+    // Update the footer message
+    footerStore.update(value => {
+      value.type = 'align';
+      value.state = `Set scores of ${state.selectedInfo.nodeData.length} bins to <b>${target}</b>`;
+      return value;
+    });
   };
 
   const multiMenuDeleteClicked = () => {
@@ -865,6 +959,7 @@
 
     // Update metrics
     sidebarInfo.curGroup = 'commit';
+    sidebarInfo.hasUpdatedLastMetrics = false;
     sidebarStore.set(sidebarInfo);
 
     // Query the global metrics and save it in the history if the scope is not in global
@@ -922,6 +1017,11 @@
       setEBM(state, ebm, 'recoverEBM', state.pointData, sidebarStore, sidebarInfo, undefined, false);
     });
 
+    // Update the metrics
+    sidebarInfo.curGroup = 'recover';
+    sidebarInfo.hasUpdatedLastMetrics = false;
+    sidebarStore.set(sidebarInfo);
+
     // Remove the drag
     let bboxGroup = d3.select(svg)
       .select('g.scatter-plot-content-group g.select-bbox-group')
@@ -933,16 +1033,12 @@
       .classed('animated', false);
     
     // Redraw the last edit if possible
-    if (state.additiveDataLastLastEdit !== undefined){
-      state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
+    if (state.pointDataLastLastEdit !== undefined){
+      state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointDataLastLastEdit));
       drawLastEdit(state, svg);
       // Prepare for next redrawing after recovering the last last edit graph
-      state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+      state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointData));
     }
-
-    // Update the metrics
-    sidebarInfo.curGroup = 'recover';
-    sidebarStore.set(sidebarInfo);
     
     // Update the footer message
     footerStore.update(value => {
@@ -956,12 +1052,173 @@
     });
   };
 
+  /**
+   * Event handler when user clicks the check icon in the sub-menu
+   */
   const multiMenuSubItemCheckClicked = () => {
+    // Check if user is in previous commit
+    if (sidebarInfo.previewHistory) {
+      let proceed = confirm('Current graph is not on the latest edit, committing' +
+        ' this edit would overwrite all later edits on this feature. Is it OK?'
+      );
+      if (!proceed) {
+        multiMenuMoveCancelClicked();
+        return;
+      }
+    }
 
+    if (multiMenuControlInfo.subItemMode === null) {
+      console.error('No sub item is selected but check is clicked!');
+    }
+
+    const existingModes = new Set(['change', 'merge', 'delete']);
+    if (!existingModes.has(multiMenuControlInfo.subItemMode)) {
+      console.error(`Encountered unknown subItemMode: ${multiMenuControlInfo.subItemMode}`);
+    }
+
+    // Stop the bbox animation
+    d3.select(svg)
+      .select('g.scatter-plot-content-group g.select-bbox-group')
+      .select('rect.original-bbox')
+      .classed('animated', false);
+
+    // Save the changes
+    state.pointData = JSON.parse(JSON.stringify(state.pointDataBuffer));
+
+    // Update the last edit data to current data (redraw the graph only when user enters
+    // editing mode next time)
+    if (state.pointDataLastEdit !== undefined) {
+      state.pointDataLastLastEdit = JSON.parse(JSON.stringify(state.pointDataLastEdit));
+    }
+    state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointData));
+
+    // Hide the confirmation panel
+    myContextMenu.hideConfirmation(multiMenuControlInfo.subItemMode);
+
+    // Move the menu bar
+    d3.select(multiMenu)
+      .call(moveMenubar, svg, component);
+    
+    // Exit the sub-item mode
+    multiMenuControlInfo.subItemMode = null;
+    multiMenuControlInfo.setValue = null;
+
+    // Update metrics
+    sidebarInfo.curGroup = 'commit';
+    sidebarInfo.hasUpdatedLastMetrics = false;
+    sidebarStore.set(sidebarInfo);
+
+    // Update the footer message
+    let editType = '';
+    footerStore.update(value => {
+      editType = value.type;
+      // Reset the baseline
+      value.baseline = 0;
+      value.baselineInit = false;
+      value.state = '';
+      value.type = '';
+      value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
+      return value;
+    });
+
+    // Push the commit to history
+    // Get the info of edited bins
+    const selectedBins = state.selectedInfo.nodeData.map(d => d.x);
+    const binRange = `[${selectedBins.join(', ')}]`;
+
+    let description = '';
+
+    switch(editType) {
+    case 'align':
+      description = `Set scores of ${binRange} to ${round(state.selectedInfo.nodeData[0].y, 4)}.`;
+      break;
+    case 'delete':
+      description = `Set scores of ${binRange} to ${round(state.selectedInfo.nodeData[0].y, 0)}.`;
+      break;
+    default:
+      break;
+    }
+
+    pushCurStateToHistoryStack(state, editType, description, historyStore, sidebarStore);
+
+    // Any new commit purges the redo stack
+    redoStack = [];
   };
 
-  const multiMenuSubItemCancelClicked = () => {
+  /**
+   * Event handler when user clicks the cross icon in the sub-menu
+   */
+  const multiMenuSubItemCancelClicked = (e, cancelFromMove = false) => {
+    console.log('sub item cancel clicked');
+    if (!cancelFromMove && multiMenuControlInfo.subItemMode === null) {
+      console.error('No sub item is selected but check is clicked!');
+    }
 
+    const existingModes = new Set(['change', 'merge', 'delete']);
+    if (!cancelFromMove && !existingModes.has(multiMenuControlInfo.subItemMode)) {
+      console.error(`Encountered unknown subItemMode: ${multiMenuControlInfo.subItemMode}`);
+    }
+
+    // Stop the bbox animation
+    d3.select(svg)
+      .select('g.scatter-plot-content-group g.select-bbox-group')
+      .select('rect.original-bbox')
+      .classed('animated', false);
+
+    // Discard the change
+    state.pointDataBuffer = null;
+
+    // Recover the last edit graph
+    if (state.pointDataLastLastEdit !== undefined){
+      state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointDataLastLastEdit));
+      drawLastEdit(state, svg);
+      // Prepare for next redrawing after recovering the last last edit graph
+      state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointData));
+    }
+
+    // If the current edit is interpolation, we need to recover the bin definition
+    // in the EBM model
+    let callBack = () => {};
+
+    if (!cancelFromMove) {
+      callBack = () => {
+        setEBM(state, ebm, 'recoverEBM', state.pointData,
+          sidebarStore, sidebarInfo, undefined, false);
+      };
+    }
+
+    // Update the metrics
+    sidebarInfo.curGroup = 'recover';
+    sidebarInfo.hasUpdatedLastMetrics = false;
+    sidebarStore.set(sidebarInfo);
+
+    // Recover the original graph
+    redrawOriginal(state, svg, true, () => {
+      // Move the menu bar after the animation
+      d3.select(multiMenu)
+        .call(moveMenubar, svg, component);
+
+      // Update the EBM in "background"
+      callBack();
+    });
+
+    // Hide the confirmation panel
+    myContextMenu.hideConfirmation(multiMenuControlInfo.subItemMode);
+
+    // Exit the sub-item mode
+    multiMenuControlInfo.subItemMode = null;
+    multiMenuControlInfo.setValue = null;
+
+    // Update the footer message
+    footerStore.update(value => {
+      // Reset the baseline
+      value.baseline = 0;
+      value.baselineInit = false;
+      value.state = '';
+      value.type = '';
+      value.help = '<b>Drag</b> to marquee select, <b>Scroll</b> to zoom';
+      return value;
+    });
   };
 
   /**
@@ -1070,7 +1327,7 @@
     }
   };
 
-  $: featureData && mounted && !initialized && drawFeature(featureData);
+  $: featureData && ebm && mounted && !initialized && featureData.name === ebm.editingFeatureName && drawFeature(featureData);
 
 </script>
 
@@ -1135,6 +1392,7 @@
       on:inputChanged={multiMenuInputChanged}
       on:moveButtonClicked={multiMenuMoveClicked}
       on:mergeClicked={multiMenuMergeClicked}
+      on:mergeUpdated={multiMenuMergeUpdated}
       on:deleteClicked={multiMenuDeleteClicked}
       on:moveCheckClicked={multiMenuMoveCheckClicked}
       on:moveCancelClicked={multiMenuMoveCancelClicked}

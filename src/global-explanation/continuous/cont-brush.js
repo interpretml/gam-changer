@@ -208,6 +208,7 @@ export const brushEndSelect = (event, state, svg, multiMenu, myContextMenu,
         } else {
           value.curGroup = 'no action';
         }
+        value.hasUpdatedLastMetrics = false;
         return value;
       });
 

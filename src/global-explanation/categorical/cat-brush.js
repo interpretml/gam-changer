@@ -131,6 +131,7 @@ export const brushEndSelect = (event, state, svg, multiMenu, brush, component,
         } else {
           value.curGroup = 'no action';
         }
+        value.hasUpdatedLastMetrics = false;
         return value;
       });
 

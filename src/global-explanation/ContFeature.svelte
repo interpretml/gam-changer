@@ -1040,8 +1040,11 @@
     }
 
     // Copy current metrics as last metrics
-    sidebarInfo.curGroup = 'last';
-    sidebarStore.set(sidebarInfo);
+    if (!sidebarInfo.hasUpdatedLastMetrics) {
+      sidebarInfo.curGroup = 'last';
+      sidebarInfo.hasUpdatedLastMetrics = true;
+      sidebarStore.set(sidebarInfo);
+    }
 
     // Update the footer message
     footerStore.update(value => {
@@ -1091,6 +1094,7 @@
 
     // Update metrics
     sidebarInfo.curGroup = 'commit';
+    sidebarInfo.hasUpdatedLastMetrics = false;
     sidebarStore.set(sidebarInfo);
 
     // Query the global metrics and save it in the history if the scope is not in global
@@ -1152,6 +1156,11 @@
       updateEBM('recoverEBM');
     });
 
+    // Update the metrics
+    sidebarInfo.curGroup = 'recover';
+    sidebarInfo.hasUpdatedLastMetrics = false;
+    sidebarStore.set(sidebarInfo);
+
     // Remove the drag
     let bboxGroup = d3.select(svg)
       .select('g.line-chart-content-group g.select-bbox-group')
@@ -1169,10 +1178,6 @@
       // Prepare for next redrawing after recovering the last last edit graph
       state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
     }
-
-    // Update the metrics
-    sidebarInfo.curGroup = 'recover';
-    sidebarStore.set(sidebarInfo);
 
     // Update the footer message
     footerStore.update(value => {
@@ -1227,9 +1232,12 @@
     });
     myContextMenu.showConfirmation('increasing', 600);
 
-    // Update EBM
-    sidebarInfo.curGroup = 'last';
-    sidebarStore.set(sidebarInfo);
+    // Copy current metrics as last metrics
+    if (!sidebarInfo.hasUpdatedLastMetrics) {
+      sidebarInfo.curGroup = 'last';
+      sidebarInfo.hasUpdatedLastMetrics = true;
+      sidebarStore.set(sidebarInfo);
+    }
 
     // Update the footer message
     footerStore.update(value => {
@@ -1276,9 +1284,12 @@
     redrawMonotone(state, svg, isoYs, () => {updateEBM('current');});
     myContextMenu.showConfirmation('decreasing', 600);
 
-    // Update EBM
-    sidebarInfo.curGroup = 'last';
-    sidebarStore.set(sidebarInfo);
+    // Copy current metrics as last metrics
+    if (!sidebarInfo.hasUpdatedLastMetrics) {
+      sidebarInfo.curGroup = 'last';
+      sidebarInfo.hasUpdatedLastMetrics = true;
+      sidebarStore.set(sidebarInfo);
+    }
     
     // Update the footer message
     footerStore.update(value => {
@@ -1326,9 +1337,12 @@
 
     myContextMenu.showConfirmation('interpolation', 600);
 
-    // Update EBM
-    sidebarInfo.curGroup = 'last';
-    sidebarStore.set(sidebarInfo);
+    // Copy current metrics as last metrics
+    if (!sidebarInfo.hasUpdatedLastMetrics) {
+      sidebarInfo.curGroup = 'last';
+      sidebarInfo.hasUpdatedLastMetrics = true;
+      sidebarStore.set(sidebarInfo);
+    }
 
     // Update the footer message
     footerStore.update(value => {
@@ -1435,8 +1449,12 @@
 
     myContextMenu.showConfirmation('merge', 600);
 
-    sidebarInfo.curGroup = 'last';
-    sidebarStore.set(sidebarInfo);
+    // Copy current metrics as last metrics
+    if (!sidebarInfo.hasUpdatedLastMetrics) {
+      sidebarInfo.curGroup = 'last';
+      sidebarInfo.hasUpdatedLastMetrics = true;
+      sidebarStore.set(sidebarInfo);
+    }
 
     // Update the footer message
     footerStore.update(value => {
@@ -1463,8 +1481,12 @@
 
     myContextMenu.showConfirmation('change', 600);
 
-    sidebarInfo.curGroup = 'last';
-    sidebarStore.set(sidebarInfo);
+    // Copy current metrics as last metrics
+    if (!sidebarInfo.hasUpdatedLastMetrics) {
+      sidebarInfo.curGroup = 'last';
+      sidebarInfo.hasUpdatedLastMetrics = true;
+      sidebarStore.set(sidebarInfo);
+    }
 
     const target = round(multiMenuControlInfo.setValue, 4);
 
@@ -1485,8 +1507,12 @@
     let target = merge(state, svg, multiMenuControlInfo.mergeMode, callBack);
     target = round(target, 4);
 
-    sidebarInfo.curGroup = 'last';
-    sidebarStore.set(sidebarInfo);
+    // Copy current metrics as last metrics
+    if (!sidebarInfo.hasUpdatedLastMetrics) {
+      sidebarInfo.curGroup = 'last';
+      sidebarInfo.hasUpdatedLastMetrics = true;
+      sidebarStore.set(sidebarInfo);
+    }
 
     // Update the footer message
     footerStore.update(value => {
@@ -1518,9 +1544,12 @@
 
     myContextMenu.showConfirmation('delete', 600);
 
-    // Update EBM
-    sidebarInfo.curGroup = 'last';
-    sidebarStore.set(sidebarInfo);
+    // Copy current metrics as last metrics
+    if (!sidebarInfo.hasUpdatedLastMetrics) {
+      sidebarInfo.curGroup = 'last';
+      sidebarInfo.hasUpdatedLastMetrics = true;
+      sidebarStore.set(sidebarInfo);
+    }
 
     // Update the footer message
     footerStore.update(value => {
@@ -1592,6 +1621,7 @@
 
     // Update metrics
     sidebarInfo.curGroup = 'commit';
+    sidebarInfo.hasUpdatedLastMetrics = false;
     sidebarStore.set(sidebarInfo);
 
     // Update the footer message
@@ -1694,11 +1724,10 @@
         // For other types of update, we need to revoke the changes
         callBack = () => {updateEBM('recoverEBM');};
       }
-    }
 
-    // Update metrics
-    if (!cancelFromMove) {
+      // Update the metrics
       sidebarInfo.curGroup = 'recover';
+      sidebarInfo.hasUpdatedLastMetrics = false;
       sidebarStore.set(sidebarInfo);
     }
 

@@ -77,7 +77,8 @@
     previewHistory: false,
     barData: JSON.parse(JSON.stringify(barData)),
     confusionMatrixData: JSON.parse(JSON.stringify(confusionMatrixData)),
-    totalSampleNum: 0
+    totalSampleNum: 0,
+    hasUpdatedLastMetrics: false,
   });
 
   let footerStore = writable({

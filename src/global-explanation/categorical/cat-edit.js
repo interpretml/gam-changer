@@ -207,3 +207,58 @@ export const redrawOriginal = (state, svg, bounce=true, animationEndFunc=undefin
     .attr('y', d => state.curYScale(d.y1) - curPadding)
     .attr('height', d => state.curYScale(d.y2) - state.curYScale(d.y1) + 2 * curPadding);
 };
+
+export const merge = (state, svg, value, callBack) => {
+  // Step 1: Find the left and right point in the selected region
+  let leftPoint = { x: Infinity, y: null, id: null };
+  let rightPoint = { x: -Infinity, y: null, id: null };
+
+  let sum = 0;
+  let count = 0;
+
+  let selectedNodeXs = new Set();
+
+  state.selectedInfo.nodeData.forEach((d, i) => {
+    if (i === 0) {
+      leftPoint = state.pointDataBuffer[d.id];
+    }
+    if (i === state.selectedInfo.nodeData.length - 1) {
+      rightPoint = state.pointDataBuffer[d.id];
+    }
+    selectedNodeXs.add(d.x);
+    sum += state.pointDataBuffer[d.id].y * state.pointDataBuffer[d.id].count;
+    count += state.pointDataBuffer[d.id].count;
+  });
+
+  const average = sum / count;
+
+  // Compute the merge values
+  let target = 0;
+
+  if (value === 'left') {
+    target = leftPoint.y;
+  } else if (value === 'right') {
+    target = rightPoint.y;
+  } else if (value === 'average') {
+    target = average;
+  } else {
+    target = value;
+  }
+
+  // Step 2: Iterate through all nodes in the region and change their values
+  Object.keys(state.pointDataBuffer).forEach(k => {
+    let curPoint = state.pointDataBuffer[k];
+    if (selectedNodeXs.has(curPoint.x)) {
+      state.pointDataBuffer[k].y = target;
+    }
+  });
+
+  // Step 3: update the bbox info
+  state.selectedInfo.updateNodeData(state.pointDataBuffer);
+  state.selectedInfo.computeBBox(state.pointDataBuffer);
+
+  // Step 5: Update the graph using new data
+  drawBufferGraph(state, svg, true, 500, callBack);
+
+  return target;
+};

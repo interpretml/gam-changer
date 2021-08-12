@@ -208,6 +208,7 @@
   };
 
   const mergeClicked = () => {
+    console.log('clicked1');
     prepareSubMenu('merge');
     controlInfo.mergeMode = 'left';
     dispatch('mergeClicked');
@@ -835,7 +836,7 @@
 
         <div class='item sub-item-child show-tooltip'
           class:selected={controlInfo.subItemMode==='merge' && controlInfo.mergeMode === 'left'}
-          on:mouseenter={(e) => mouseoverHandler(e, 'to left', 70, 30)}
+          on:mouseenter={(e) => mouseoverHandler(e, 'to left', 60, 30)}
           on:mouseleave={mouseleaveHandler}
           on:click={mergeToLeftClicked}
         >
@@ -844,7 +845,7 @@
 
         <div class='item sub-item-child show-tooltip'
           class:selected={controlInfo.subItemMode==='merge' && controlInfo.mergeMode === 'average'}
-          on:mouseenter={(e) => mouseoverHandler(e, 'to average', 90, 30)}
+          on:mouseenter={(e) => mouseoverHandler(e, 'to weighted average', 150, 30)}
           on:mouseleave={mouseleaveHandler}
           on:click={mergeToAverageClicked}
         >
