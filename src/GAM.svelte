@@ -585,8 +585,6 @@
 
     sidebarStore.set(sidebarInfo);
 
-    console.log(selectedFeature);
-
     // Make sure all the updates are done before calling the following code
     // (It would trigger a view update)
     updateChanger = !updateChanger;

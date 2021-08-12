@@ -11,7 +11,8 @@
   import { moveMenubar } from './continuous/cont-bbox';
   import { drawLastEdit, dragged, grayOutConfidenceLine, redrawOriginal } from './categorical/cat-edit';
   import { getEBMMetrics, transferMetricToSidebar, setEBM } from './categorical/cat-ebm';
-  import { pushCurStateToHistoryStack, undoHandler, redoHandler, tryRestoreLastEdit } from './categorical/cat-history';
+  import { pushCurStateToHistoryStack, undoHandler, redoHandler, checkoutCommitHead,
+    tryRestoreLastEdit } from './categorical/cat-history';
 
   import ContextMenu from '../components/ContextMenu.svelte';
 
@@ -178,13 +179,13 @@
 
     // User clicks to preview a previous edit
     case 'headChanged': {
-      // const headFeatureName = historyList[value.historyHead].featureName;
+      const headFeatureName = historyList[value.historyHead].featureName;
       // // Only checkout the commit if it is still on the same feature
       // // Otherwise, this component should wait for its parent to kill it
-      // if (headFeatureName === state.featureName) {
-      //   checkoutCommitHead(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
-      //     historyStore, setEBM, setEBMEditingFeature, sidebarStore);
-      // }
+      if (headFeatureName === state.featureName) {
+        checkoutCommitHead(state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+          historyStore, ebm, sidebarStore, barWidth);
+      }
       break;
     }
 
@@ -814,6 +815,17 @@
   };
 
   const multiMenuMoveCheckClicked = async () => {
+    // Check if user is in previous commit
+    if (sidebarInfo.previewHistory) {
+      let proceed = confirm('Current graph is not on the latest edit, committing' +
+        ' this edit would overwrite all later edits on this feature. Is it OK?'
+      );
+      if (!proceed) {
+        multiMenuMoveCancelClicked();
+        return;
+      }
+    }
+
     // Save the changes
     state.pointData = JSON.parse(JSON.stringify(state.pointDataBuffer));
 

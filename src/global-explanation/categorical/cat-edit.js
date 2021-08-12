@@ -136,10 +136,7 @@ export const drawLastEdit = (state, svg, barWidth) => {
     .join(
       enter => enter.append('path')
         .attr('class', 'additive-line')
-        .attr('d', d => `M ${state.oriXScale(d.x) - barWidth / 2}, ${state.oriYScale(0)} l ${barWidth}, 0`)
-        .call(enter => enter.transition(trans)
-          .attr('d', d => `M ${state.oriXScale(d.x) - barWidth / 2}, ${state.oriYScale(d.y)} l ${barWidth}, 0`)
-        ),
+        .attr('d', d => `M ${state.oriXScale(d.x) - barWidth / 2}, ${state.oriYScale(d.y)} l ${barWidth}, 0`),
       update => update.call(update => update.transition(trans)
         .attr('d', d => `M ${state.oriXScale(d.x) - barWidth / 2}, ${state.oriYScale(d.y)} l ${barWidth}, 0`)
       )

@@ -1533,6 +1533,16 @@
    * Event handler when user clicks the check icon in the sub-menu
    */
   const multiMenuSubItemCheckClicked = () => {
+    // Check if user is in previous commit
+    if (sidebarInfo.previewHistory) {
+      let proceed = confirm('Current graph is not on the latest edit, committing' +
+        ' this edit would overwrite all later edits on this feature. Is it OK?'
+      );
+      if (!proceed) {
+        multiMenuMoveCancelClicked();
+        return;
+      }
+    }
 
     if (multiMenuControlInfo.subItemMode === null) {
       console.error('No sub item is selected but check is clicked!');

@@ -427,3 +427,110 @@ export const tryRestoreLastEdit = async (state, svg, historyStore, ebm,
 
   return lastCommit.hash;
 };
+
+
+/**
+ * Checkout the current HEAD commit
+ * @param {object} state Global state
+ * @param {element} svg SVG element
+ * @param {element} multiMenu multiMenu element
+ * @param {func} resetContextMenu function to reset context menu bar
+ * @param {func} resetFeatureSidebar function to reset the feature side bar
+ * @param {object} historyStore History store
+ * @param {func} ebm function to set EBM bin definitions
+ * @param {object} sidebarStore sidebar store object
+ * @param {number} barWidth width of each bar in the categorical variable plot
+ */
+export const checkoutCommitHead = async (state, svg, multiMenu, resetContextMenu, resetFeatureSidebar,
+  historyStore, ebm, sidebarStore, barWidth) => {
+
+  let curHistoryStoreValue;
+  historyStore.update(value => {
+    curHistoryStoreValue = value;
+    return value;
+  });
+
+  let sidebarInfo;
+  sidebarStore.update(value => {
+    sidebarInfo = value;
+    return value;
+  });
+
+  let targetCommit = curHistoryStoreValue[sidebarInfo.historyHead];
+  let targetCommitIndex = sidebarInfo.historyHead;
+
+  // Step 1: If the user has selected some nodes, discard the selections
+  quitSelection(svg, state, multiMenu, resetContextMenu, resetFeatureSidebar);
+
+  // Step 2: Replace the current state with targetCommit
+  state.pointData = targetCommit.state.pointData;
+  state.pointDataBuffer = null;
+
+  // Step 3: Update the last edit state, redraw the last edit graphs
+
+  // Note that the last last edit is possible not the one right next to lastCommit
+  // because users can edit multiple features
+  // Need to search it backward
+  let lastCommit = null;
+  for (let i = targetCommitIndex - 1; i >= 0; i--) {
+    if (curHistoryStoreValue[i].featureName === state.featureName) {
+      lastCommit = curHistoryStoreValue[i];
+      break;
+    }
+  }
+
+  if (lastCommit !== null) {
+    state.pointDataLastEdit = lastCommit.state.pointData;
+    drawLastEdit(state, svg, barWidth);
+  } else {
+    // If there is no last edit, then it is the origin
+    state.pointDataLastEdit = undefined;
+  }
+
+  // Step 4: Update the last last edit state
+  // Note lastLastEdit is *only* used to restore lastEdit after user enters editing mode then cancel
+  // So when we restore it, it is the same as lastEdit
+  if (lastCommit !== null) {
+    state.pointDataLastLastEdit = lastCommit.state.pointData;
+  } else {
+    // If there is no last last edit, then it is the origin or the first edit
+    state.pointDataLastLastEdit = undefined;
+  }
+
+  // Step 4.5: If the user tries to check out the original graph, the lastEdit would
+  // be the same as the original graph
+  if (lastCommit === null & targetCommit.type === 'original') {
+    state.pointDataLastEdit = targetCommit.state.pointData;
+    state.pointDataLastLastEdit = targetCommit.state.pointData;
+    drawLastEdit(state, svg, barWidth);
+  }
+
+  // After drawing the lastEdit curve, change lastEdit to curEdit (so when user
+  // clicks any editing, the orange line moves to current location)
+  state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointData));
+
+  /**
+   * Step 5: Reset EBM bin definition
+   * This step is tricky when we have edited multiple features between the checkouts
+   * A0 -> A1 -> A2 -> B0 -> C0 -> C1 -> A3
+   * Backward (A3 -> A2), iterate backward, setEBM when we pass original graph
+   * Forward (A2 -> A3), iterate forward, if the next step changes featureName, setEBM
+   * at the cur step.
+   * 
+   * Another approach is to not restore the historical metrics when jump in history
+   * stack => the current is always the latest' edit metric, last would be NA
+   */
+  await setEBM(state, ebm, 'current', state.pointData, sidebarStore, sidebarInfo);
+
+  // Change the currently editing feature to the target
+  ebm.setEditingFeature(targetCommit.featureName);
+
+  // Update the metrics, we has forced it to be global scope
+  sidebarStore.update(value => {
+    value.curGroup = 'nullify-last';
+    return value;
+  });
+
+  // Redraw the graph
+  redrawOriginal(state, svg);
+};
