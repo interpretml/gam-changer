@@ -919,7 +919,41 @@
   };
 
   const multiMenuDeleteClicked = () => {
+    console.log('delete clicked');
 
+    // Animate the bbox
+    d3.select(svg)
+      .select('g.scatter-plot-content-group g.select-bbox-group')
+      .select('rect.original-bbox')
+      .classed('animated', true);
+
+    state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
+
+    // Update the last edit graph
+    drawLastEdit(state, svg);
+
+    // Update EBM
+    const callBack = () => {
+      setEBM(state, ebm, 'current', state.pointDataBuffer, sidebarStore, sidebarInfo);
+    };
+
+    merge(state, svg, 0, callBack);
+
+    myContextMenu.showConfirmation('delete', 600);
+
+    // Copy current metrics as last metrics
+    if (!sidebarInfo.hasUpdatedLastMetrics) {
+      sidebarInfo.curGroup = 'last';
+      sidebarInfo.hasUpdatedLastMetrics = true;
+      sidebarStore.set(sidebarInfo);
+    }
+
+    // Update the footer message
+    footerStore.update(value => {
+      value.type = 'delete';
+      value.state = `Set scores of ${state.selectedInfo.nodeData.length} bins to <b>${0}</b>`;
+      return value;
+    });
   };
 
   const multiMenuMoveCheckClicked = async () => {
@@ -991,7 +1025,7 @@
     // Save into the history
     // Generate the description message
     const selectedBins = state.selectedInfo.nodeData.map(d => d.x);
-    const binRange = `[${selectedBins.join(', ')}]`;
+    const binRange = `["${selectedBins.join('", "')}"]`;
 
     const message = `${curEditBaseline >= 0 ? 'Increased' : 'Decreased'} scores of ${binRange} ` +
       `by ${round(Math.abs(curEditBaseline), 2)}.`;
@@ -1124,7 +1158,7 @@
     // Push the commit to history
     // Get the info of edited bins
     const selectedBins = state.selectedInfo.nodeData.map(d => d.x);
-    const binRange = `[${selectedBins.join(', ')}]`;
+    const binRange = `["${selectedBins.join('", "')}"]`;
 
     let description = '';
 
