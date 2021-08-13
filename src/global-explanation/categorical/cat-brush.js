@@ -113,11 +113,11 @@ export const brushEndSelect = (event, state, svg, multiMenu, brush, component,
         });
 
         // Redraw the last edit if possible
-        if (state.additiveDataLastLastEdit !== undefined) {
-          state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
+        if (state.pointDataLastLastEdit !== undefined) {
+          state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointDataLastLastEdit));
           drawLastEdit(state, svg, barWidth);
           // Prepare for next redrawing after recovering the last last edit graph
-          state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveData));
+          state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointData));
         }
       }
 

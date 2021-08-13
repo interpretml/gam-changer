@@ -316,6 +316,7 @@
     selectedFeature = tempSelectedFeature;
     updateChanger = !updateChanger;
 
+    sidebarInfo.isClassification = data.isClassifier;
     sidebarInfo.totalSampleNum = 0;
     sidebarInfo.featureName = selectedFeature.name;
     sidebarInfo.historyHead = 0;
@@ -362,11 +363,13 @@
       } else {
         sidebarInfo.rmse = metrics.rmse;
         sidebarInfo.mae = metrics.mae;
+        sidebarInfo.mape = metrics.mape;
       }
     }
 
     // Set curgroup outside the if block => metrics might be initialized form
     // initGamView() when a .gamchanger file is given
+    sidebarInfo.isClassification = data.isClassifier;
     sidebarInfo.curGroup = 'original';
 
     // Get the distribution of test data on each variable

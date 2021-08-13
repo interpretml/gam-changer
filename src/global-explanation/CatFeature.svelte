@@ -761,6 +761,7 @@
     }
 
     multiMenuControlInfo.setValue = null;
+    myContextMenu.hideToolTipDuringSubMenu();
 
     // Update the footer message
     footerStore.update(value => {
@@ -839,12 +840,11 @@
 
     // Update EBM
     const callBack = () => {
-      console.log(state.pointDataBuffer);
       setEBM(state, ebm, 'current', state.pointDataBuffer, sidebarStore, sidebarInfo);
     };
 
     // Update the last edit graph
-    drawLastEdit(state, svg);
+    drawLastEdit(state, svg, barWidth);
 
     merge(state, svg, 'left', callBack);
 
@@ -930,7 +930,7 @@
     state.pointDataBuffer = JSON.parse(JSON.stringify(state.pointData));
 
     // Update the last edit graph
-    drawLastEdit(state, svg);
+    drawLastEdit(state, svg, barWidth);
 
     // Update EBM
     const callBack = () => {
@@ -1069,7 +1069,7 @@
     // Redraw the last edit if possible
     if (state.pointDataLastLastEdit !== undefined){
       state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointDataLastLastEdit));
-      drawLastEdit(state, svg);
+      drawLastEdit(state, svg, barWidth);
       // Prepare for next redrawing after recovering the last last edit graph
       state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointData));
     }
@@ -1205,7 +1205,7 @@
     // Recover the last edit graph
     if (state.pointDataLastLastEdit !== undefined){
       state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointDataLastLastEdit));
-      drawLastEdit(state, svg);
+      drawLastEdit(state, svg, barWidth);
       // Prepare for next redrawing after recovering the last last edit graph
       state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointData));
     }

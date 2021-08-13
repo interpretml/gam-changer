@@ -208,7 +208,6 @@
   };
 
   const mergeClicked = () => {
-    console.log('clicked1');
     prepareSubMenu('merge');
     controlInfo.mergeMode = 'left';
     dispatch('mergeClicked');
@@ -238,7 +237,7 @@
     dispatch('deleteClicked');
   };
 
-  const hideToolTipDuringSubMenu = () => {
+  export const hideToolTipDuringSubMenu = () => {
     // hide the tooltip
     clearTimeout(mouseoverTimeout);
     mouseoverTimeout = null;
