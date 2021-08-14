@@ -1,7 +1,7 @@
 <script>
   import * as d3 from 'd3';
   import { onMount } from 'svelte';
-  import { drawClassificationBarChart, drawConfusionMatrix } from './draw-metric';
+  import { drawClassificationBarChart, drawConfusionMatrix, drawRegressionBarChart } from './draw-metric';
 
   export let sidebarStore;
 
@@ -12,7 +12,7 @@
   let width = 0;
   let height = 0;
 
-  const svgPadding = {top: 10, right: 20, bottom: 40, left: 20};
+  const svgPadding = {top: 10, right: 15, bottom: 40, left: 15};
 
   let confusionMatrixData = {
     tn: [23.2, null, 23, null],
@@ -26,6 +26,12 @@
     accuracy: [0.5, null, 0.5, null],
     rocAuc: [0.5, null, 0.5, null],
     balancedAccuracy: [0.5, null, 0.5, null]
+  };
+
+  let barDataRegression = {
+    rmse: [0.5, null, 0.5, null],
+    mae: [0.5, null, 0.5, null],
+    mape: [0.5, null, 0.5, null]
   };
 
   onMount(() => {
@@ -56,14 +62,14 @@
   });
 
   const copyMetricData = (barData, confusionMatrixData, fromIndex, toIndex) => {
-    barData.accuracy[toIndex] = barData.accuracy[fromIndex];
-    barData.rocAuc[toIndex] = barData.rocAuc[fromIndex];
-    barData.balancedAccuracy[toIndex] = barData.balancedAccuracy[fromIndex];
 
-    confusionMatrixData.tn[toIndex] = confusionMatrixData.tn[fromIndex]; 
-    confusionMatrixData.fn[toIndex] = confusionMatrixData.fn[fromIndex];
-    confusionMatrixData.fp[toIndex] = confusionMatrixData.fp[fromIndex];
-    confusionMatrixData.tp[toIndex] = confusionMatrixData.tp[fromIndex];
+    Object.keys(barData).forEach(d => {
+      barData[d][toIndex] = barData[d][fromIndex];
+    });
+
+    Object.keys(confusionMatrixData).forEach((d) => {
+      confusionMatrixData[d][toIndex] = confusionMatrixData[d][fromIndex];
+    });
   };
 
   const tabClicked = (tab) => {
@@ -109,19 +115,22 @@
    * Load the data from sidebarInfo to barData, confusionMatrixData at index i
    */
   const updateData = (index, barData, confusionMatrixData, sidebarInfo) => {
-    if (sidebarInfo.confusionMatrix.length === 0) {
+    if (sidebarInfo.confusionMatrix.length === 0 && sidebarInfo.isClassification) {
       return;
     }
-    barData.accuracy[index] = sidebarInfo.accuracy;
-    barData.rocAuc[index] = sidebarInfo.rocAuc;
-    barData.balancedAccuracy[index] = sidebarInfo.balancedAccuracy;
 
-    let total = sidebarInfo.confusionMatrix.reduce((a, b) => a + b);
+    Object.keys(barData).forEach(d => {
+      barData[d][index] = sidebarInfo[d];
+    });
 
-    confusionMatrixData.tn[index] = sidebarInfo.confusionMatrix[0] / total;
-    confusionMatrixData.fn[index] = sidebarInfo.confusionMatrix[1] / total;
-    confusionMatrixData.fp[index] = sidebarInfo.confusionMatrix[2] / total;
-    confusionMatrixData.tp[index] = sidebarInfo.confusionMatrix[3] / total;
+    if (sidebarInfo.isClassification) {
+      let total = sidebarInfo.confusionMatrix.reduce((a, b) => a + b);
+
+      const confusionMatrixIndexes = ['tn', 'fn', 'fp', 'tp'];
+      confusionMatrixIndexes.forEach((d, i) => {
+        confusionMatrixData[d][index] = sidebarInfo.confusionMatrix[i] / total;
+      });
+    }
   };
 
   sidebarStore.subscribe(value => {
@@ -129,6 +138,11 @@
 
     switch(sidebarInfo.curGroup) {
     case 'original': {
+      // Change the barData definition if it is a regression model
+      if (!sidebarInfo.isClassification) {
+        barData = barDataRegression;
+      }
+
       updateData(0, barData, confusionMatrixData, sidebarInfo);
 
       copyMetricData(barData, confusionMatrixData, 0, 2);
@@ -247,11 +261,9 @@
         tp: [null, null, null, null]
       };
 
-      barData = {
-        accuracy: [null, null, null, null],
-        rocAuc: [null, null, null, null],
-        balancedAccuracy: [null, null, null, null]
-      };
+      Object.keys(barData).forEach(d => {
+        barData[d] = [null, null, null, null];
+      });
 
       sidebarInfo.curGroup = 'nullifyCompleted';
       sidebarStore.set(sidebarInfo);
@@ -279,9 +291,13 @@
     }
 
     // We only update the graph if the user is currently in this tab
-    if (sidebarInfo.selectedTab === 'effect') {
-      drawClassificationBarChart(width, svgPadding, component, barData);
-      drawConfusionMatrix(width, svgPadding, component, confusionMatrixData); 
+    if (sidebarInfo.selectedTab === 'effect' && sidebarInfo.isClassification !== null) {
+      if (sidebarInfo.isClassification) {
+        drawClassificationBarChart(width, svgPadding, component, barData);
+        drawConfusionMatrix(width, svgPadding, component, confusionMatrixData); 
+      } else {
+        drawRegressionBarChart(width, svgPadding, component, barData);
+      }
     }
 
   });

@@ -5,6 +5,7 @@ import { round } from '../utils/utils';
 const barHeight = 18;
 const textHeight = 22;
 const sectionGap = 28;
+let regressionScales = {};
 
 /**
 * Function to draw a curve (PR curve or ROC curve).
@@ -106,6 +107,212 @@ export const drawCurve = (curve, isPR, svg, lineGroup, groupColors) => {
  * @param component Sidebar component
  * @param barData Data of metrics
  */
+export const drawRegressionBarChart = (width, svgPadding, component, barData) => {
+
+  const lineY = barHeight * 3 + textHeight + sectionGap / 2 + 2;
+  const lineWidth = width - svgPadding.left - svgPadding.right;
+
+  let svg = d3.select(component)
+    .select('.bar-svg');
+
+  const groupData = [
+    { name: 'rmse', text: 'RMSE', title: 'Root Mean Squared Error' },
+    { name: 'mae', text: 'MAE', title: 'Mean Absolute Error' },
+    { name: 'mape', text: 'MAPE', title: 'Mean Absolute Percentage Error' }
+  ];
+
+  const rectOrder = ['original', 'last', 'current'];
+
+  // Initialize the group structure if it is the first call
+  if (svg.select('.bar-group').size() === 0) {
+
+    let barGroup = svg.append('g')
+      .attr('class', 'bar-group')
+      .attr('transform', `translate(0, ${10})`);
+
+    // Add three bar chart groups
+    let bars = barGroup.selectAll('g.bar')
+      .data(groupData)
+      .join('g')
+      .attr('class', d => `bar ${d.name}-group`)
+      .attr('transform', (d, i) => `translate(${svgPadding.left}, ${i * (3 * barHeight + textHeight + sectionGap)})`);
+
+    bars.append('text')
+      .attr('class', 'metric-title')
+      .text(d => d.text);
+
+    bars.append('path')
+      .attr('d', `M ${0}, ${lineY} L ${lineWidth}, ${lineY}`)
+      .style('stroke', 'hsla(0, 0%, 0%, 0.2)')
+      .style('visibility', d => d.name === 'confusionMatrix' ? 'hidden' : 'show');
+
+    // Add color legend next to the first metric
+    let legendGroup = barGroup.select(`g.${groupData[0].name}-group`);
+
+    const legendData = [
+      { name: 'origin', class: 'original', title: 'Metrics of the original graph', width: 42, x: 0 },
+      { name: 'last', class: 'last', title: 'Metrics of the last edit', width: 28, x: 47 },
+      { name: 'current', class: 'current', title: 'Metrics of the current graph', width: 50, x: 80 }
+    ];
+
+    let items = legendGroup.selectAll('g.legend-item')
+      .data(legendData)
+      .join('g')
+      .style('cursor', 'default')
+      .attr('transform', d => `translate(${60 + d.x}, 0)`);
+
+    items.append('title')
+      .text(d => d.title);
+
+    items.append('rect')
+      .attr('width', d => d.width)
+      .attr('height', 16)
+      .attr('rx', 3)
+      .attr('class', d => d.class);
+
+    items.append('text')
+      .attr('class', 'legend-title')
+      .attr('y', 2)
+      .attr('x', d => d.width / 2)
+      .text(d => d.name);
+
+    // Add metrics explanation (we have some space left for regression metrics)
+    let metricLegendGroup = barGroup.append('g')
+      .attr('class', 'metric-legend')
+      .attr('transform', `translate(${svgPadding.left},
+        ${6 + 3 * (3 * barHeight + textHeight + sectionGap)})`);
+
+    let rmseText = metricLegendGroup.append('text')
+      .style('dominant-baseline', 'hanging')
+      .style('font-size', '0.85em')
+      .attr('x', 0)
+      .attr('y', 0);
+    
+    rmseText.append('tspan')
+      .attr('x', 0)
+      .attr('dy', 0)
+      .style('font-weight', 600)
+      .text('RMSE: ');
+    
+    rmseText.append('tspan')
+      .text('Root Mean Squared Error');
+
+    rmseText.append('tspan')
+      .attr('dy', '1.1em')
+      .attr('x', 0)
+      .style('fill', 'hsl(0, 0%, 60%)')
+      .text('Penalize larger errors');
+
+    let maeText = metricLegendGroup.append('text')
+      .attr('x', 0)
+      .attr('y', 52)
+      .style('font-size', '0.85em');
+
+    maeText.append('tspan')
+      .attr('x', 0)
+      .attr('dy', 0)
+      .style('font-weight', 600)
+      .text('MAE: ');
+
+    maeText.append('tspan')
+      .text('Mean Absolute Error');
+
+    maeText.append('tspan')
+      .attr('dy', '1.1em')
+      .attr('x', 0)
+      .style('fill', 'hsl(0, 0%, 60%)')
+      .text('Weight all errors equally');
+
+    let mapeText = metricLegendGroup.append('text')
+      .attr('x', 0)
+      .attr('y', 83)
+      .style('dominant-baseline', 'hanging')
+      .style('font-size', '0.85em');
+
+    mapeText.append('tspan')
+      .attr('x', 0)
+      .attr('dy', 0)
+      .style('font-weight', 600)
+      .text('MAPE: ');
+
+    mapeText.append('tspan')
+      .text('Mean Abs Percentage Err');
+
+    mapeText.append('tspan')
+      .attr('dy', '1.1em')
+      .attr('x', 0)
+      .style('fill', 'hsl(0, 0%, 60%)')
+      .text('Insensitive to the unit of errors');
+  }
+
+  // Create bars and texts (for the first time)
+  let barGroup = svg.select('.bar-group');
+
+  if (svg.selectAll('rect.bar').size() === 0) {
+
+    /**
+     * Figure out the width scale (more complicated than classification metrics)
+     * Here we don't know what's the upper limit for all errors
+     * 1. We map the default value to the 61.803% point
+     * 2. We clamp the width at 0% and 100% points
+     */
+
+    Object.keys(barData).forEach(k => {
+
+      const curMaxError = barData[k][0] / (100 - 61.803) * 100;
+
+      regressionScales[k] = d3.scaleLinear()
+        .domain([0, curMaxError])
+        .range([0, width - svgPadding.left - svgPadding.right])
+        .unknown(25)
+        .clamp(true);
+
+      barGroup.select(`.${k}-group`)
+        .selectAll('rect.bar')
+        .data(barData[k].slice(0, 3))
+        .join('rect')
+        .attr('class', (d, i) => `bar ${rectOrder[i]}`)
+        .attr('y', (d, i) => (i) * (barHeight + 0) + textHeight)
+        .attr('width', d => regressionScales[k](d))
+        .attr('height', barHeight);
+
+      barGroup.select(`.${k}-group`)
+        .selectAll('text.bar')
+        .data(barData[k].slice(0, 3))
+        .join('text')
+        .attr('class', (d, i) => `bar-label ${rectOrder[i]}`)
+        .attr('x', 3)
+        .attr('y', (d, i) => (i) * (barHeight + 0) + barHeight / 2 + textHeight + 1)
+        .text(d => round(d, 4));
+    });
+  }
+
+  // Update the bars
+  Object.keys(barData).forEach(k => {
+    for (let i = 0; i < 3; i++) {
+      barGroup.select(`.${k}-group`)
+        .select(`rect.bar.${rectOrder[i]}`)
+        .transition('update-metric')
+        .duration(200)
+        .attr('width', regressionScales[k](barData[k][i]));
+
+      barGroup.select(`.${k}-group`)
+        .select(`text.bar-label.${rectOrder[i]}`)
+        .text(barData[k][i] === null || isNaN(barData[k][i]) ? 'NA' : round(barData[k][i], 4));
+    }
+  });
+
+};
+
+/**
+ * Draw the bar charts in the classification metric tab. It also allocates space
+ * for the confusion matrix at the bottom of the bar chart.
+ * @param width Sidebar total width
+ * @param svgPadding Object describing the paddings of the sidebar content
+ * @param component Sidebar component
+ * @param barData Data of metrics
+ * @param isClassification If the current model is a classifier
+ */
 export const drawClassificationBarChart = (width, svgPadding, component, barData) => {
 
   const lineY = barHeight * 3 + textHeight + sectionGap / 2 + 2;
@@ -151,8 +358,8 @@ export const drawClassificationBarChart = (width, svgPadding, component, barData
       .style('stroke', 'hsla(0, 0%, 0%, 0.2)')
       .style('visibility', d => d.name === 'confusionMatrix' ? 'hidden' : 'show');
 
-    // Add color legend next to Accuracy
-    let legendGroup = barGroup.select('g.accuracy-group');
+    // Add color legend next to the first metric
+    let legendGroup = barGroup.select(`g.${groupData[0].name}-group`);
 
     const legendData = [
       { name: 'origin', class: 'original', title: 'Metrics of the original graph', width: 42, x: 0 },
@@ -180,8 +387,12 @@ export const drawClassificationBarChart = (width, svgPadding, component, barData
       .attr('y', 2)
       .attr('x', d => d.width / 2)
       .text(d => d.name);
-    
-    // Create bars and texts
+  }
+
+  // Create bars and texts
+  let barGroup = svg.select('.bar-group');
+
+  if (svg.selectAll('rect.bar').size() === 0) {
     Object.keys(barData).forEach(k => {
 
       barGroup.select(`.${k}-group`)
@@ -205,9 +416,6 @@ export const drawClassificationBarChart = (width, svgPadding, component, barData
   }
 
   // Update the bars
-
-  let barGroup = svg.select('.bar-group');
-
   Object.keys(barData).forEach(k => {
     for(let i = 0; i < 3; i++) {
       barGroup.select(`.${k}-group`)

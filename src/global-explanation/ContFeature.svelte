@@ -711,6 +711,7 @@
     } else {
       sidebarInfo.rmse = metrics.rmse;
       sidebarInfo.mae = metrics.mae;
+      sidebarInfo.mape = metrics.mape;
     }
 
     sidebarInfo.curGroup = curGroup;

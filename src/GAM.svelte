@@ -64,10 +64,12 @@
   let sidebarStore = writable({
     rmse: 0,
     mae: 0,
+    mape: 0,
     accuracy: 0,
     rocAuc: 0,
     balancedAccuracy: 0,
     confusionMatrix: [],
+    isClassification: null,
     prCurve: [],
     rocCurve: [],
     curGroup: '',
@@ -256,11 +258,11 @@
     } else {
       // Initialize GAM Changer using the continuous variable with the highest importance
 
-      // targetFeatureIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
-      // tempSelectedFeature.type = 'continuous';
+      targetFeatureIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
+      tempSelectedFeature.type = 'continuous';
 
-      targetFeatureIndex = d3.maxIndex(featureSelectList.categorical, d => d.importance);
-      tempSelectedFeature.type = 'categorical';
+      // targetFeatureIndex = d3.maxIndex(featureSelectList.categorical, d => d.importance);
+      // tempSelectedFeature.type = 'categorical';
     }
     
     tempSelectedFeature.data = data.features[featureSelectList[tempSelectedFeature.type][targetFeatureIndex].featureID];
