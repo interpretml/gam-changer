@@ -9,7 +9,7 @@
   import ToggleSwitch from './components/ToggleSwitch.svelte';
   import Dropzone from './components/Dropzone.svelte';
 
-  import * as d3 from 'd3';
+  import d3 from './utils/d3-import';
   import { initEBM } from './ebm';
   import { initDummyEBM} from './dummyEbm';
   import { onMount } from 'svelte';

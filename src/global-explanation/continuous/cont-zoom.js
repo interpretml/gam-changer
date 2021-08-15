@@ -1,4 +1,4 @@
-import * as d3 from 'd3';
+import d3 from '../../utils/d3-import';
 import { moveMenubar } from './cont-bbox';
 
 export const rExtent = [2, 16];

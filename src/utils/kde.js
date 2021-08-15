@@ -1,4 +1,4 @@
-import * as d3 from 'd3';
+import d3 from '../utils/d3-import';
 
 const epanechnikov = (bandwidth) => {
   return x => Math.abs(x /= bandwidth) <= 1 ? 0.75 * (1 - x * x) / bandwidth : 0;

@@ -1,4 +1,4 @@
-import * as d3 from 'd3';
+import d3 from '../../utils/d3-import';
 import { SelectedInfo } from './cat-class';
 import { moveMenubar } from '../continuous/cont-bbox';
 import { rExtent } from './cat-zoom';

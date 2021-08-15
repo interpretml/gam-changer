@@ -1,9 +1,5 @@
 <script>
-  import { onMount } from 'svelte';
-  import * as d3 from 'd3';
-
   import ClassificationMetrics from './ClassificationMetrics.svelte';
-  import RegressionMetrics from './RegressionMetrics.svelte';
   import Dropzone from '../components/Dropzone.svelte';
   import Feature from './Feature.svelte';
   import History from './History.svelte';

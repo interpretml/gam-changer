@@ -1,4 +1,4 @@
-import * as d3 from 'd3';
+import d3 from '../../utils/d3-import';
 import { round } from '../../utils/utils';
 import { rScale, rExtent } from './cont-zoom';
 import { updateAdditiveDataBufferFromPointDataBuffer } from './cont-data';

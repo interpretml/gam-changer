@@ -1,4 +1,4 @@
-import * as d3 from 'd3';
+import d3 from '../../utils/d3-import';
 import { rScale } from './cat-zoom';
 import { round } from '../../utils/utils';
 

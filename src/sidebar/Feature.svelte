@@ -1,6 +1,5 @@
 <script>
-
-  import * as d3 from 'd3';
+  import d3 from '../utils/d3-import';
   import { onMount, afterUpdate } from 'svelte';
   import { flip } from 'svelte/animate';
   import { initLegend, initContFeature, initCatFeature, updateContFeature, updateCatFeature } from './draw-feature';

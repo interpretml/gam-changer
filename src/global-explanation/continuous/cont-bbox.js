@@ -1,4 +1,4 @@
-import * as d3 from 'd3';
+import d3 from '../../utils/d3-import';
 
 /**
  * Use the selection bbox to compute where to put the context menu bar

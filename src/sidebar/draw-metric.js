@@ -1,4 +1,4 @@
-import * as d3 from 'd3';
+import d3 from '../utils/d3-import';
 import { config } from '../config';
 import { round } from '../utils/utils';
 

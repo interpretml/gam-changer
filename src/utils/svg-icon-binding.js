@@ -1,4 +1,4 @@
-import * as d3 from 'd3';
+import d3 from '../utils/d3-import';
 
 import mergeIconSVG from '../img/merge-icon.svg';
 import mergeRightIconSVG from '../img/merge-right-icon.svg';

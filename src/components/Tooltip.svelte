@@ -1,5 +1,5 @@
 <script>
-  import * as d3 from 'd3';
+  import d3 from '../utils/d3-import';
   import { onMount } from 'svelte';
   import { tooltipConfigStore } from '../store';
 

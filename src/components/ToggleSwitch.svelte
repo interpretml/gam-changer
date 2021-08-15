@@ -1,5 +1,5 @@
 <script>
-  import * as d3 from 'd3';
+  import d3 from '../utils/d3-import';
   import { onMount, createEventDispatcher } from 'svelte';
   import selectIconSVG from '../img/select-icon.svg';
   import dragIconSVG from '../img/drag-icon.svg';
