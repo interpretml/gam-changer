@@ -8,6 +8,7 @@ import preprocess from 'svelte-preprocess';
 import inlineSvg from 'rollup-plugin-inline-svg';
 
 const production = !process.env.ROLLUP_WATCH;
+const jupyter = !process.env.JUPYTER;
 
 function serve() {
   let server;
