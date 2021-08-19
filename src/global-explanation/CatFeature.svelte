@@ -562,6 +562,17 @@
       .select('path')
       .style('stroke-width', 1.5);
 
+    // Add x axis label
+    // Dynamically determine the height of x-axis first
+    const xAxisGroupHeight = xAxisGroup.node().getBoundingClientRect().height;
+
+    xAxisGroup.append('g')
+      .attr('class', 'x-axis-text')
+      .attr('transform', `translate(${chartWidth / 2}, ${xAxisGroupHeight})`)
+      .append('text')
+      .text(featureData.name)
+      .style('fill', 'black');
+
     // Rotate the x axis label if there are too many values
     if (featureData.binLabel.length > 6) {
       xAxisGroup.selectAll('g.tick text')

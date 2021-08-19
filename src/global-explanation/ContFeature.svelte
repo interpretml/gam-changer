@@ -513,6 +513,17 @@
       .call(d3.axisBottom(xScale));
     
     xAxisGroup.attr('font-family', defaultFont);
+
+    // Add x axis label
+    // Dynamically determine the height of x-axis first
+    const xAxisGroupHeight = xAxisGroup.node().getBoundingClientRect().height;
+
+    xAxisGroup.append('g')
+      .attr('class', 'x-axis-text')
+      .attr('transform', `translate(${lineChartWidth / 2}, ${xAxisGroupHeight})`)
+      .append('text')
+      .text(featureData.name)
+      .style('fill', 'black');
     
     // Draw the line chart Y axis
     let yAxisGroup = axisGroup.append('g')

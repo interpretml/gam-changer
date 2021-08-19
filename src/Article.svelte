@@ -23,10 +23,10 @@
   let tab = 'iowa';
   let tabNames = {
     iowa: {
-      // modelName: 'iow-house-ebm-binary',
-      // sampleName: 'iow-house-train-sample'
-      modelName: 'iowa-house-regression-model',
-      sampleName: 'iowa-house-regression-sample'
+      modelName: 'iow-house-ebm-binary',
+      sampleName: 'iow-house-train-sample'
+      // modelName: 'iowa-house-regression-model',
+      // sampleName: 'iowa-house-regression-sample'
     },
     adult: {
       modelName: 'adult-model',

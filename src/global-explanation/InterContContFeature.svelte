@@ -195,8 +195,15 @@
     
     xAxisGroup.attr('font-family', config.defaultFont);
 
+    // Add x axis label
+    // Dynamically determine the height of x-axis first
+    // Note that the height is measured in the screen px instead of SVG viewbox unit
+    // So we don't need to add padding, but itt might look weird when real
+    // dimension is very different from the viewbox
+    const xAxisGroupHeight = xAxisGroup.node().getBoundingClientRect().height;
+
     xAxisGroup.append('g')
-      .attr('transform', `translate(${chartWidth / 2}, ${25})`)
+      .attr('transform', `translate(${chartWidth / 2}, ${xAxisGroupHeight})`)
       .append('text')
       .attr('class', 'x-axis-text')
       .text(featureData.name1)
