@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { round } from '../utils/utils';
   import { config } from '../config';
-  import { drawHorizontalColorLegend } from './draw';
+  import { drawHorizontalColorLegend, approximateYAxisWidth } from './draw';
 
   import { state } from './inter-cat-cat/cat-cat-state';
   import { SelectedInfo } from './inter-cat-cat/cat-cat-class';
@@ -41,6 +41,7 @@
 
   // Colors
   const colors = config.colors;
+  const defaultFont = config.defaultFont;
 
   // Select mode
   let selectMode = false;
@@ -146,8 +147,8 @@
 
     // Some constant lengths of different elements
     // Approximate the longest width of score (y-axis)
-    const yAxisWidth = 6 * d3.max(data.shortBinName.map(d => String(d).length));
 
+    // Shorter categorical variable on the y-axis
     const legendConfig = {
       startColor: '#2166ac',
       endColor: '#b2182b',
@@ -155,21 +156,23 @@
       height: 6
     };
     const legendHeight = legendConfig.height;
+    const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight - legendHeight;
+
+    let yScale = d3.scalePoint()
+      .domain(data.shortBinName)
+      .padding(config.scalePointPadding)
+      .range([chartHeight, 0]);
+
+    let tempWidth = Math.max(30, approximateYAxisWidth(svg, yScale, defaultFont));
+    const yAxisWidth = 20 + tempWidth / svgWidth * width;
     
     const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
-    const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight - legendHeight;
 
     // We put longer categorical variable on the x-axis
     let xScale = d3.scalePoint()
       .domain(data.longBinName)
       .padding(config.scalePointPadding)
       .range([0, chartWidth]);
-
-    // Shorter categorical variable on the y-axis
-    let yScale = d3.scalePoint()
-      .domain(data.shortBinName)
-      .padding(config.scalePointPadding)
-      .range([chartHeight, 0]);
 
     // Create histogram chart group
     let histChart = content.append('g')
@@ -275,35 +278,35 @@
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`)
       .call(d3.axisBottom(xScale));
     
-    xAxisGroup.attr('font-family', config.defaultFont);
+    xAxisGroup.attr('font-family', defaultFont);
+
+    // Rotate the x axis label if there are too many values
+    if (data.longBinName.length > 6) {
+      xAxisGroup.selectAll('g.tick text')
+        .attr('y', 0)
+        .attr('x', -9)
+        .attr('dy', '-0.6em')
+        .attr('transform', 'rotate(-90)')
+        .style('text-anchor', 'end');
+    }
 
     // Add x axis label
     // Dynamically determine the height of x-axis first
     // Note that the height is measured in the screen px instead of SVG viewbox unit
     // So we don't need to add padding, but itt might look weird when real
     // dimension is very different from the viewbox
-    const xAxisGroupHeight = xAxisGroup.node().getBoundingClientRect().height;
+    const xAxisGroupHeight = xAxisGroup.node().getBoundingClientRect().height / svgHeight * height;
 
     xAxisGroup.append('g')
-      .attr('transform', `translate(${chartWidth / 2}, ${xAxisGroupHeight})`)
+      .attr('transform', `translate(${chartWidth / 2}, ${Math.min(densityHeight - 15, xAxisGroupHeight + 5)})`)
       .append('text')
       .attr('class', 'x-axis-text')
       .text(data.longName)
       .style('fill', 'black')
       .clone(true)
-      .style('stroke', 'white')
+      .style('stroke', '#FDFCFC')
       .style('stroke-width', 3)
       .lower();
-
-    // Rotate the x axis label if there are too many values
-    if (data.longBinName.length > 6) {
-      xAxisGroup.selectAll('g.tick text')
-        .attr('y', 0)
-        .attr('x', 9)
-        .attr('dy', '-0.6em')
-        .attr('transform', 'rotate(90)')
-        .style('text-anchor', 'start');
-    }
     
     // Draw the line chart Y axis
     let yAxisGroup = axisGroup.append('g')
@@ -314,10 +317,10 @@
       .attr('transform', `translate(${yAxisWidth}, 0)`);
     
     yAxisGroup.call(d3.axisLeft(yScale));
-    yAxisGroup.attr('font-family', config.defaultFont);
+    yAxisGroup.attr('font-family', defaultFont);
 
     yAxisGroup.append('g')
-      .attr('transform', `translate(${-yAxisWidth - 15}, ${chartHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth + 15}, ${chartHeight / 2}) rotate(-90)`)
       .append('text')
       .attr('class', 'y-axis-text')
       .text(data.shortName)
@@ -377,7 +380,7 @@
         .ticks(2)
     );
 
-    yAxisHistGroup.attr('font-family', config.defaultFont);
+    yAxisHistGroup.attr('font-family', defaultFont);
 
     // Change 0.0 to 0
     yAxisHistGroup.selectAll('text')
@@ -390,9 +393,9 @@
 
     yAxisHistGroup.append('g')
       .attr('class', 'y-axis-text')
-      .attr('transform', `translate(${-yAxisWidth - 15}, ${densityHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth + 15}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
-      .text('density')
+      .text('Density')
       .style('fill', colors.histAxis);
 
 

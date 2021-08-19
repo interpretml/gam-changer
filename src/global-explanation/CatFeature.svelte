@@ -4,7 +4,7 @@
   import { round } from '../utils/utils';
   import { config } from '../config';
 
-  import { drawBarLegend } from './draw';
+  import { drawBarLegend, approximateYAxisWidth } from './draw';
   import { SelectedInfo } from './categorical/cat-class';
   import { zoomStart, zoomEnd, zoomed, zoomScaleExtent, rExtent } from './categorical/cat-zoom';
   import { brushDuring, brushEndSelect, quitSelection, selectAllBins } from './categorical/cat-brush';
@@ -345,20 +345,18 @@
       .attr('width', svgWidth)
       .attr('height', svgHeight);
 
-    // Draw a border for the svg
-    svgSelect.append('rect')
-      .attr('class', 'border')
-      .classed('hidden', !showRuler)
-      .attr('width', 600)
-      .attr('height', 400)
-      .style('fill', 'none')
-      .style('stroke', 'pink');
-
     // Some constant lengths of different elements
-    // Approximate the longest width of score (y-axis)
-    const yAxisWidth = 5 * d3.max(scoreRange.map(d => String(round(d, 1)).length));
-    const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
     const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
+
+    // Approximate the longest width of score (y-axis)
+    let yScale = d3.scaleLinear()
+      .domain(scoreRange)
+      .range([chartHeight, 0]);
+
+    let tempWidth = Math.max(30, approximateYAxisWidth(svg, yScale, defaultFont));
+    const yAxisWidth = 18 + tempWidth / svgWidth * width;
+
+    const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
 
     // Draw the bar legend
     drawBarLegend(svgSelect, width, svgPadding);
@@ -378,9 +376,6 @@
     // doesn't really matter in EBM because we can modify intercept)
     // TODO: Provide interaction for users to change the center point
     // Normalize the Y axis by the global score range
-    let yScale = d3.scaleLinear()
-      .domain(scoreRange)
-      .range([chartHeight, 0]);
 
     state.oriXScale = xScale;
     state.oriYScale = yScale;
@@ -562,26 +557,26 @@
       .select('path')
       .style('stroke-width', 1.5);
 
-    // Add x axis label
-    // Dynamically determine the height of x-axis first
-    const xAxisGroupHeight = xAxisGroup.node().getBoundingClientRect().height;
-
-    xAxisGroup.append('g')
-      .attr('class', 'x-axis-text')
-      .attr('transform', `translate(${chartWidth / 2}, ${xAxisGroupHeight})`)
-      .append('text')
-      .text(featureData.name)
-      .style('fill', 'black');
-
     // Rotate the x axis label if there are too many values
     if (featureData.binLabel.length > 6) {
       xAxisGroup.selectAll('g.tick text')
         .attr('y', 0)
-        .attr('x', 9)
+        .attr('x', -9)
         .attr('dy', '-0.6em')
-        .attr('transform', 'rotate(90)')
-        .style('text-anchor', 'start');
+        .attr('transform', 'rotate(-90)')
+        .style('text-anchor', 'end');
     }
+
+    // Add x axis label
+    // Dynamically determine the height of x-axis first
+    const xAxisGroupHeight = xAxisGroup.node().getBoundingClientRect().height / svgHeight * height;
+
+    xAxisGroup.append('g')
+      .attr('class', 'x-axis-text')
+      .attr('transform', `translate(${chartWidth / 2}, ${Math.min(densityHeight - 15, xAxisGroupHeight + 5)})`)
+      .append('text')
+      .text(featureData.name)
+      .style('fill', 'black');
     
     // Draw the chart Y axis
     let yAxisGroup = axisGroup.append('g')
@@ -593,7 +588,7 @@
 
     yAxisGroup.append('g')
       .attr('class', 'y-axis-text')
-      .attr('transform', `translate(${-yAxisWidth - 15}, ${chartHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth + 15}, ${chartHeight / 2}) rotate(-90)`)
       .append('text')
       .text('Score')
       .style('fill', 'black');
@@ -656,7 +651,7 @@
       .style('stroke', colors.histAxis);
 
     yAxisHistGroup.append('g')
-      .attr('transform', `translate(${-yAxisWidth - 15}, ${densityHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth + 15}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
       .attr('class', 'y-axis-text')
       .text('Density')

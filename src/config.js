@@ -3,7 +3,7 @@ export const config = {
     top: 30,
     right: 15,
     bottom: 10,
-    left: 35
+    left: 5
   },
   defaultFont: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;',
   scalePointPadding: 0.7,

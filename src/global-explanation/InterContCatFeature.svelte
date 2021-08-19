@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { round } from '../utils/utils';
   import { config } from '../config';
-  import { drawHorizontalColorLegend } from './draw';
+  import { drawHorizontalColorLegend, approximateYAxisWidth } from './draw';
 
   import { state } from './inter-cont-cat/cont-cat-state';
   import { SelectedInfo } from './inter-cont-cat/cont-cat-class';
@@ -197,8 +197,6 @@
 
     // Some constant lengths of different elements
     // Approximate the longest width of score (y-axis)
-    const yAxisWidth = 6 * d3.max(data.catHistEdgeName.map(d => String(d).length));
-
     const legendConfig = {
       startColor: '#2166ac',
       endColor: '#b2182b',
@@ -206,17 +204,7 @@
       height: 6
     };
     const legendHeight = legendConfig.height;
-    
-    const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
     const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight - legendHeight;
-
-    // We put continuous variable on the x-axis
-    let xMin = data.contBinLabel[0];
-    let xMax = data.contBinLabel[data.contBinLabel.length - 1];
-
-    let xScale = d3.scaleLinear()
-      .domain([xMin, xMax])
-      .range([0, chartWidth]);
 
     // Categorical variable on the y-axis
     let yScale = d3.scaleBand()
@@ -225,6 +213,19 @@
       .paddingOuter(0.3)
       .range([chartHeight, 0])
       .round(true);
+
+    let tempWidth = Math.max(30, approximateYAxisWidth(svg, yScale, defaultFont));
+    const yAxisWidth = 20 + tempWidth / svgWidth * width;
+    
+    const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
+
+    // We put continuous variable on the x-axis
+    let xMin = data.contBinLabel[0];
+    let xMax = data.contBinLabel[data.contBinLabel.length - 1];
+
+    let xScale = d3.scaleLinear()
+      .domain([xMin, xMax])
+      .range([0, chartWidth]);
 
     // Create histogram chart group
     let histChart = content.append('g')
@@ -327,13 +328,10 @@
 
     // Add x axis label
     // Dynamically determine the height of x-axis first
-    // Note that the height is measured in the screen px instead of SVG viewbox unit
-    // So we don't need to add padding, but itt might look weird when real
-    // dimension is very different from the viewbox
-    const xAxisGroupHeight = xAxisGroup.node().getBoundingClientRect().height;
+    const xAxisGroupHeight = xAxisGroup.node().getBoundingClientRect().height / svgHeight * height;
 
     xAxisGroup.append('g')
-      .attr('transform', `translate(${chartWidth / 2}, ${xAxisGroupHeight})`)
+      .attr('transform', `translate(${chartWidth / 2}, ${xAxisGroupHeight + 5})`)
       .append('text')
       .attr('class', 'x-axis-text')
       .text(data.contName)
@@ -352,7 +350,7 @@
 
     yAxisGroup.append('g')
       .attr('class', 'y-axis-text')
-      .attr('transform', `translate(${-yAxisWidth - 15}, ${chartHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth + 15}, ${chartHeight / 2}) rotate(-90)`)
       .append('text')
       .text(data.catName)
       .style('fill', 'black');
@@ -457,7 +455,7 @@
       .style('stroke', colors.histAxis);
 
     yAxisHistGroup.append('g')
-      .attr('transform', `translate(${-yAxisWidth - 15}, ${densityHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth + 15}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
       .attr('class', 'y-axis-text')
       .text('Density')

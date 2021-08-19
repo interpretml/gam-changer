@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { round, transpose2dArray } from '../utils/utils';
   import { config } from '../config';
-  import { drawHorizontalColorLegend } from './draw';
+  import { drawHorizontalColorLegend, approximateYAxisWidth } from './draw';
 
   import { state } from './inter-cont-cont/cont-cont-state';
   import { SelectedInfo } from './inter-cont-cont/cont-cont-class';
@@ -45,6 +45,7 @@
 
   // Colors
   const colors = config.colors;
+  const defaultFont = config.defaultFont;
 
   const drawFeatureBar = (featureData) => {
     initialized = true;
@@ -73,7 +74,6 @@
 
     // Some constant lengths of different elements
     // Approximate the longest width of score (y-axis)
-    const yAxisWidth = 5 * d3.max(featureData.binLabel2.map(d => String(round(d, 2)).length + 1));
     const legendConfig = {
       startColor: '#2166ac',
       endColor: '#b2182b',
@@ -81,17 +81,7 @@
       height: 6
     };
     const legendHeight = legendConfig.height;
-    
-    const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
     const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight - legendHeight;
-
-    // We put continuous 1 on the x-axis
-    let xMin = featureData.binLabel1[0];
-    let xMax = featureData.binLabel1[featureData.binLabel1.length - 1];
-
-    let xScale = d3.scaleLinear()
-      .domain([xMin, xMax])
-      .range([0, chartWidth]);
 
     // Continuous 2 on the y-axis
     let yMin = featureData.binLabel2[0];
@@ -100,6 +90,19 @@
     let yScale = d3.scaleLinear()
       .domain([yMin, yMax])
       .range([chartHeight, 0]);
+
+    let tempWidth = Math.max(30, approximateYAxisWidth(svg, yScale, defaultFont));
+    const yAxisWidth = 20 + tempWidth / svgWidth * width;
+
+    const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
+
+    // We put continuous 1 on the x-axis
+    let xMin = featureData.binLabel1[0];
+    let xMax = featureData.binLabel1[featureData.binLabel1.length - 1];
+
+    let xScale = d3.scaleLinear()
+      .domain([xMin, xMax])
+      .range([0, chartWidth]);
 
     // Create histogram chart group
     let histChart = content.append('g')
@@ -193,17 +196,14 @@
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`)
       .call(d3.axisBottom(xScale));
     
-    xAxisGroup.attr('font-family', config.defaultFont);
+    xAxisGroup.attr('font-family', defaultFont);
 
     // Add x axis label
     // Dynamically determine the height of x-axis first
-    // Note that the height is measured in the screen px instead of SVG viewbox unit
-    // So we don't need to add padding, but itt might look weird when real
-    // dimension is very different from the viewbox
-    const xAxisGroupHeight = xAxisGroup.node().getBoundingClientRect().height;
+    const xAxisGroupHeight = xAxisGroup.node().getBoundingClientRect().height / svgHeight * svgHeight;
 
     xAxisGroup.append('g')
-      .attr('transform', `translate(${chartWidth / 2}, ${xAxisGroupHeight})`)
+      .attr('transform', `translate(${chartWidth / 2}, ${xAxisGroupHeight + 5})`)
       .append('text')
       .attr('class', 'x-axis-text')
       .text(featureData.name1)
@@ -215,10 +215,10 @@
       .attr('transform', `translate(${yAxisWidth}, 0)`);
     
     yAxisGroup.call(d3.axisLeft(yScale));
-    yAxisGroup.attr('font-family', config.defaultFont);
+    yAxisGroup.attr('font-family', defaultFont);
 
     yAxisGroup.append('g')
-      .attr('transform', `translate(${-yAxisWidth - 15}, ${chartHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth + 15}, ${chartHeight / 2}) rotate(-90)`)
       .append('text')
       .attr('class', 'y-axis-text')
       .text(featureData.name2)
@@ -276,7 +276,7 @@
         .ticks(2)
     );
 
-    yAxisHistGroup.attr('font-family', config.defaultFont);
+    yAxisHistGroup.attr('font-family', defaultFont);
 
     // Change 0.0 to 0
     yAxisHistGroup.selectAll('text')
@@ -289,7 +289,7 @@
 
     yAxisHistGroup.append('g')
       .attr('class', 'y-axis-text')
-      .attr('transform', `translate(${-yAxisWidth - 15}, ${densityHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth + 15}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
       .text('Density')
       .style('fill', colors.histAxis);

@@ -217,3 +217,21 @@ export const drawBarLegend = (svgSelect, width, svgPadding) => {
     .attr('x', legendRectWidth + 4)
     .text(d => d.name);
 };
+
+export const approximateYAxisWidth = (svg, yScale, defaultFont) => {
+  const svgSelect = d3.select(svg);
+
+  let tempGroup = svgSelect.append('g')
+    .attr('transform', 'translate(200, 50)')
+    .attr('class', 'temp-group')
+    .style('visibility', 'hidden');
+
+  tempGroup.call(d3.axisLeft(yScale));
+
+  tempGroup.attr('font-family', defaultFont);
+
+  const axisWidth = tempGroup.node().getBoundingClientRect().width;
+  // tempGroup.remove();
+
+  return axisWidth;
+};

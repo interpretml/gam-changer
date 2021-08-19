@@ -6,7 +6,7 @@
 
   import { round } from '../utils/utils';
   import { config } from '../config';
-  import { drawLineLegend } from './draw';
+  import { drawLineLegend, approximateYAxisWidth } from './draw';
 
   import { SelectedInfo } from './continuous/cont-class';
   import { createConfidenceData, createAdditiveData, createPointData, linkPointToAdditive } from './continuous/cont-data';
@@ -323,14 +323,7 @@
     // Track the feature name
     state.featureName = featureData.name;
 
-    // Approximate the longest width of score (y-axis)
-    yAxisWidth = 5 * d3.max(scoreRange.map(d => String(round(d, 1)).length));
-    lineChartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
-
     let svgSelect = d3.select(svg);
-
-    // Initialize the isotonic regression model
-    initIsoModel(featureData);
 
     // Set svg viewBox (3:2 WH ratio)
     svgSelect.attr('viewBox', '0 0 600 400')
@@ -344,6 +337,21 @@
     svgSelect.on('contextmenu', (event) => {
       event.preventDefault();
     });
+
+    // Approximate the longest width of score (y-axis)
+
+    // Normalize the Y axis by the global score range
+    let yScale = d3.scaleLinear()
+      .domain(scoreRange)
+      .range([lineChartHeight, 0]);
+
+    let tempWidth = Math.max(30, approximateYAxisWidth(svg, yScale, defaultFont));
+    yAxisWidth = 18 + tempWidth / svgWidth * width;
+
+    lineChartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
+
+    // Initialize the isotonic regression model
+    initIsoModel(featureData);
 
     // Draw a legend for the line color
     drawLineLegend(svgSelect, width, svgPadding);
@@ -366,11 +374,6 @@
     let xScale = d3.scaleLinear()
       .domain([xMin, xMax])
       .range([0, lineChartWidth]);
-
-    // Normalize the Y axis by the global score range
-    let yScale = d3.scaleLinear()
-      .domain(scoreRange)
-      .range([lineChartHeight, 0]);
     
     state.oriXScale = xScale;
     state.oriYScale = yScale;
@@ -516,11 +519,11 @@
 
     // Add x axis label
     // Dynamically determine the height of x-axis first
-    const xAxisGroupHeight = xAxisGroup.node().getBoundingClientRect().height;
+    const xAxisGroupHeight = xAxisGroup.node().getBoundingClientRect().height / svgHeight * height;
 
     xAxisGroup.append('g')
       .attr('class', 'x-axis-text')
-      .attr('transform', `translate(${lineChartWidth / 2}, ${xAxisGroupHeight})`)
+      .attr('transform', `translate(${lineChartWidth / 2}, ${xAxisGroupHeight + 5})`)
       .append('text')
       .text(featureData.name)
       .style('fill', 'black');
@@ -535,9 +538,10 @@
 
     yAxisGroup.append('g')
       .attr('class', 'y-axis-text')
-      .attr('transform', `translate(${-yAxisWidth - 15}, ${lineChartHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth + 15}, ${lineChartHeight / 2}) rotate(-90)`)
       .append('text')
       .text('Score')
+      .style('dominant-baseline', 'text-bottom')
       .style('fill', 'black');
 
     // Draw the histograms at the bottom
@@ -596,10 +600,11 @@
       .style('stroke', colors.histAxis);
 
     yAxisHistGroup.append('g')
-      .attr('transform', `translate(${-yAxisWidth - 15}, ${densityHeight / 2}) rotate(-90)`)
+      .attr('transform', `translate(${-yAxisWidth + 15}, ${densityHeight / 2}) rotate(-90)`)
       .append('text')
       .attr('class', 'y-axis-text')
       .text('Density')
+      .style('dominant-baseline', 'text-bottom')
       .style('fill', colors.histAxis);
 
     // Add brush
