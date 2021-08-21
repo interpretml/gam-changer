@@ -27,6 +27,7 @@
 
   let sortedContFeatures = [];
   let sortedCatFeatures = [];
+  let labelEncoder = null;
 
 
   onMount(() => {
@@ -63,7 +64,7 @@
 
       sortedCatFeatures.forEach(f => {
         initCatFeature(component, f, svgCatPadding, totalSampleNum, width,
-          catBarWidth, svgHeight, titleHeight);
+          catBarWidth, svgHeight, titleHeight, labelEncoder);
       });
 
       waitingToDrawDIV = false;
@@ -80,6 +81,7 @@
 
       sortedContFeatures = sidebarInfo.featurePlotData.cont;
       sortedCatFeatures = sidebarInfo.featurePlotData.cat;
+      labelEncoder = sidebarInfo.featurePlotData.labelEncoder;
 
       // Wait for the DOM to update (will trigger afterUpdate)
       waitingToDrawDIV = true;
@@ -116,7 +118,7 @@
 
       tempSortedCatFeatures.forEach(f => {
         needToResort = updateCatFeature(component, f, selectedSampleCount,
-          totalSampleCount, svgHeight, svgCatPadding, titleHeight);
+          totalSampleCount, svgHeight, svgCatPadding, titleHeight, labelEncoder);
       });
 
       if (needToResort) {

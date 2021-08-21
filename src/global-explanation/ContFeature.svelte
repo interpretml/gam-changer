@@ -43,8 +43,8 @@
   const densityHeight = 90;
 
   // Viewbox width and height
-  const width = 600;
-  const height = 400;
+  let width = 600;
+  let height = 400;
 
   // Real SVG width
   let svgWidth = svgHeight * (width / height);
@@ -326,7 +326,10 @@
     let svgSelect = d3.select(svg);
 
     // Set svg viewBox (3:2 WH ratio)
-    svgSelect.attr('viewBox', '0 0 600 400')
+    // width = 450;
+    // height = 400;
+    // svgWidth = svgHeight * (width / height);
+    svgSelect.attr('viewBox', `0 0 ${width} ${height}`)
       .attr('preserveAspectRatio', 'xMinYMin meet')
       .attr('width', svgWidth)
       .attr('height', svgHeight)
@@ -345,7 +348,7 @@
       .domain(scoreRange)
       .range([lineChartHeight, 0]);
 
-    let tempWidth = Math.max(30, approximateYAxisWidth(svg, yScale, defaultFont));
+    let tempWidth = Math.max(30, approximateYAxisWidth(svg, yScale, defaultFont, true));
     yAxisWidth = 18 + tempWidth / svgWidth * width;
 
     lineChartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
@@ -533,7 +536,9 @@
       .attr('class', 'y-axis')
       .attr('transform', `translate(${yAxisWidth}, 0)`);
     
-    yAxisGroup.call(d3.axisLeft(yScale));
+    yAxisGroup.call(
+      d3.axisLeft(yScale).tickFormat(d => Math.abs(d) >= 1000 ? d / 1000 + 'K' : d)
+    );
     yAxisGroup.attr('font-family', defaultFont);
 
     yAxisGroup.append('g')

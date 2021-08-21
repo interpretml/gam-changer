@@ -343,7 +343,7 @@
     isClassification = data.isClassifier;
 
     // Create the sidebar feature data
-    let featurePlotData = {cont: [], cat: []};
+    let featurePlotData = {cont: [], cat: [], labelEncoder: data.labelEncoder};
     let featureDataNameMap = new Map();
     data.features.forEach((d, i) => featureDataNameMap.set(d.name, i));
 

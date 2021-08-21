@@ -31,7 +31,7 @@
 
   // Viewbox width and height
   let width = 600;
-  const height = 400;
+  let height = 400;
 
   // Real width (depends on the svgHeight prop)
   let svgWidth = svgHeight * (width / height);
@@ -54,6 +54,9 @@
     let svgSelect = d3.select(svg);
 
     // Set svg viewBox (3:2 WH ratio)
+    // width = 450;
+    // height = 400;
+    // svgWidth = svgHeight * (width / height);
     svgSelect.attr('viewBox', `0 0 ${width} ${height}`)
       .attr('preserveAspectRatio', 'xMinYMin meet')
       .attr('width', svgWidth)

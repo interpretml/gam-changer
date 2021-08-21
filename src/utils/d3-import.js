@@ -65,6 +65,10 @@ import {
   drag
 } from 'd3-drag';
 
+import {
+  format
+} from 'd3-format';
+
 export default {
   select,
   selectAll,
@@ -93,5 +97,6 @@ export default {
   brush,
   zoom,
   zoomIdentity,
-  drag
+  drag,
+  format
 };

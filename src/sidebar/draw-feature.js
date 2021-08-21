@@ -11,7 +11,7 @@ export const initLegend = (component, width, svgCatPadding) => {
   let legendSVG = d3.select(component)
     .select('svg#legend')
     .attr('width', width)
-    .attr('height', 40);
+    .attr('height', 42);
 
   let leftGroup = legendSVG.append('g')
     .attr('class', 'left')
@@ -156,9 +156,10 @@ export const initContFeature = (component, f, svgContPadding, totalSampleNum,
  * @param {number} width Sidebar width
  * @param {number} svgHeight SVG Height
  * @param {number} titleHeight Feature name text height
+ * @param {object} labelEncoder Label encoder
  */
 export const initCatFeature = (component, f, svgCatPadding, totalSampleNum,
-  width, catBarWidth, svgHeight, titleHeight) => {
+  width, catBarWidth, svgHeight, titleHeight, labelEncoder) => {
   let svg = d3.select(component)
     .select(`.feature-${f.id}`)
     .select('svg');
@@ -179,6 +180,7 @@ export const initCatFeature = (component, f, svgCatPadding, totalSampleNum,
   // (needed to update selected bins)
   let curData = f.histEdge.map((d, i) => ({
     edge: f.histEdge[i],
+    label: labelEncoder[f.name][f.histEdge[i]],
     count: f.histCount[i],
     density: f.histCount[i] / totalSampleNum,
     // Initialize selected bars with 0 density
@@ -186,7 +188,7 @@ export const initCatFeature = (component, f, svgCatPadding, totalSampleNum,
     selectedDensity: 0
   }));
 
-  curData.sort((a, b) => b.count - a.count);
+  // curData.sort((a, b) => b.count - a.count);
 
   // Create the axis scales
   // histEdge, histCount, histDensity
@@ -201,9 +203,10 @@ export const initCatFeature = (component, f, svgCatPadding, totalSampleNum,
 
   // Add the feature title
   topContent.append('text')
+    .datum(f.name)
     .attr('class', 'feature-title')
     .attr('x', xScale(curData[0].edge))
-    .text(f.name);
+    .text(d => d);
 
   // Draw a short pink rectangle as baseline (to signal missing value / small value)
   lowContent.selectAll('rect.base-bar')
@@ -224,7 +227,18 @@ export const initCatFeature = (component, f, svgCatPadding, totalSampleNum,
     .attr('x', d => xScale(d.edge))
     .attr('y', d => yScale(d.density))
     .attr('width', xScale.bandwidth())
-    .attr('height', d => svgHeight - svgCatPadding.bottom - yScale(d.density));
+    .attr('height', d => svgHeight - svgCatPadding.bottom - yScale(d.density))
+    .on('mouseenter', e => {
+      let label = d3.select(e.target).datum().label;
+      d3.select(e.target.parentNode.parentNode)
+        .select('.top-content .feature-title')
+        .text(d => d + ': ' + label);
+    })
+    .on('mouseleave', e => {
+      d3.select(e.target.parentNode.parentNode)
+        .select('.top-content .feature-title')
+        .text(d => d);
+    });
 
   // Draw overlay layer
   let yScaleSelected = d3.scaleLinear()
@@ -238,7 +252,18 @@ export const initCatFeature = (component, f, svgCatPadding, totalSampleNum,
     .attr('x', d => xScale(d.edge))
     .attr('y', d => yScaleSelected(d.selectedDensity))
     .attr('width', xScale.bandwidth())
-    .attr('height', d => svgHeight - svgCatPadding.bottom - yScaleSelected(d.selectedDensity));
+    .attr('height', d => svgHeight - svgCatPadding.bottom - yScaleSelected(d.selectedDensity))
+    .on('mouseenter', e => {
+      let label = d3.select(e.target).datum().label;
+      d3.select(e.target.parentNode.parentNode)
+        .select('.top-content .feature-title')
+        .text(d => d + ': ' + label);
+    })
+    .on('mouseleave', e => {
+      d3.select(e.target.parentNode.parentNode)
+        .select('.top-content .feature-title')
+        .text(d => d);
+    });
 };
 
 
@@ -292,14 +317,16 @@ export const updateContFeature = (component, f, selectedSampleCount, totalSample
  * @param {number} svgHeight SVG Height
  * @param {object} svgCatPadding Padding info
  * @param {number} titleHeight Feature name text height
+ * @param {object} labelEncoder Label encoder
  */
 export const updateCatFeature = (component, f, selectedSampleCount, totalSampleCount,
-  svgHeight, svgCatPadding, titleHeight) => {
+  svgHeight, svgCatPadding, titleHeight, labelEncoder) => {
   let svg = d3.select(component)
     .select(`#cat-feature-svg-${f.id}`);
 
   let curData = f.histEdge.map((d, i) => ({
     edge: f.histEdge[i],
+    label: labelEncoder[f.name][f.histEdge[i]],
     count: f.histCount[i],
     selectedCount: f.histSelectedCount[i],
     selectedDensity: selectedSampleCount === 0 ? 0 : f.histSelectedCount[i] / selectedSampleCount
@@ -310,7 +337,7 @@ export const updateCatFeature = (component, f, selectedSampleCount, totalSampleC
   let globalDensity = curData.map(d => d.count / totalSampleCount);
   f.distanceScore = l1Distance(globalDensity, selectedDensity);
 
-  curData.sort((a, b) => b.count - a.count);
+  // curData.sort((a, b) => b.count - a.count);
 
   const yMax = d3.max(curData, d => d.selectedDensity) === 0 ? 1 : d3.max(curData, d => d.selectedDensity);
   const needToResort = d3.max(curData, d => d.selectedDensity) === 0 ? false : true;

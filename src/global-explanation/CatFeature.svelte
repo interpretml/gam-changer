@@ -41,7 +41,7 @@
 
   // Viewbox width and height
   let width = 600;
-  const height = 400;
+  let height = 400;
 
   // Context menu info
   let multiMenuControlInfo = {
@@ -340,6 +340,9 @@
     svgWidth = svgHeight * (width / height);
 
     // Set svg viewBox (3:2 WH ratio)
+    // width = 490;
+    // height = 400;
+    // svgWidth = svgHeight * (width / height);
     svgSelect.attr('viewBox', `0 0 ${width} ${height}`)
       .attr('preserveAspectRatio', 'xMinYMin meet')
       .attr('width', svgWidth)
@@ -353,7 +356,7 @@
       .domain(scoreRange)
       .range([chartHeight, 0]);
 
-    let tempWidth = Math.max(30, approximateYAxisWidth(svg, yScale, defaultFont));
+    let tempWidth = Math.max(30, approximateYAxisWidth(svg, yScale, defaultFont, true));
     const yAxisWidth = 18 + tempWidth / svgWidth * width;
 
     const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;
@@ -583,7 +586,7 @@
       .attr('class', 'y-axis')
       .attr('transform', `translate(${yAxisWidth}, 0)`);
     
-    yAxisGroup.call(d3.axisLeft(yScale));
+    yAxisGroup.call(d3.axisLeft(yScale).tickFormat(d => Math.abs(d) >= 1000 ? d / 1000 + 'K' : d));
     yAxisGroup.attr('font-family', defaultFont);
 
     yAxisGroup.append('g')

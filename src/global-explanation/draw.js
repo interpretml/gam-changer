@@ -47,7 +47,7 @@ export const drawHorizontalColorLegend = (legendGroup, legendConfig, largestAbs)
 
   let axisGroup = legendGroup.append('g')
     .attr('transform', `translate(${0}, ${legendConfig.height})`)
-    .call(d3.axisBottom(legendScale).ticks(5));
+    .call(d3.axisBottom(legendScale).ticks(5).tickFormat(d => Math.abs(d) >= 1000 ? d / 1000 + 'K' : d));
   
   axisGroup.attr('font-family', config.defaultFont)
     .style('stroke-width', 0.5);
@@ -183,7 +183,7 @@ export const drawBarLegend = (svgSelect, width, svgPadding) => {
       class: 'current',
       title: 'Current bins',
       x: 110,
-      rectColor: '#5582EC',
+      rectColor: config.colors.bar,
     },
     {
       name: 'editing',
@@ -218,7 +218,7 @@ export const drawBarLegend = (svgSelect, width, svgPadding) => {
     .text(d => d.name);
 };
 
-export const approximateYAxisWidth = (svg, yScale, defaultFont) => {
+export const approximateYAxisWidth = (svg, yScale, defaultFont, abbreviation=false) => {
   const svgSelect = d3.select(svg);
 
   let tempGroup = svgSelect.append('g')
@@ -226,7 +226,7 @@ export const approximateYAxisWidth = (svg, yScale, defaultFont) => {
     .attr('class', 'temp-group')
     .style('visibility', 'hidden');
 
-  tempGroup.call(d3.axisLeft(yScale));
+  tempGroup.call(d3.axisLeft(yScale).tickFormat(d => Math.abs(d) >= 1000 && abbreviation ? d / 1000 + 'K' : d));
 
   tempGroup.attr('font-family', defaultFont);
 

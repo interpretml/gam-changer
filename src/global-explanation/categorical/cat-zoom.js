@@ -52,7 +52,7 @@ export const zoomed = (event, state, xScale, yScale, svg,
     .call(d3.axisBottom(zXScale));
 
   svgSelect.select('g.y-axis')
-    .call(d3.axisLeft(zYScale));
+    .call(d3.axisLeft(zYScale).tickFormat(d => Math.abs(d) >= 1000 ? d / 1000 + 'K' : d));
 
   // Transform the bars
   svgSelect.selectAll('g.scatter-plot-bar-group')
