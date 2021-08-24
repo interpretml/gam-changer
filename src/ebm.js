@@ -958,6 +958,23 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
        * @returns {object}
        */
       getMetricsOnSelectedBins(binIndexes) {
+        let metrics = {};
+
+        // Handle binIndexes empty array case at the JS interface
+        if (binIndexes.length === 0) {
+          if (!this.isClassification) {
+            metrics.rmse = null;
+            metrics.mae = null;
+            metrics.mape = null;
+          } else {
+            metrics.confusionMatrix = [null, null, null, null];
+            metrics.accuracy = null;
+            metrics.rocAuc = null;
+            metrics.balancedAccuracy = null;
+          }
+          return metrics;
+        }
+
         let binIndexesPtr = __pin(__newArray(wasm.Int32Array_ID, binIndexes));
 
         /**
@@ -967,7 +984,6 @@ const initEBM = (_featureData, _sampleData, _editingFeature, _isClassification) 
          */
 
         // Unpack the return value from getMetrics()
-        let metrics = {};
         if (!this.isClassification) {
           let result3D = __getArray(this.ebm.getMetricsOnSelectedBins(binIndexesPtr));
           let result3DPtr = __pin(result3D);
