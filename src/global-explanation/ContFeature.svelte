@@ -326,7 +326,7 @@
     let svgSelect = d3.select(svg);
 
     // Set svg viewBox (3:2 WH ratio)
-    // width = 450;
+    // width = 750;
     // height = 400;
     // svgWidth = svgHeight * (width / height);
     svgSelect.attr('viewBox', `0 0 ${width} ${height}`)

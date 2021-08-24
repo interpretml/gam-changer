@@ -582,11 +582,7 @@ export const drawConfusionMatrix = (width, svgPadding, component, confusionMatri
       if (confusionMatrixData[k][i] === null) {
         curText = 'NA';
       } else {
-        curText = round(confusionMatrixData[k][i] * 100, 1);
-      }
-
-      if (g === 'current') {
-        curText = `${curText}%`;
+        curText = confusionMatrixData[k][i];
       }
 
       contentGroup.select(`.matrix-group-${k}`)

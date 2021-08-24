@@ -340,7 +340,7 @@
     svgWidth = svgHeight * (width / height);
 
     // Set svg viewBox (3:2 WH ratio)
-    // width = 490;
+    // width = 300;
     // height = 400;
     // svgWidth = svgHeight * (width / height);
     svgSelect.attr('viewBox', `0 0 ${width} ${height}`)

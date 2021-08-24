@@ -1,5 +1,6 @@
 <script>
   import d3 from '../utils/d3-import';
+  import { round } from '../utils/utils';
   import { onMount } from 'svelte';
   import { drawClassificationBarChart, drawConfusionMatrix, drawRegressionBarChart } from './draw-metric';
 
@@ -128,7 +129,14 @@
 
       const confusionMatrixIndexes = ['tn', 'fn', 'fp', 'tp'];
       confusionMatrixIndexes.forEach((d, i) => {
-        confusionMatrixData[d][index] = sidebarInfo.confusionMatrix[i] / total;
+        // Convert the count to percentage if total is above 10k
+        if (total > 10000) {
+          confusionMatrixData[d][index] = sidebarInfo.confusionMatrix[i] / total;
+          confusionMatrixData[d][index] = `${round(confusionMatrixData[d][index] * 100, 1)}%`;
+        } else {
+          // Use the raw count other wise
+          confusionMatrixData[d][index] = sidebarInfo.confusionMatrix[i];
+        }
       });
     }
   };
