@@ -23,6 +23,7 @@
   export let featureData = null;
   export let scoreRange = null;
   export let svgHeight = 400;
+  export let svgWidth = null;
   export let ebm = null;
   export let sidebarStore = null;
   export let footerStore = null;
@@ -46,13 +47,15 @@
   let width = 600;
   let height = 400;
 
-  // Real SVG width
-  let svgWidth = svgHeight * (width / height);
+  // If both svg width and height are given, we re-compute the Viewbox dimension
+  if (svgWidth !== null & svgHeight !== null) {
+    height = width / svgWidth * svgHeight;
+  }
 
   // Some constant lengths of different elements
   let yAxisWidth;
   let lineChartWidth;
-  const lineChartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
+  let lineChartHeight;
 
   // Some styles
   const colors = config.colors;
@@ -328,7 +331,7 @@
     // Set svg viewBox (3:2 WH ratio)
     // width = 750;
     // height = 400;
-    // svgWidth = svgHeight * (width / height);
+    svgWidth = svgHeight * (width / height);
 
     svgSelect.attr('viewBox', `0 0 ${width} ${height}`)
       .attr('preserveAspectRatio', 'xMinYMin meet')
@@ -342,14 +345,15 @@
       event.preventDefault();
     });
 
-    // Approximate the longest width of score (y-axis)
+    lineChartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
 
+    // Approximate the longest width of score (y-axis)
     // Normalize the Y axis by the global score range
     let yScale = d3.scaleLinear()
       .domain(scoreRange)
       .range([lineChartHeight, 0]);
 
-    let tempWidth = Math.max(30, approximateYAxisWidth(svg, yScale, defaultFont, true));
+    let tempWidth = Math.max(40, approximateYAxisWidth(svg, yScale, defaultFont, true));
     yAxisWidth = 18 + tempWidth / svgWidth * width;
 
     lineChartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;

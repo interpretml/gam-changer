@@ -19,7 +19,8 @@
   export let featureData = null;
   export let labelEncoder = null;
   export let scoreRange = null;
-  export let svgHeight = 400;
+  export let svgHeight = 500;
+  export let svgWidth = null;
   export let ebm = null;
   export let sidebarStore = null;
   export let footerStore = null;
@@ -42,6 +43,11 @@
   // Viewbox width and height
   let width = 600;
   let height = 400;
+
+  // If both svg width and height are given, we re-compute the Viewbox dimension
+  if (svgWidth !== null & svgHeight !== null) {
+    height = width / svgWidth * svgHeight;
+  }
 
   // Context menu info
   let multiMenuControlInfo = {
@@ -250,12 +256,6 @@
     footerActionStore.set('');
   });
 
-  // Real width (depends on the svgHeight prop)
-  let svgWidth = svgHeight * (width / height);
-
-  // Show some hidden elements for development
-  const showRuler = false;
-
   // Some styles
   const colors = config.colors;
   const defaultFont = config.defaultFont;
@@ -307,7 +307,9 @@
     return pathStr;
   };
 
-  onMount(() => {mounted = true;});
+  onMount(() => {
+    mounted = true;
+  });
 
   onDestroy(() => {
     sidebarStoreUnsubscribe();
@@ -356,7 +358,7 @@
       .domain(scoreRange)
       .range([chartHeight, 0]);
 
-    let tempWidth = Math.max(30, approximateYAxisWidth(svg, yScale, defaultFont, true));
+    let tempWidth = Math.max(40, approximateYAxisWidth(svg, yScale, defaultFont, true));
     const yAxisWidth = 18 + tempWidth / svgWidth * width;
 
     const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;

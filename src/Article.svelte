@@ -235,7 +235,10 @@
 
     {#key tab}
       <div class='gam-changer' in:fly={{ x: 2000, duration: 800 }} out:fly={{ x : -2000, duration: 800 }}>
-        <GAM modelName={tabNames[tab].modelName} sampleName={tabNames[tab].sampleName}/>
+        <GAM modelName={tabNames[tab].modelName}
+          sampleName={tabNames[tab].sampleName}
+          svgWidth={null}
+        />
       </div>
     {/key}
 
@@ -247,13 +250,13 @@
       </a>
 
       <a target="_blank" href="https://interpret.ml">
-        <div class="svg-icon icon-youtube" title="Open-source code">
+        <div class="svg-icon icon-youtube" title="Demo video">
         </div>
         <span>Video</span>
       </a>
 
       <a target="_blank" href="https://interpret.ml">
-        <div class="svg-icon icon-pdf" title="Open-source code">
+        <div class="svg-icon icon-pdf" title="Paper">
         </div>
         <span>Paper</span>
       </a>

@@ -16,7 +16,8 @@
   export let featureData = null;
   export let labelEncoder = null;
   export let scoreRange = null;
-  export let svgHeight = 400;
+  export let svgWidth = null;
+  export let svgHeight = 500;
 
   let svg = null;
   let component = null;
@@ -33,8 +34,10 @@
   let width = 600;
   let height = 400;
 
-  // Real width (depends on the svgHeight prop)
-  let svgWidth = svgHeight * (width / height);
+  // If both svg width and height are given, we re-compute the Viewbox dimension
+  if (svgWidth !== null & svgHeight !== null) {
+    height = width / svgWidth * svgHeight;
+  }
 
   // Show some hidden elements for development
   const showRuler = false;
@@ -125,7 +128,9 @@
     // Set svg viewBox (3:2 WH ratio)
     // width = 450;
     // height = 400;
-    // svgWidth = svgHeight * (width / height);
+
+    svgWidth = svgHeight * (width / height);
+
     svgSelect.attr('viewBox', `0 0 ${width} ${height}`)
       .attr('preserveAspectRatio', 'xMinYMin meet')
       .attr('width', svgWidth)
@@ -166,7 +171,7 @@
       .padding(config.scalePointPadding)
       .range([chartHeight, 0]);
 
-    let tempWidth = Math.max(30, approximateYAxisWidth(svg, yScale, defaultFont));
+    let tempWidth = Math.max(40, approximateYAxisWidth(svg, yScale, defaultFont));
     const yAxisWidth = 20 + tempWidth / svgWidth * width;
     
     const chartWidth = width - svgPadding.left - svgPadding.right - yAxisWidth;

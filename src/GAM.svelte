@@ -23,6 +23,8 @@
 
   export let modelName = null;
   export let sampleName = null;
+  export let svgWidth = null;
+  export let inNotebook = false;
 
   let data = null;
   let sampleData = null;
@@ -38,7 +40,10 @@
 
   // Some view size constants
   const svgHeight = 500;
-  const svgWidth = svgHeight / 2 * 3;
+  if (svgWidth === null) {
+    svgWidth = svgHeight / 2 * 3;
+  }
+
   const sidebarWidth = 250;
 
   const confusionMatrixData = {
@@ -470,6 +475,19 @@
   };
 
   /**
+   * Directly load the model data amd sample data (json string)
+  */
+  const initDataLoaded = (loadedModelData, loadedSampleData) => {
+    data = loadedModelData;
+    sampleData = loadedSampleData;
+   
+    console.log('Loaded inline data');
+
+    initGAMView();
+    initSidebar();
+  };
+
+  /**
    * Wrapper to call the child changer's handler
   */
   const selectModeSwitched = () => {
@@ -630,6 +648,21 @@
       () => footerActionTriggered('redo'),
       () => footerActionTriggered('selectAll')
     );
+
+    // If GAM-Changer is used in computation notebook, we only make the bottom
+    // corners round
+    if (inNotebook) {
+      d3.select(component)
+        .style('border-radius', 0)
+        .style('border-bottom-left-radius', '5px')
+        .style('border-bottom-right-radius', '5px');
+
+      // Listen to the iframe message events
+      document.addEventListener('gamchangerData', e => {
+        let data = e.data;
+        initDataLoaded(data.model, data.sample);
+      });
+    }
   });
 
 </script>
@@ -886,7 +919,8 @@
               footerStore = {footerStore}
               footerActionStore = {footerActionStore}
               historyStore = {historyStore}
-              svgHeight = 500
+              svgHeight = {500}
+              svgWidth = {svgWidth}
             />
           {/if}
 
@@ -900,7 +934,8 @@
               footerActionStore = {footerActionStore}
               historyStore = {historyStore}
               bind:ebm = {ebm}
-              svgHeight = 500
+              svgHeight = {500}
+              svgWidth = {svgWidth}
               bind:this = {changer}
             />
           {/if}
@@ -909,7 +944,8 @@
             <InterContContGlobalExplain
               featureData = {selectedFeature === null ? null : selectedFeature.data}
               scoreRange = {data === null ? null : data.scoreRange}
-              svgHeight = 500
+              svgHeight = {500}
+              svgWidth = {svgWidth}
               bind:this = {changer}
             />
           {/if}
@@ -919,7 +955,8 @@
               featureData = {selectedFeature === null ? null : selectedFeature.data}
               labelEncoder = {data === null ? null : data.labelEncoder}
               scoreRange = {data === null ? null : data.scoreRange}
-              svgHeight = 500
+              svgHeight = {500}
+              svgWidth = {svgWidth}
               chartType = 'bar'
               bind:this = {changer}
             />
@@ -930,7 +967,8 @@
               featureData = {selectedFeature === null ? null : selectedFeature.data}
               labelEncoder = {data === null ? null : data.labelEncoder}
               scoreRange = {data === null ? null : data.scoreRange}
-              svgHeight = 500
+              svgHeight = {500}
+              svgWidth = {svgWidth}
               bind:this = {changer}
             />
           {/if}
