@@ -1,18 +1,61 @@
 import numpy as np
 import pandas as pd
+import random
 import html
 import base64
 import pkgutil
 
+from IPython.display import display_html
 from copy import deepcopy
-from json import dump, load
+from json import dump, load, dumps
 
-def get_model_data(ebm):
+
+def _resort_categorical_level(col_mapping):
+    """
+    Resort the levels in the categorical encoders if all levels can be converted
+    to numbers (integer or float).
+    
+    Args:
+        col_mapping: the dictionary that maps level string to int
+    
+    Returns:
+        New col_mapping if all levels can be converted to numbers, otherwise
+        the original col_mapping
+    """
+
+    def is_number(string):
+      try:
+        float(string)
+        return True
+      except ValueError:
+        return False
+
+    if all(map(is_number, col_mapping.keys())):
+
+        key_tuples = [(k, float(k)) for k in col_mapping.keys()]
+        sorted_key_tuples = sorted(key_tuples, key=lambda x: x[1])
+
+        new_mapping = {}
+        value = 1
+
+        for t in sorted_key_tuples:
+            new_mapping[t[0]] = value
+            value += 1
+
+        return new_mapping
+
+    else:
+        return col_mapping
+
+
+def get_model_data(ebm, resort_categorical=False):
     """
     Get the model data for GAM Changer.
     Args:
         ebm: Trained EBM model. ExplainableBoostingClassifier or
             ExplainableBoostingRegressor object.
+        resort_categorical: Whether to sort the levels in categorical variable
+            by increasing order if all levels can be converted to numbers.
     Returns:
         A Python dictionary of model data
     """
@@ -126,6 +169,11 @@ def get_model_data(ebm):
             elif cur_feature['type'] == 'categorical':
                 # Get the level value mapping
                 level_str_to_int = ebm.preprocessor_.col_mapping_[cur_id]
+
+                if resort_categorical:
+                    level_str_to_int = _resort_categorical_level(
+                        level_str_to_int)
+
                 cur_feature['binLabel'] = list(map(lambda x: level_str_to_int[x],
                                                ebm.preprocessor_._get_bin_labels(cur_id)))
 
@@ -138,8 +186,30 @@ def get_model_data(ebm):
                     ebm.preprocessor_._get_hist_counts(cur_id), 4
                 ).tolist()
 
+                if resort_categorical:
+                    cur_bin_info = list(zip(
+                        cur_feature['binLabel'],
+                        cur_feature['additive'],
+                        cur_feature['error'],
+                        cur_feature['count'],
+                    ))
+                    cur_bin_info = sorted(cur_bin_info, key=lambda x: x[0])
+
+                    cur_feature['binLabel'] = [k[0] for k in cur_bin_info]
+                    cur_feature['additive'] = [k[1] for k in cur_bin_info]
+                    cur_feature['error'] = [k[2] for k in cur_bin_info]
+                    cur_feature['count'] = [k[3] for k in cur_bin_info]
+
+                    cur_hist_info = list(
+                        zip(cur_feature['histEdge'], cur_feature['histCount']))
+                    cur_hist_info = sorted(cur_hist_info, key=lambda x: x[0])
+
+                    cur_feature['histEdge'] = [k[0] for k in cur_hist_info]
+                    cur_feature['histCount'] = [k[1] for k in cur_hist_info]
+
                 # Add the label encoding information
-                labelEncoder[cur_feature['name']] = {i: s for s, i in level_str_to_int.items()}
+                labelEncoder[cur_feature['name']] = {
+                    i: s for s, i in level_str_to_int.items()}
 
         features.append(cur_feature)
 
@@ -152,11 +222,11 @@ def get_model_data(ebm):
         'labelEncoder': labelEncoder,
         'scoreRange': score_range
     }
-    
+
     return data
 
 
-def get_sample_data(ebm, x_test, y_test):
+def get_sample_data(ebm, x_test, y_test, resort_categorical=False):
     """
     Get the sample data for GAM Changer.
     Args:
@@ -164,7 +234,9 @@ def get_sample_data(ebm, x_test, y_test):
             ExplainableBoostingRegressor object.
         x_test: Sample features. 2D np.ndarray or pd.DataFrame with dimension [n, k]:
             n samples and k features.
-        x_test: Sample labels. 1D np.ndarray or pd.Series with size = n samples.
+        y_test: Sample labels. 1D np.ndarray or pd.Series with size = n samples.
+        resort_categorical: Whether to sort the levels in categorical variable
+            by increasing order if all levels can be converted to numbers.
     Returns:
         A Python dictionary of sample data.
     """
@@ -195,6 +267,9 @@ def get_sample_data(ebm, x_test, y_test):
     for i in range(len(feature_types)):
         if (feature_types[i] == 'categorical'):
             level_str_to_int = ebm.preprocessor_.col_mapping_[i]
+
+            if resort_categorical:
+                level_str_to_int = _resort_categorical_level(level_str_to_int)
 
             def get_level_int(x):
 
@@ -368,10 +443,25 @@ def get_edited_model(ebm, gamchanger_export):
     return ebm_copy
 
 
-def make_html():
+def _make_html(ebm, x_test, y_test, resort_categorical):
     """
     Function to create an HTML string to bundle GAM Changer's html, css, and js.
     We use base64 to encode the js so that we can use inline defer for <script>
+
+    We add another script to pass Python data as inline json, and dispatch an
+    event to transfer the data
+
+    Args:
+        ebm: Trained EBM model. ExplainableBoostingClassifier or
+            ExplainableBoostingRegressor object.
+        x_test: Sample features. 2D np.ndarray or pd.DataFrame with dimension [n, k]:
+            n samples and k features.
+        y_test: Sample labels. 1D np.ndarray or pd.Series with size = n samples.
+        resort_categorical: Whether to sort the levels in categorical variable
+            by increasing order if all levels can be converted to numbers.
+
+    Return:
+        HTML code with deferred JS code in base64 format
     """
     # HTML template for GAM Changer widget
     html_top = '''<!DOCTYPE html><html lang="en"><head><meta charset='utf-8'><meta name='viewport' content='width = device-width, initial-scale = 1'><title>GAM Changer</title><style>html,body{position:relative;width:100%;height:100%}body{color:#333;margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif}a{color:rgb(0,100,200);text-decoration:none}a:hover{text-decoration:underline}a:visited{color:rgb(0,80,160)}label{display:block}input,button,select,textarea{font-family:inherit;font-size:inherit;-webkit-padding:0.4em 0;padding:0.4em;margin:0 0 0.5em 0;box-sizing:border-box;border:1px solid #ccc;border-radius:2px}input:disabled{color:#ccc}</style>'''
@@ -384,9 +474,70 @@ def make_html():
     # Encode the JS & CSS with base 64
     js_base64 = base64.b64encode(js_string).decode('utf-8')
 
+    # Generate the model and sample data
+    model_data = get_model_data(ebm, resort_categorical=resort_categorical)
+
+    if x_test is not None and y_test is not None:
+        sample_data = get_sample_data(
+            ebm, x_test, y_test, resort_categorical=resort_categorical)
+    else:
+        sample_data = None
+
+    data_json = dumps({'model': model_data, 'sample': sample_data})
+
+    # Pass the data to GAM Changer using message event
+
+    # Pass data into JS by using another script to dispatch event
+    messenger_js = '''
+        (function() {{
+            let data = {data};
+            let event = new Event('gamchangerData');
+            event.data = data;
+            console.log('before');
+            console.log(data);
+            document.dispatchEvent(event);
+        }}())
+    '''.format(data=data_json)
+    messenger_js = messenger_js.encode()
+    messenger_js_base64 = base64.b64encode(messenger_js).decode('utf-8')
+
     # Inject the JS to the html template
     html_str = html_top + \
         '''<script defer src='data:text/javascript;base64,{}'></script>'''.format(js_base64) + \
+        '''<script defer src='data:text/javascript;base64,{}'></script>'''.format(messenger_js_base64) + \
         html_bottom
 
     return html.escape(html_str)
+
+
+def visualize(ebm, x_test=None, y_test=None, resort_categorical=False):
+    """
+    Render GAM Changer in the output cell.
+
+    Args:
+        ebm: Trained EBM model. ExplainableBoostingClassifier or
+            ExplainableBoostingRegressor object.
+        x_test: Sample features. 2D np.ndarray or pd.DataFrame with dimension [n, k]:
+            n samples and k features.
+        y_test: Sample labels. 1D np.ndarray or pd.Series with size = n samples.
+        resort_categorical: Whether to sort the levels in categorical variable
+            by increasing order if all levels can be converted to numbers.
+    """
+    html_str = _make_html(ebm, x_test, y_test, resort_categorical)
+
+    # Randomly generate an ID for the iframe to avoid collision
+    iframe_id = 'gam-changer-iframe-' + str(int(random.random() * 1e8))
+
+
+    iframe = '''
+    <iframe
+        srcdoc="{}"
+        frameBorder="0"
+        width="100%"
+        height="645px"
+        id="{}">
+    </iframe>
+    '''.format(html_str, iframe_id)
+
+    # Display the iframe
+    display_html(iframe, raw=True)
