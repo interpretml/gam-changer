@@ -6,7 +6,7 @@ import preprocess from 'svelte-preprocess';
 import inlineSvg from 'rollup-plugin-inline-svg';
 
 export default {
-  input: 'src/main.js',
+  input: 'src/main-widget.js',
   output: {
     sourcemap: false,
     format: 'umd',

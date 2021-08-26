@@ -329,6 +329,7 @@
     // width = 750;
     // height = 400;
     // svgWidth = svgHeight * (width / height);
+
     svgSelect.attr('viewBox', `0 0 ${width} ${height}`)
       .attr('preserveAspectRatio', 'xMinYMin meet')
       .attr('width', svgWidth)

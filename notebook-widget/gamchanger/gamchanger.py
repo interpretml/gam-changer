@@ -1,5 +1,8 @@
 import numpy as np
 import pandas as pd
+import html
+import base64
+import pkgutil
 
 from copy import deepcopy
 from json import dump, load
@@ -363,3 +366,27 @@ def get_edited_model(ebm, gamchanger_export):
             raise ValueError('Encounter unknown feature type {}'.format(feature_name_to_type[cur_name]))
 
     return ebm_copy
+
+
+def make_html():
+    """
+    Function to create an HTML string to bundle GAM Changer's html, css, and js.
+    We use base64 to encode the js so that we can use inline defer for <script>
+    """
+    # HTML template for GAM Changer widget
+    html_top = '''<!DOCTYPE html><html lang="en"><head><meta charset='utf-8'><meta name='viewport' content='width = device-width, initial-scale = 1'><title>GAM Changer</title><style>html,body{position:relative;width:100%;height:100%}body{color:#333;margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif}a{color:rgb(0,100,200);text-decoration:none}a:hover{text-decoration:underline}a:visited{color:rgb(0,80,160)}label{display:block}input,button,select,textarea{font-family:inherit;font-size:inherit;-webkit-padding:0.4em 0;padding:0.4em;margin:0 0 0.5em 0;box-sizing:border-box;border:1px solid #ccc;border-radius:2px}input:disabled{color:#ccc}</style>'''
+    html_bottom = '''</head><body></body></html>'''
+
+    # Read the bundled JS file
+    js_string = pkgutil.get_data(__name__, 'gamchanger.js')
+    # js_b = bytes(js_string, encoding='utf-8')
+
+    # Encode the JS & CSS with base 64
+    js_base64 = base64.b64encode(js_string).decode('utf-8')
+
+    # Inject the JS to the html template
+    html_str = html_top + \
+        '''<script defer src='data:text/javascript;base64,{}'></script>'''.format(js_base64) + \
+        html_bottom
+
+    return html.escape(html_str)
