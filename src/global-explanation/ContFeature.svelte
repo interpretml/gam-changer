@@ -530,9 +530,9 @@
     const xAxisGroupHeight = xAxisGroup.node().getBoundingClientRect().height / svgHeight * height;
 
     xAxisGroup.append('g')
-      .attr('class', 'x-axis-text')
       .attr('transform', `translate(${lineChartWidth / 2}, ${xAxisGroupHeight + 5})`)
       .append('text')
+      .attr('class', 'x-axis-text')
       .text(featureData.name)
       .style('fill', 'black');
     

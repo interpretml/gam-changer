@@ -88,7 +88,7 @@ onMount(() => {
   .page {
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: flex-start;
     padding-top: 10px;
   }
 

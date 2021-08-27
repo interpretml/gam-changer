@@ -184,7 +184,9 @@
     svgSelect.attr('viewBox', `0 0 ${width} ${height}`)
       .attr('preserveAspectRatio', 'xMinYMin meet')
       .attr('width', svgWidth)
-      .attr('height', svgHeight);
+      .attr('height', svgHeight)
+      // WebKit bug workaround (see https://bugs.webkit.org/show_bug.cgi?id=226683)
+      .on('wheel', () => {});
 
     // Draw a border for the svg
     svgSelect.append('rect')

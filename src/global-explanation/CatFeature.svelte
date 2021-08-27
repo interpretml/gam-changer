@@ -348,7 +348,9 @@
     svgSelect.attr('viewBox', `0 0 ${width} ${height}`)
       .attr('preserveAspectRatio', 'xMinYMin meet')
       .attr('width', svgWidth)
-      .attr('height', svgHeight);
+      .attr('height', svgHeight)
+      // WebKit bug workaround (see https://bugs.webkit.org/show_bug.cgi?id=226683)
+      .on('wheel', () => {});
 
     // Some constant lengths of different elements
     const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
@@ -577,9 +579,9 @@
     const xAxisGroupHeight = xAxisGroup.node().getBoundingClientRect().height / svgHeight * height;
 
     xAxisGroup.append('g')
-      .attr('class', 'x-axis-text')
       .attr('transform', `translate(${chartWidth / 2}, ${Math.min(densityHeight - 15, xAxisGroupHeight + 5)})`)
       .append('text')
+      .attr('class', 'x-axis-text')
       .text(featureData.name)
       .style('fill', 'black');
     
