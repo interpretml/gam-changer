@@ -366,7 +366,6 @@ def _overwrite_bin_definition(ebm, index_id, new_bins, new_scores):
         new_bins[1:]).astype(np.float64)
 
 
-
 def get_edited_model(ebm, gamchanger_export):
     """
     Return a copy of ebm that is modified based on the edits from GAM Changer.
@@ -389,6 +388,9 @@ def get_edited_model(ebm, gamchanger_export):
 
     # Keep track which feature has been updated in ebm_copy
     updated_features = set()
+
+    # Use the ebm's mapping to map level name to bin index
+    ebm_col_mpaaing = ebm_copy.pair_preprocessor_.col_mapping_
 
     # We iterate through the history list from the newest edit to the oldes edit
     # For each modified feature, we overwrite the bin definitions/scores on an EBM
@@ -434,11 +436,36 @@ def get_edited_model(ebm, gamchanger_export):
             updated_features.add(cur_name)
 
         elif feature_name_to_type[cur_name] == 'categorical':
-            pass
+            # Get the current level mapping
+            cur_mapping = ebm_col_mpaaing[cur_index]
+
+            # Collect bin edges and scores
+            bin_data = cur_history['state']['pointData']
+            bin_edges, bin_scores = [], []
+
+            for k in bin_data:
+                point = bin_data[k]
+                bin_edges.append(point['x'])
+                bin_scores.append(point['y'])
+
+            assert(len(bin_edges) == len(bin_scores))
+
+            # Update the additive term
+            for j in range(len(bin_edges)):
+                cur_score = bin_scores[j]
+                cur_bin_index = cur_mapping[bin_edges[j]]
+
+                if round(ebm_copy.additive_terms_[cur_index][cur_bin_index], 4) != cur_score:
+                    ebm_copy.additive_terms_[
+                        cur_index][cur_bin_index] = cur_score
+
+            updated_features.add(cur_name)
+
         elif feature_name_to_type[cur_name] == 'interaction':
             pass
         else:
-            raise ValueError('Encounter unknown feature type {}'.format(feature_name_to_type[cur_name]))
+            raise ValueError('Encounter unknown feature type {}'.format(
+                feature_name_to_type[cur_name]))
 
     return ebm_copy
 
