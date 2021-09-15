@@ -105,3 +105,4 @@ ENV/
 .vscode/
 
 gamchanger.js
+publish-pip.sh

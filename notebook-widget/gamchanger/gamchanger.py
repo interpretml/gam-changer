@@ -510,11 +510,10 @@ def _make_html(ebm, x_test, y_test, resort_categorical):
     else:
         sample_data = None
 
+    # Pass the data to GAM Changer using message event
     data_json = dumps({'model': model_data, 'sample': sample_data})
 
-    # Pass the data to GAM Changer using message event
-
-    # Pass data into JS by using another script to dispatch event
+    # Pass data into JS by using another script to dispatch an event
     messenger_js = '''
         (function() {{
             let data = {data};
@@ -555,15 +554,14 @@ def visualize(ebm, x_test=None, y_test=None, resort_categorical=False):
     # Randomly generate an ID for the iframe to avoid collision
     iframe_id = 'gam-changer-iframe-' + str(int(random.random() * 1e8))
 
-
     iframe = '''
-    <iframe
-        srcdoc="{}"
-        frameBorder="0"
-        width="100%"
-        height="645px"
-        id="{}">
-    </iframe>
+        <iframe
+            srcdoc="{}"
+            frameBorder="0"
+            width="100%"
+            height="645px"
+            id="{}">
+        </iframe>
     '''.format(html_str, iframe_id)
 
     # Display the iframe
