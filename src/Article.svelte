@@ -1,3 +1,7 @@
+<svelte:head>
+  <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</svelte:head>
+
 <script>
   import d3 from './utils/d3-import';
   import { onMount } from 'svelte';
@@ -11,6 +15,12 @@
   import pdfIconSVG from './img/pdf-icon.svg';
 
   import { tooltipConfigStore } from './store';
+
+  // Define inline math
+  const math1 = '\\(x \\in \\mathbb{R}^{N\\times D} \\)';
+  const math2 = '\\(y \\in \\mathbb{R}^{N} \\)';
+  const math3 = '$$g \\left(y \\right) = f_0 + \\sum_{j=1}^{D} f_j \\left(x_j \\right)$$';
+  const math4 = '\\( \\sum f_{ij}\\left(x_i ,x_j\\right)\\)';
 
   let component = null;
 
@@ -75,6 +85,7 @@
 <style type='text/scss'>
 
   @import 'define';
+  @import 'article';
   
   .page {
     display: flex;
@@ -84,9 +95,9 @@
   .top {
     position: relative;
     display: grid;
-    height: min(850px, calc(100vh - 5px));
+    height: min(800px, calc(100vh - 5px));
     grid-template-columns: [start] 1fr [mid-start] auto [mid-end] 1fr [end];
-    grid-template-rows: [start] 1fr [content-start] auto [content-end] 1fr [end];
+    grid-template-rows: [start] 3fr [content-start] auto [content-end] 2fr [end];
   }
 
   .top-fill {
@@ -294,11 +305,32 @@
 
 
 
-  <!-- <div class='content'>
+  <div class='article'>
 
-    <h1>What is GAM Changer?</h1>
+  <h2 id="what-is-gam-changer">What is <span class='tool-text'>GAM Changer</span>?</h2>
+    <p>Machine Learning (ML) researchers have developed many techniques to make ML models interpretable.
+      However, it is unclear how we can use interpretability to improve ML models.
+      GAM Changer is an interactive tool that turns interpretability into actions—it empowers domain experts and data scientists
+      to easily and responsibly edit the weights of Generalized Additive Models (GAMs), the state-of-the-art interpretable ML model
+      for tabular data. With GAM Changer, you can align model behaviors with your domain knowledge and values.</p>
 
-  </div> -->
-  
+    <p>Don’t worry if you are not familiar with GAMs.
+      They have emerged as one of the most popular model classes among today’s data science community.
+      GAMs’ predictive performance is on par with more complex, state-of-the-art models, yet GAMs remain simple enough for humans to understand its decision process.
+      Given an input {math1} and a target {math2}, a GAM with a link function \(g\) and shape function \(f_j\) for each feature \(j\) can be written as:
+    </p>
+    {math3}
+
+    <p>
+      The link function is determined by the task. For example, in binary classification, \(g\) is logit.
+      In the equation above, \(f_0\) represents the intercept constant.
+      There are many options for the shape functions \(f_j\), such as spline, gradient-boosted tree, and neural network.
+      Some GAMs also support pair-wise interaction terms {math4}.
+      Different GAM variants come with different training methods, but once trained, they all have the same form.
+      The interpretability of GAMs stems from the fact that people can visualize and modify each individual feature \(j\)’s
+      contribution to the model’s prediction by inspecting and adjusting the shape function \(f_j\).
+      Since GAMs are additive, one can edit the functions expressing the impact of distinct features independently.
+    </p>
+  </div>
 
 </div>

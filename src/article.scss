@@ -1,0 +1,137 @@
+@import 'define';
+
+.article {
+  margin-bottom: 60px;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 78ch;
+}
+
+.article h2 {
+  color: #444;
+  font-size: 40px;
+  font-weight: 450;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #eaecef;
+}
+
+.article h4 {
+  color: #444;
+  font-size: 32px;
+  font-weight: 450;
+  margin-bottom: 8px;
+  margin-top: 44px;
+}
+
+.article h6 {
+  color: #444;
+  font-size: 24px;
+  font-weight: 450;
+  margin-bottom: 8px;
+  margin-top: 44px;
+}
+
+.article p {
+  margin: 16px 0;
+}
+
+.article p img {
+  vertical-align: middle;
+}
+
+.article .figure-caption {
+  font-size: 13px;
+  margin-top: 5px;
+}
+
+// .article a {
+//   color: #253D71;
+// }
+
+.article ol {
+  margin-left: 40px;
+}
+
+.article p,
+.article div,
+.article li {
+  color: #555;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.article small {
+  font-size: 12px;
+}
+
+.article ol li img {
+  vertical-align: middle;
+}
+
+.article .video-link {
+  color: #3273DC;
+  cursor: pointer;
+  font-weight: normal;
+  text-decoration: none;
+}
+
+.article ul {
+  list-style-type: disc;
+  margin-top: -10px;
+  margin-left: 40px;
+  margin-bottom: 15px;
+}
+
+.article a:hover,
+.article .video-link:hover {
+  text-decoration: underline;
+}
+
+.figure,
+.video {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tool-text {
+  color: $blue-dark;
+  font-weight: 600;
+}
+
+.paper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 30px;
+}
+
+.paper-image {
+  height: 100%;
+  border-radius: 5px;
+  border: 2px solid hsla(0, 0%, 90%);
+  margin-right: 15px;
+
+  img {
+    height: 110px;
+  }
+
+  &:hover {
+    box-shadow: 2px 2px 3px hsla(0, 0%, 0%, 0.1);
+  }
+}
+
+.paper-info__title {
+  font-weight: 500;
+
+  a {
+    color: #444;
+  }
+}
+
+.paper-info {
+  display: flex;
+  flex-direction: column;
+}
