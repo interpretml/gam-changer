@@ -307,7 +307,7 @@
 
   <div class='article'>
 
-  <h2 id="what-is-gam-changer">What is <span class='tool-text'>GAM Changer</span>?</h2>
+    <h2 id="what-is-gam-changer">What is <span class='tool-text'>GAM Changer</span>?</h2>
     <p>Machine Learning (ML) researchers have developed many techniques to make ML models interpretable.
       However, it is unclear how we can use interpretability to improve ML models.
       GAM Changer is an interactive tool that turns interpretability into actions—it empowers domain experts and data scientists
@@ -315,7 +315,7 @@
       for tabular data. With GAM Changer, you can align model behaviors with your domain knowledge and values.</p>
 
     <p>Don’t worry if you are not familiar with GAMs.
-      They have emerged as one of the most popular model classes among today’s data science community.
+      These models have emerged as one of the most popular model classes among today’s data science community.
       GAMs’ predictive performance is on par with more complex, state-of-the-art models, yet GAMs remain simple enough for humans to understand its decision process.
       Given an input {math1} and a target {math2}, a GAM with a link function \(g\) and shape function \(f_j\) for each feature \(j\) can be written as:
     </p>
@@ -331,6 +331,96 @@
       contribution to the model’s prediction by inspecting and adjusting the shape function \(f_j\).
       Since GAMs are additive, one can edit the functions expressing the impact of distinct features independently.
     </p>
+
+
+    <h2 id="why-do-i-want-to-change-gams">Why do I Want to Change GAMs?</h2>
+
+    <p>&quot;All models are wrong, and some are harmful&quot; is a modern realization of George Box’s <a href="https://en.wikipedia.org/wiki/All_models_are_wrong">famous quote</a>.
+      This is particularly true for ML-powered systems in high-stake domains (e.g., healthcare, finance, and criminal justice),
+      as a simple mistake can lead to catastrophic impacts on countless individuals.
+      These model mistakes can be caused by human label error, questionable training data, or even the training stochasticity.
+      With interpretable ML models, we see many models exploit problematic patterns in the training data to make predictions.
+    </p>
+    <p>
+      Here is an example where domain experts want to fix their GAMs.
+      Doctors have trained an EBM model to predict the risk of dying from pneumonia.
+      The model uses continuous (e.g., <code>age</code>), categorical (e.g., <code>having asthma</code>) features, and their pair-wise interaction terms from a dataset collected in a US hospital.
+      The model’s prediction pattern on the feature <code>age</code> is visualized in Figure 1.
+    </p>
+
+    <p>The shape function visualization shows that the model predicts younger patients to have lower risk, and the risk increases when patients grow older.
+      However, the predicted risk suddenly plunges when the age passes 100—leading to a similar risk score as if the patient is 30 years younger!
+      One hypothesis to explain this dangerous pattern is that it might be due to outliers in this age range, especially the range has a small sample size.
+      To identify the true impact of age on pneumonia risk, additional causal experiments and analysis are needed.
+      Without robust evidence that people over 100 are truly at lower risk, doctors might fear that they may be injuring patients by depriving needy older people of care,
+      and violating their primary obligation to <strong>do no harm</strong>.
+      Therefore, some doctors would like to manually set the risk of older patients to be equal to that of their slightly younger neighbors.
+    </p>
+    <p>Interpretability helps us discover model errors like the sudden drop of predicted risk of older patients, however,
+      it is yet unclear how we can fix these dangerous patterns.
+      GAM Changer aims to address this practical challenge.
+      With this tool, you can easily <em>investigate</em>, <em>validate</em>, and <em>align</em> GAM behaviors with your domain knowledge
+      and values through interactively editing model parameters.
+    </p>
+
+    <h2 id="how-to-use-gam-changer">How to Use GAM Changer?</h2>
+    <h4 id="quick-start">Quick Start</h4>
+    <p>There are two ways to use GAM Changer to edit a trained EBM model.
+      The first option is to select &quot;My Model&quot; on the top of this page, and upload your model and sample data by dragging them to the interface.
+      You can follow <a href="https://gist.github.com/xiaohk/875b5374840c66689eb42a4b8820c3b5">this instruction</a> to export EBM models.
+      Alternatively, you can directly use GAM Changer in any computational notebooks (e.g., Jupyter Notebook/Lab, Google Colab).
+      You can follow the steps in this <a href="https://colab.research.google.com/drive/1OgAVZKqs2VwmY13QuOjCxlOEyexsYjtm?usp=sharing">example notebook</a>.
+    </p>
+
+    <h4 id="gam-canvas">GAM Canvas</h4>
+    <p>The GAM Canvas (Figure 2) is the primary view of GAM Changer.
+      It is visualizes one input feature’s contribution to the model’s prediction by plotting its shape function.
+      As a GAM’s inference varies by feature type, we apply different visualization designs for different feature types.
+      You can use the feature selection drop-down to switch features. At start, GAM Changer chooses the feature with the highest importance score for you.
+    </p>
+    <p>In the <em>Move Mode</em>, you can pan and zoom to inspect the graphs. To edit the model, you can switch to <em>Selection Mode</em> and select bins you want to change by drawing a bounding box around them.
+      Then, the <em>Context Toolbar</em> will appear, where you can apply different preset editing tools.
+      For example, with the <em>Move</em> tool, you can drag the selected bins up and down to change their contribution scores.
+      With the interpolation tool, you can (1) geometrically interpolate between two extreme points, (2) fit a mini-regression, or (3) use an arbitrary number of points to connect two extreme points (either geometric interpolation or regression).
+    </p>
+
+    <h4 id="metric-panel">Metric Panel</h4>
+    <p>Model editing empowers domain experts and data scientists to exercise human agency, but <em>demands caution</em>.
+      Changing an ML model can have serious consequences—you should only edit the model when you are confident that it would improve the model.
+      Fortunately, GAMs are glass-box models, so we can figure out the effect of model changes. To help you keep track of the editing effect on the model performance over the sample dataset, we have developed the <em>Metric Panel</em> (figure).
+      In real-time, it visualizes the model performance metrics of the original model, last version, and the current version. You can also choose different metric scopes to focus on the selected bins or a slice of dataset (e.g., houses in certain neighborhoods).
+    </p>
+
+    <h4 id="feature-panel">Feature Panel</h4>
+    <p>Besides model performance, we also hope you to be mindful about fairness issues during model editing;
+      some edits can disproportionally affect certain sub-groups in the dataset. For example, in a house price prediction model, editing model behaviors with high-quality houses is more likely to affect houses built in recent years.
+      In healthcare, model edits made for older patients tend to affect women more than men. To help you be aware of the characteristics of samples that are affected by your edits, we have developed the <strong>Feature Panel</strong>.
+      Every time you select an editing region on the <em>GAM Canvas</em>, the <strong>Feature Panel</strong> automatically identifies other correlated features (both continuous and categorical) and sort them based on correlations.
+      It also visualizes the distribution of the affected samples vs. the all samples in the dataset.
+    </p>
+
+    <h4 id="history-panel">History Panel</h4>
+    <p>We hope the <strong>Metric Panel</strong> and <strong>Feature Panel</strong> can help you identify and envision potential consequences of your edits, so that you can make responsible edits.
+      But don’t worry if you have accidentally made a mistake! You can always click the <em>Undo</em> and <em>Redo</em> buttons to undo and redo any edits!
+      You can also use keyboard shortcuts <kbd>command</kbd> (or <kbd>control</kbd> on Windows) + <kbd>z</kbd> and <kbd>command</kbd> + <kbd>shift</kbd> + <kbd>z</kbd>.
+    </p>
+    <p>GAM Changer keeps track of all the edits you have made, and it organizes them as a timeline in the <strong>History Panel</strong>.
+      You can also see the timestamp, feature type, feature name, and an automatically generated description of every edit.
+      By clicking the <em>Check out</em> button, you can preview the model from a previous version.
+      We encourage you to document all edits by typing in the text box. You can write the motivations and contexts of your edits;
+      they will become very helpful when you review edits in the future! Finally, before saving the model (by clicking the <em>Save</em> button on the bottom right), GAM Changer forces you to review and confirm all edits by clicking the <em>Thumb-up</em> buttons.
+      GAM Changer also saves the entire editing history and descriptions so that you can review or continue editing in the future. Again, we hope it can help you make accountable and transparent edits!
+    </p>
+
+    <h2 id="video-tutorial">Video Tutorial</h2>
+
+    <h2 id="how-is-gam-changer-developed">How is <span class='tool-text'>GAM Changer</span> Developed?</h2>
+    <p>GAM Changer uses <a href="https://webassembly.org">WebAssembly</a>, a modern web technology to accelerate in-browser computation.
+      It enables GAM Changer to run a <em>live EBM model</em> along with <em>isotonic regression</em> and <em>correlation computations</em> directly <strong>in your browser</strong>!
+      In other words, the entire app runs locally and privately, and your model and data would not leave your machine.
+      The interactive system is written in Javascript using <a href="https://svelte.dev">Svelte</a> as a framework and <a href="https://d3js.org">D3.js</a> for visualizations.
+    </p>
+
   </div>
 
 </div>
