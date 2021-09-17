@@ -17,10 +17,15 @@
   import { tooltipConfigStore } from './store';
 
   // Define inline math
-  const math1 = '\\(x \\in \\mathbb{R}^{N\\times D} \\)';
-  const math2 = '\\(y \\in \\mathbb{R}^{N} \\)';
-  const math3 = '$$g \\left(y \\right) = f_0 + \\sum_{j=1}^{D} f_j \\left(x_j \\right)$$';
-  const math4 = '\\( \\sum f_{ij}\\left(x_i ,x_j\\right)\\)';
+  const math1 = '\\( \\textcolor{hsl(24, 95%, 59%)}{x \\in \\mathbb{R}^{M}} \\)';
+  const math2 = '\\( \\textcolor{hsl(148, 71%, 44%)}{y \\in \\mathbb{R}} \\)';
+  const math3 = '$$ \\textcolor{hsl(265, 57%, 57%)}{g \\left( \\textcolor{hsl(148, 71%, 44%)}{y} \\right)} = \\textcolor{hsl(213, 28%, 41%)}{\\beta_0} + \\textcolor{hsl(206, 100%, 45%)}{f_1 \\left( \\textcolor{hsl(24, 95%, 59%)}{x_1} \\right)} + \\textcolor{hsl(206, 100%, 45%)}{f_2 \\left( \\textcolor{hsl(24, 95%, 59%)}{x_2} \\right)} + \\cdots + \\textcolor{hsl(206, 100%, 45%)}{f_M \\left( \\textcolor{hsl(24, 95%, 59%)}{x_M} \\right)} $$';
+  const math4 = '\\( \\textcolor{hsl(206, 100%, 45%)}{f_{ij}\\left( \\textcolor{hsl(24, 95%, 59%)}{x_i ,x_j} \\right) }\\)';
+  const math5 = '\\( \\textcolor{hsl(265, 57%, 57%)}{g} \\)';
+  const math6 = '\\( \\textcolor{hsl(206, 100%, 45%)}{f_j} \\)';
+  const math7 = '\\( \\textcolor{hsl(213, 28%, 41%)}{\\beta_0} \\)';
+  const math8 = '\\( \\textcolor{hsl(24, 95%, 59%)}{x_j} \\)';
+  const math9 = '\\( \\textcolor{hsl(206, 100%, 45%)}{f_{ij}\\left( \\textcolor{hsl(24, 95%, 59%)}{x_i} \\right) }\\)';
 
   let component = null;
 
@@ -78,6 +83,8 @@
 
   onMount(() => {
     bindInlineSVG();
+    d3.select('html')
+      .style('scroll-behavior', 'smooth');
   });
 
 </script>
@@ -228,7 +235,7 @@
 <div class='page' bind:this={component}>
   <Tooltip bind:this={tooltip}/>
 
-  <div class='top'>
+  <div class='top' id='top'>
 
     <div class='top-fill'>
 
@@ -317,19 +324,24 @@
     <p>Don’t worry if you are not familiar with GAMs.
       These models have emerged as one of the most popular model classes among today’s data science community.
       GAMs’ predictive performance is on par with more complex, state-of-the-art models, yet GAMs remain simple enough for humans to understand its decision process.
-      Given an input {math1} and a target {math2}, a GAM with a link function \(g\) and shape function \(f_j\) for each feature \(j\) can be written as:
+      Given an <span style='color: hsl(24, 95%, 59%)'>input</span> {math1} and a <span style='color: hsl(148, 71%, 44%)'>target</span> {math2},
+      a GAM with a <span style='color: hsl(265, 57%, 57%)'>link function</span> {math5} and <span style='color: hsl(206, 100%, 45%)'>shape function</span> {math6} for each feature \(j\) can be written as:
     </p>
     {math3}
 
     <p>
-      The link function is determined by the task. For example, in binary classification, \(g\) is logit.
-      In the equation above, \(f_0\) represents the intercept constant.
-      There are many options for the shape functions \(f_j\), such as spline, gradient-boosted tree, and neural network.
+      The <span style='color: hsl(265, 57%, 57%)'>link function</span> {math5} is determined by the task. For example, in binary classification, {math5} is <span style='color: hsl(265, 57%, 57%)'>logit</span>.
+      In the equation above, {math7} represents the <span style='color: hsl(213, 28%, 41%)'>intercept constant</span>.
+      There are many options for the <span style='color: hsl(206, 100%, 45%)'>shape functions</span> {math6},
+      such as <a href='https://www.routledge.com/Generalized-Additive-Models/Hastie-Tibshirani/p/book/9780412343902'><span style=''>splines</span></a>,
+      <a href='https://dl.acm.org/doi/10.1145/2783258.2788613'><span style=''>gradient-boosted trees</span></a>,
+      and <a href='https://arxiv.org/abs/2004.13912'><span style=''>neural networks</span></a>.
       Some GAMs also support pair-wise interaction terms {math4}.
       Different GAM variants come with different training methods, but once trained, they all have the same form.
-      The interpretability of GAMs stems from the fact that people can visualize and modify each individual feature \(j\)’s
-      contribution to the model’s prediction by inspecting and adjusting the shape function \(f_j\).
-      Since GAMs are additive, one can edit the functions expressing the impact of distinct features independently.
+      The interpretability and editability of GAMs stems from the fact that people can visualize and modify each individual feature {math8}'s
+      contribution score to the model’s prediction by inspecting and adjusting the <span style='color: hsl(206, 100%, 45%)'>shape functions</span> {math6}.
+      The contribution score is measured by the output of {math9}.
+      Since GAMs are additive, we can edit different <span style='color: hsl(206, 100%, 45%)'>shape functions</span> independently.
     </p>
 
 
@@ -343,10 +355,19 @@
     </p>
     <p>
       Here is an example where domain experts want to fix their GAMs.
-      Doctors have trained an EBM model to predict the risk of dying from pneumonia.
+      Doctors have trained an <a href="https://github.com/interpretml/interpret">Explainable Boosting Machine (EBM)</a> model, a tree-based GAM, to predict the risk of dying from pneumonia.
       The model uses continuous (e.g., <code>age</code>), categorical (e.g., <code>having asthma</code>) features, and their pair-wise interaction terms from a dataset collected in a US hospital.
       The model’s prediction pattern on the feature <code>age</code> is visualized in Figure 1.
     </p>
+
+    <div class="figure">
+      <img src="https://i.imgur.com/1jtTWUj.png" alt="Shape function of age on pneumonia risk prediction EBM" width=90% align="middle"/>
+      <div class="figure-caption">
+        Figure 1.  The shape function of age in an EBM model trained to predict the risk of dying from pneumonia.
+        The curve shows that the model overall predicts older patients to have higher risk, but the predicted risk mysteriously drops when the patients are older than 100 years old.
+        This prediction pattern can deprive needy patients of care and cause harm in deployment.
+      </div>
+    </div>
 
     <p>The shape function visualization shows that the model predicts younger patients to have lower risk, and the risk increases when patients grow older.
       However, the predicted risk suddenly plunges when the age passes 100—leading to a similar risk score as if the patient is 30 years younger!
@@ -364,20 +385,40 @@
     </p>
 
     <h2 id="how-to-use-gam-changer">How to Use GAM Changer?</h2>
-    <h4 id="quick-start">Quick Start</h4>
-    <p>There are two ways to use GAM Changer to edit a trained EBM model.
-      The first option is to select &quot;My Model&quot; on the top of this page, and upload your model and sample data by dragging them to the interface.
-      You can follow <a href="https://gist.github.com/xiaohk/875b5374840c66689eb42a4b8820c3b5">this instruction</a> to export EBM models.
-      Alternatively, you can directly use GAM Changer in any computational notebooks (e.g., Jupyter Notebook/Lab, Google Colab).
+
+    <div class='video'>
+      <video autoplay loop muted playsinline class='loop-video'>
+        <source src="video/drag.mp4" type="video/mp4">
+      </video>
+      <div class="figure-caption">
+        Figure 2.  In the <a href='#top' style='font-variant: small-caps;'>my model</a> tab, users can use simple drag-and-drop to start editing their GAM models.
+      </div>
+    </div>
+
+    <p>We provide two options to use GAM Changer to edit your GAM models.
+      The first option is to select <a href='#top' style='font-variant: small-caps;'>my model</a> on the top of this page, and then upload your model and sample data by dragging them to the interface (Figure 2).
+      You can follow <a href="https://gist.github.com/xiaohk/875b5374840c66689eb42a4b8820c3b5">this instruction</a> to export GAM model and sample data.
+      Alternatively, you can directly use GAM Changer in any computational notebooks (e.g., <a href='https://jupyter.org/'>Jupyter Notebook/Lab</a>, <a href='https://colab.research.google.com'>Google Colab</a>).
       You can follow the steps in this <a href="https://colab.research.google.com/drive/1OgAVZKqs2VwmY13QuOjCxlOEyexsYjtm?usp=sharing">example notebook</a>.
     </p>
 
     <h4 id="gam-canvas">GAM Canvas</h4>
-    <p>The GAM Canvas (Figure 2) is the primary view of GAM Changer.
+    <p>The GAM Canvas (Figure 3) is the primary view of GAM Changer.
       It is visualizes one input feature’s contribution to the model’s prediction by plotting its shape function.
       As a GAM’s inference varies by feature type, we apply different visualization designs for different feature types.
       You can use the feature selection drop-down to switch features. At start, GAM Changer chooses the feature with the highest importance score for you.
     </p>
+
+    <div class='video'>
+      <video autoplay loop muted playsinline class='loop-video'>
+        <source src="video/editing.mp4" type="video/mp4">
+      </video>
+      <div class="figure-caption">
+        Figure 3.  In the <em>GAM Canvas</em>, you can inspect the shape function with zooming and panning.
+        In the Selection Mode, you apply various editing tools to modify the shape function and therefore change the model prediction behaviors.
+      </div>
+    </div>
+
     <p>In the <em>Move Mode</em>, you can pan and zoom to inspect the graphs. To edit the model, you can switch to <em>Selection Mode</em> and select bins you want to change by drawing a bounding box around them.
       Then, the <em>Context Toolbar</em> will appear, where you can apply different preset editing tools.
       For example, with the <em>Move</em> tool, you can drag the selected bins up and down to change their contribution scores.
@@ -385,31 +426,75 @@
     </p>
 
     <h4 id="metric-panel">Metric Panel</h4>
-    <p>Model editing empowers domain experts and data scientists to exercise human agency, but <em>demands caution</em>.
+
+    <div class='video'>
+      <video autoplay loop muted playsinline class='loop-video'>
+        <source src="video/performance.mp4" type="video/mp4">
+      </video>
+      <div class="figure-caption">
+        Figure 4. There is a "live" GAM model running in your browser.
+        GAM Changer modifies this model as you change the shape function, and tests the new model the sample data.
+        The model performance is visualized in real-time in the <em>Metric Panel</em>.
+      </div>
+    </div>
+
+    <p>Model editing empowers domain experts and data scientists to exercise human agency, but <strong>demands caution</strong>.
       Changing an ML model can have serious consequences—you should only edit the model when you are confident that it would improve the model.
-      Fortunately, GAMs are glass-box models, so we can figure out the effect of model changes. To help you keep track of the editing effect on the model performance over the sample dataset, we have developed the <em>Metric Panel</em> (figure).
-      In real-time, it visualizes the model performance metrics of the original model, last version, and the current version. You can also choose different metric scopes to focus on the selected bins or a slice of dataset (e.g., houses in certain neighborhoods).
+      Fortunately, GAMs are glass-box models, so you can identify the effects of model changes.
+      To help you keep track of the editing effects on the model performance over the sample dataset, we have developed the <em>Metric Panel</em> (Figure 4).
+      In real-time, it visualizes the model performance metrics of the original model, last version, and the current version.
+      You can also choose different metric scopes to focus on the selected bins or a slice of dataset (e.g., houses with paved alley).
     </p>
 
     <h4 id="feature-panel">Feature Panel</h4>
-    <p>Besides model performance, we also hope you to be mindful about fairness issues during model editing;
-      some edits can disproportionally affect certain sub-groups in the dataset. For example, in a house price prediction model, editing model behaviors with high-quality houses is more likely to affect houses built in recent years.
-      In healthcare, model edits made for older patients tend to affect women more than men. To help you be aware of the characteristics of samples that are affected by your edits, we have developed the <strong>Feature Panel</strong>.
-      Every time you select an editing region on the <em>GAM Canvas</em>, the <strong>Feature Panel</strong> automatically identifies other correlated features (both continuous and categorical) and sort them based on correlations.
+
+    <div class='video'>
+      <video autoplay loop muted playsinline class='loop-video'>
+        <source src="video/feature.mp4" type="video/mp4">
+      </video>
+      <div class="figure-caption">
+        Figure 5. By identifying correlated features, GAM Changer helps you get an overview of the samples that are affected by your edits.
+        With the <em>Feature Panel</em>, we hope you are aware that the affected samples might share some other important attributes,
+        and model edits might have disproportional impact on some particular sub-populations.
+      </div>
+    </div>
+
+    <p>Besides model performance, we also hope you to <strong>be mindful about fairness issues</strong> during model editing;
+      some edits can disproportionally affect certain sub-groups in the dataset.
+      For example, in a house price prediction model (Figure 5), editing model's prediction on high-quality houses is implicitly affecting houses built in recent years.
+      This is because the house quality is correlated with when the house was built.
+      In healthcare, model edits created for older patients tend to affect women more than men, because in average women live longer than men.
+      To help you be aware of the characteristics of samples that are affected by your edits, we have designed the <em>Feature Panel</em> (Figure 5).
+      Every time you select an editing region on the <em>GAM Canvas</em>, the <em>Feature Panel</em> automatically identifies other correlated features (both continuous and categorical) and sort them based on the correlation.
       It also visualizes the distribution of the affected samples vs. the all samples in the dataset.
+      You can also hover over the histogram bins in the Categorical tab to view their labels.
     </p>
 
     <h4 id="history-panel">History Panel</h4>
-    <p>We hope the <strong>Metric Panel</strong> and <strong>Feature Panel</strong> can help you identify and envision potential consequences of your edits, so that you can make responsible edits.
-      But don’t worry if you have accidentally made a mistake! You can always click the <em>Undo</em> and <em>Redo</em> buttons to undo and redo any edits!
-      You can also use keyboard shortcuts <kbd>command</kbd> (or <kbd>control</kbd> on Windows) + <kbd>z</kbd> and <kbd>command</kbd> + <kbd>shift</kbd> + <kbd>z</kbd>.
+
+    <p>With the <em>Metric Panel</em> and <em>Feature Panel</em>, GAM Changer helps you identify and envision potential consequences of model edits and make good edits.
+      But don’t worry if you have accidentally made a mistake! You can always click the <em>Undo</em> and <em>Redo</em> buttons to revert or re-apply any edits!
+      You can also use keyboard shortcuts <kbd>cmd</kbd> + <kbd>z</kbd> (<kbd>ctrl</kbd> on Windows) and <kbd>cmd</kbd> + <kbd>shift</kbd> + <kbd>z</kbd>.
     </p>
-    <p>GAM Changer keeps track of all the edits you have made, and it organizes them as a timeline in the <strong>History Panel</strong>.
-      You can also see the timestamp, feature type, feature name, and an automatically generated description of every edit.
+
+    <div class='video'>
+      <video autoplay loop muted playsinline class='loop-video'>
+        <source src="video/history.mp4" type="video/mp4">
+      </video>
+      <div class="figure-caption">
+        Figure 6. With GAM Changer, you are safe to explore different editing options, as all edits are reversible.
+        GAM Changer keeps track of all your edits in the <em>History Panel</em>, and it automatically generates a short description to help you review edits in the future.
+        We strongly recommend you document your edits by typing in the text box; it will help other stakeholders (e.g., colleagues, auditors, users) make sense of your changes.
+      </div>
+    </div>
+
+    <p>GAM Changer keeps track of all the edits you have made, and it organizes them as a timeline in the <strong>History Panel</strong> (Figure 6).
+      You can also see the <em>timestamp</em>, <em>feature type</em>, <em>feature name</em>, and an automatically generated <em>description</em> of each edit.
       By clicking the <em>Check out</em> button, you can preview the model from a previous version.
-      We encourage you to document all edits by typing in the text box. You can write the motivations and contexts of your edits;
-      they will become very helpful when you review edits in the future! Finally, before saving the model (by clicking the <em>Save</em> button on the bottom right), GAM Changer forces you to review and confirm all edits by clicking the <em>Thumb-up</em> buttons.
-      GAM Changer also saves the entire editing history and descriptions so that you can review or continue editing in the future. Again, we hope it can help you make accountable and transparent edits!
+      We encourage you to document all edits by typing in the text box.
+      You can write the motivations and contexts of your edits; they will become very helpful when you review edits in the future, or share the history with your colleagues.
+      Finally, before saving the model (by clicking the <em>Save</em> button on the bottom right), GAM Changer forces you to review and confirm all edits by clicking the <em>Thumbs-up</em> buttons.
+      GAM Changer also saves the entire editing history and descriptions so that you can review or continue editing in the future. Again, we hope this design can help you make responsible edits!
     </p>
 
     <h2 id="video-tutorial">Video Tutorial</h2>
