@@ -1,8 +1,33 @@
 <svelte:head>
   <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+	<!-- Primary Meta Tags -->
+	<meta name="title" content="GAM Changer">
+	<meta name="description"
+		content="Interactive visualization system designed to help domain experts align machine learning model behaviors with their knowledge.">
+	
+	<!-- Open Graph / Facebook -->
+	<meta property="og:type" content="website">
+	<meta property="og:url" content="interpret.ml/">
+	<meta property="og:title" content="CNN Explainer">
+	<meta property="og:description"
+		content="Interactive visualization system designed to help domain experts align machine learning model behaviors with their knowledge.">
+	<meta property="og:image" content="https://i.imgur.com/zowIKBB.png">
+	
+	<!-- Twitter -->
+	<meta property="twitter:card" content="summary_large_image">
+	<meta property="twitter:url" content="interpret.ml/">
+	<meta property="twitter:title" content="CNN Explainer">
+	<meta property="twitter:description"
+		content="Interactive visualization system designed to help domain experts align machine learning model behaviors with their knowledge.">
+	<meta property="twitter:image" content="https://i.imgur.com/zowIKBB.png">
+	<meta property="twitter:site" content="@jay4w">
+	<meta property="twitter:creator" content="@jay4w">
 </svelte:head>
 
 <script>
+  import Youtube from './Youtube.svelte';
+
   import d3 from './utils/d3-import';
   import { onMount } from 'svelte';
   import { fade, fly } from 'svelte/transition';
@@ -13,6 +38,10 @@
   import githubIconSVG from './img/github-icon.svg';
   import youtubeIconSVG from './img/youtube-icon.svg';
   import pdfIconSVG from './img/pdf-icon.svg';
+  import msSVG from './img/ms-icon.svg';
+  import gtSVG from './img/gt-icon.svg';
+  import uwSVG from './img/uw-icon.svg';
+  import nyuSVG from './img/nyu-icon.svg';
 
   import { tooltipConfigStore } from './store';
 
@@ -28,6 +57,7 @@
   const math9 = '\\( \\textcolor{hsl(206, 100%, 45%)}{f_{ij}\\left( \\textcolor{hsl(24, 95%, 59%)}{x_i} \\right) }\\)';
 
   let component = null;
+  let currentPlayer = null;
 
   // Set up tooltip
   let tooltip = null;
@@ -75,6 +105,22 @@
     d3.select(component)
       .selectAll('.svg-icon.icon-pdf')
       .html(preProcessSVG(pdfIconSVG));
+
+    d3.select(component)
+      .selectAll('.svg-logo.icon-ms')
+      .html(preProcessSVG(msSVG));
+
+    d3.select(component)
+      .selectAll('.svg-logo.icon-gt')
+      .html(preProcessSVG(gtSVG));
+
+    d3.select(component)
+      .selectAll('.svg-logo.icon-uw')
+      .html(preProcessSVG(uwSVG));
+
+    d3.select(component)
+      .selectAll('.svg-logo.icon-nyu')
+      .html(preProcessSVG(nyuSVG));
   };
 
   const tabClicked = (newTab) => {
@@ -178,6 +224,18 @@
     }
   }
 
+  .svg-logo {
+    height: 100%;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+
+    :global(svg) {
+      height: 40px;
+      // height: 2em;
+    }
+  }
+
   .gam-tab {
     grid-column: mid-start / mid-end;
     grid-row: content-end / end;
@@ -228,6 +286,34 @@
         font-weight: 600;
       }
     }
+  }
+
+  .article-footer {
+    background: $blue-dark;
+    color: white;
+    padding: 2rem 0 2em 0;
+    margin-top: 1rem;
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .footer-main {
+    display: flex;
+    max-width: 100ch;
+    flex-direction: row;
+  }
+
+  .footer-cp {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .footer-logo {
+    display: flex;
+    margin-right: 30px;
+    gap: 30px;
   }
 
 </style>
@@ -488,7 +574,7 @@
       </div>
     </div>
 
-    <p>GAM Changer keeps track of all the edits you have made, and it organizes them as a timeline in the <strong>History Panel</strong> (Figure 6).
+    <p>GAM Changer keeps track of all the edits you have made, and it organizes them as a timeline in the <em>History Panel</em> (Figure 6).
       You can also see the <em>timestamp</em>, <em>feature type</em>, <em>feature name</em>, and an automatically generated <em>description</em> of each edit.
       By clicking the <em>Check out</em> button, you can preview the model from a previous version.
       We encourage you to document all edits by typing in the text box.
@@ -499,13 +585,137 @@
 
     <h2 id="video-tutorial">Video Tutorial</h2>
 
+    <ul>
+      <li class="video-link" on:click={currentPlayer.play(0)}>
+        Introduction
+        <small>(0:00-0:16)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(16)}>
+        <em>Problems revealed by interpretability</em>
+        <small>(0:16-0:50)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(50)}>
+        Introducing <em>GAM Changer</em>
+        <small>(0:50-1:07)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(67)}>
+        Democratizing model editing
+        <small>(1:07-1:16)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(76)}>
+        Navigation
+        <small>(1:16-1:31)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(91)}>
+        Editing categorical variables
+        <small>(1:31-1:56)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(116)}>
+        Editing continuous variables
+        <small>(1:56-2:45)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(165)}>
+        Responsible editing
+        <small>(2:45-3:00)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(180)}>
+        <em>Metric Panel</em>
+        <small>(3:00-3:09)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(189)}>
+        <em>Feature Panel</em>
+        <small>(3:09-3:18)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(198)}>
+        <em>History Panel</em>
+        <small>(3:18-3:41)</small>
+      </li>
+      <li class="video-link" on:click={currentPlayer.play(221)}>
+        Contributions
+        <small>(3:41-3:55)</small>
+      </li>
+    </ul>
+
+    <div class="video" style='margin-bottom: 2em;'>
+      <Youtube videoId="2gVSoPoSeJ8" playerId="demo_video" bind:this={currentPlayer}/>
+    </div>
+
     <h2 id="how-is-gam-changer-developed">How is <span class='tool-text'>GAM Changer</span> Developed?</h2>
     <p>GAM Changer uses <a href="https://webassembly.org">WebAssembly</a>, a modern web technology to accelerate in-browser computation.
-      It enables GAM Changer to run a <em>live EBM model</em> along with <em>isotonic regression</em> and <em>correlation computations</em> directly <strong>in your browser</strong>!
+      It enables GAM Changer to run a live EBM model along with isotonic regression and correlation computations directly <strong>in your browser</strong>!
       In other words, the entire app runs locally and privately, and your model and data would not leave your machine.
       The interactive system is written in Javascript using <a href="https://svelte.dev">Svelte</a> as a framework and <a href="https://d3js.org">D3.js</a> for visualizations.
     </p>
 
+    <h2 id="who-developed-gam-changer">Who Developed <span class='tool-text'>GAM Changer</span>?</h2>
+    <p>Led by <a href="https://zijie.wang">Jay Wang</a>, GAM Changer started as a research intern project at <a href="https://www.microsoft.com/en-us/research/">Microsoft Research</a>.
+      The design is a result of a collaboration between HCI, Visualization, and Machine Learning researchers, data scientists, and doctors.
+      GAM Changer is created by <a href="https://zijie.wang">Jay Wang</a>,
+      <a href="http://students.washington.edu/kalea/">Alex Kale</a>,
+      <a href="https://www.linkedin.com/in/harshanori/">Harsha Nori</a>,
+      <a href="https://nyulangone.org/doctors/1548522964/peter-a-stella">Peter Stella</a>,
+      <a href="https://nyulangone.org/doctors/1144385360/mark-e-nunnally">Mark Nunnally</a>,
+      <a href="https://www.cc.gatech.edu/~dchau/">Polo Chau</a>,
+      <a href="https://www.microsoft.com/en-us/research/people/mivorvor/">Mickey Vorvoreanu</a>,
+      <a href="http://www.jennwv.com">Jenn Wortman Vaughan</a>,
+      and <a href="https://www.microsoft.com/en-us/research/people/rcaruana/">Rich Caruana</a>.
+    </p>
+
+    <p>
+      We thank <a href="https://scottlundberg.com">Scott Lundberg</a> for insightful conversations.
+      We are also grateful to <a href="https://www.microsoft.com/en-us/research/people/sdrucker/">Steven Drucker</a>,
+      <a href="https://www.adamfourney.com">Adam Fourney</a>,
+      <a href="https://www.microsoft.com/en-us/research/people/samershi/">Saleema Amershi</a>,
+      <a href="https://www.linkedin.com/in/deancarignan/">Dean Carignan</a>,
+      <a href="https://www.microsoft.com/en-us/research/people/rdeline/">Rob DeLine</a>,
+      and the <a href="https://github.com/interpretml/interpret/">InterpretML team</a> for their helpful feedback.
+    </p>
+    
+    <h2 id="how-can-i-contribute">How Can I Contribute?</h2>
+    <p>
+      If you have any questions or feedback, feel free to <a href='https://github.com/interpretml/interpret/issues'>open an issue</a> or contact <a href="https://zijie.wang">Jay Wang</a>.
+    </p>
+
+    <p>
+      We’d love to learn more about your experience with GAM Changer!
+      If you’d like to share (e.g., why you use GAM Changer, what functions you find most helpful),
+      please reach out to <a href="https://zijie.wang">Jay Wang</a>.
+    </p>
+
+  </div>
+
+  <div class='article-footer'>
+    <div class='footer-main'>
+
+      <div class='footer-logo'>
+        <a target="_blank" href="https://www.microsoft.com/en-us/research/">
+          <div class="svg-logo icon-ms" title="Microsoft Research">
+          </div>
+        </a>
+
+        <a target="_blank" href="https://www.gatech.edu/">
+          <div class="svg-logo icon-gt" title="Georgia Tech">
+          </div>
+        </a>
+
+        <a target="_blank" href="https://www.washington.edu/">
+          <div class="svg-logo icon-uw" title="University of Washington">
+          </div>
+        </a>
+
+        <a target="_blank" href="https://nyulangone.org/">
+          <div class="svg-logo icon-nyu" title="NYU Langone Health">
+          </div>
+        </a>
+      </div>
+
+      <div class='footer-cp'>
+        <div>Copyright © {new Date().getFullYear()} Microsoft</div>
+        <div>All rights reserved</div>
+      </div>
+
+    </div>
+    
   </div>
 
 </div>
