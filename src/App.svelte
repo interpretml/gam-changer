@@ -6,8 +6,8 @@
 
 <script>
 	import Main from './Main.svelte';
-	// import Article from './Article.svelte';
-	import Article from './ArticleAnon.svelte';
+	import Article from './Article.svelte';
+	// import Article from './ArticleAnon.svelte';
 </script>
 
 <style type='text/scss'>
