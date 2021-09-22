@@ -67,6 +67,10 @@
   // Set up tab interactions
   let tab = 'iowa';
   let tabNames = {
+    // pneumonia: {
+    //   modelName: 'pneumonia-model',
+    //   sampleName: 'pneumonia-sample-toy'
+    // },
     iowa: {
       modelName: 'iow-house-ebm-binary',
       sampleName: 'iow-house-train-sample'
@@ -353,7 +357,7 @@
         <span>Code</span>
       </a>
 
-      <a target="_blank" href="https://interpret.ml">
+      <a target="_blank" href="https://youtu.be/2gVSoPoSeJ8">
         <div class="svg-icon icon-youtube" title="Demo video">
         </div>
         <span>Video</span>
@@ -374,6 +378,13 @@
 
       <div class='tab-options'>
         <span class='tab-title'>Choose a model:</span>
+
+        <!-- <span class='option' class:selected={tab === 'pneumonia'}
+          data-text='pneumonia risk'
+          on:click={() => tabClicked('pneumonia')}>
+          pneumonia risk
+        </span> -->
+
         <span class='option' class:selected={tab === 'iowa'}
           data-text='iowa house price'
           on:click={() => tabClicked('iowa')}>

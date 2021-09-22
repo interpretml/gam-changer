@@ -8,5 +8,4 @@ package-lock.json
 deploy-gh-page.sh
 dist
 /public/data/medical*
-
-mimic*
+/public/data/mimic2*
