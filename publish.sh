@@ -12,3 +12,5 @@ npm run build
 cd public
 vercel
 cd ..
+
+# vercel alias https://gam-changer-e1gaga9qe-xiaohk.vercel.app user-study-xiaohk.vercel.app

@@ -9,3 +9,5 @@ deploy-gh-page.sh
 dist
 /public/data/medical*
 /public/data/mimic2*
+
+toy-*

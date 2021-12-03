@@ -162,7 +162,7 @@
             selectedFeature.id = featureSelectList.continuous[curIndex].featureID;
             selectedFeature.name = featureSelectList.continuous[curIndex].name;
             featureSelect.selectedIndex = curIndex;
-            
+
             sidebarInfo.featureName = headFeatureName;
             ebm.setEditingFeature(headFeatureName);
 
@@ -229,7 +229,7 @@
 
     // Populate the slice option list
     let selectElement = d3.select(component).select('#feature-select');
-    
+
     // Remove existing options
     selectElement.selectAll('option').remove();
 
@@ -239,7 +239,7 @@
       let groupName = type.charAt(0).toUpperCase() + type.slice(1);
       let optGroup = selectElement.append('optgroup')
         .attr('label', groupName + ' (name - importance)');
-      
+
       featureSelectList[type].forEach(opt => {
         optGroup.append('option')
           .attr('value', opt.featureID)
@@ -269,7 +269,7 @@
       // targetFeatureIndex = d3.maxIndex(featureSelectList.categorical, d => d.importance);
       // tempSelectedFeature.type = 'categorical';
     }
-    
+
     tempSelectedFeature.data = data.features[featureSelectList[tempSelectedFeature.type][targetFeatureIndex].featureID];
     tempSelectedFeature.id = featureSelectList[tempSelectedFeature.type][targetFeatureIndex].featureID;
     tempSelectedFeature.name = featureSelectList[tempSelectedFeature.type][targetFeatureIndex].name;
@@ -434,10 +434,10 @@
         sliceOptions.push(curOptionGroup);
       }
     });
-    
+
     sliceOptions.sort((a, b) => a[0].name.localeCompare(b[0].name));
     sidebarInfo.sliceOptions = sliceOptions;
-    
+
     sidebarStore.set(sidebarInfo);
 
     // If the GAM View is initialized, then the 0 item in history stack has
@@ -480,7 +480,7 @@
   const initDataLoaded = (loadedModelData, loadedSampleData) => {
     data = loadedModelData;
     sampleData = loadedSampleData;
-   
+
     console.log('Loaded inline data');
 
     initGAMView();
@@ -532,10 +532,10 @@
 
     hiddenSelect.select('#hidden-option')
       .text(opt.text);
-    
+
     let selectWidth = hiddenSelect.node().clientWidth + 5 + 'px';
     hiddenSelect.style('display', 'none');
-      
+
     d3.select(component)
       .select('#feature-select')
       .style('width', selectWidth);
@@ -908,7 +908,7 @@
       {#key updateChanger}
 
         {#if selectedFeature!== null}
-        
+
           {#if selectedFeature.type === 'continuous'}
             <ContGlobalExplain
               featureData = {selectedFeature === null ? null : selectedFeature.data}
@@ -1009,7 +1009,7 @@
       {/if}
     </div>
 
-      
+
     <div class='field has-addons'>
 
       <div class='control'>

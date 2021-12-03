@@ -77,6 +77,14 @@
       // modelName: 'iowa-house-regression-model',
       // sampleName: 'iowa-house-regression-sample'
     },
+    lc: {
+      modelName: 'lc-model',
+      sampleName: 'lc-data'
+    },
+    // mimic: {
+    //   modelName: 'toy-mimic2-model',
+    //   sampleName: 'toy-mimic2-sample-2000'
+    // },
     adult: {
       modelName: 'adult-model',
       sampleName: 'adult-sample'
@@ -143,7 +151,7 @@
 
   @import 'define';
   @import 'article';
-  
+
   .page {
     display: flex;
     flex-direction: column;
@@ -385,10 +393,22 @@
           pneumonia risk
         </span> -->
 
+        <!-- <span class='option' class:selected={tab === 'mimic'}
+          data-text='mimic2'
+          on:click={() => tabClicked('mimic')}>
+          mimic2
+        </span> -->
+
         <span class='option' class:selected={tab === 'iowa'}
           data-text='iowa house price'
           on:click={() => tabClicked('iowa')}>
           iowa house price
+        </span>
+
+        <span class='option' class:selected={tab === 'lc'}
+          data-text='lending club'
+          on:click={() => tabClicked('lc')}>
+          lending club
         </span>
 
         <span class='option' class:selected={tab === 'adult'}
@@ -660,7 +680,7 @@
 
     <h2 id="who-developed-gam-changer">Who Developed <span class='tool-text'>GAM Changer</span>?</h2>
     <p>Led by <a href="https://zijie.wang">Jay Wang</a>, GAM Changer started as a research intern project at <a href="https://www.microsoft.com/en-us/research/">Microsoft Research</a>.
-      The design is a result of a collaboration between HCI, Visualization, and Machine Learning researchers, data scientists, and doctors.
+      The design is a result of a collaboration between Human-computer Interaction, Visualization, and Machine Learning researchers, data scientists, and doctors.
       GAM Changer is created by <a href="https://zijie.wang">Jay Wang</a>,
       <a href="http://students.washington.edu/kalea/">Alex Kale</a>,
       <a href="https://www.linkedin.com/in/harshanori/">Harsha Nori</a>,
@@ -680,8 +700,9 @@
       <a href="https://www.linkedin.com/in/deancarignan/">Dean Carignan</a>,
       <a href="https://www.microsoft.com/en-us/research/people/rdeline/">Rob DeLine</a>,
       and the <a href="https://github.com/interpretml/interpret/">InterpretML team</a> for their helpful feedback.
+      We appreciate anonymous user study participants for their valuable feedback.
     </p>
-    
+
     <h2 id="how-can-i-contribute">How Can I Contribute?</h2>
     <p>
       If you have any questions or feedback, feel free to <a href='https://github.com/interpretml/interpret/issues'>open an issue</a> or contact <a href="https://zijie.wang">Jay Wang</a>.
@@ -726,7 +747,7 @@
       </div>
 
     </div>
-    
+
   </div>
 
 </div>
