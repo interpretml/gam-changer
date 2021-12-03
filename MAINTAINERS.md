@@ -4,4 +4,4 @@ This document lists the Maintainers of Project GAMChanger. Maintainers may be ad
 
 | **NAME** | **Organization** |
 | --- | --- |
-|  |  |
+|Jay Wang|  |
