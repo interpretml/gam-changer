@@ -6,6 +6,7 @@ import { terser } from 'rollup-plugin-terser';
 import css from 'rollup-plugin-css-only';
 import preprocess from 'svelte-preprocess';
 import inlineSvg from 'rollup-plugin-inline-svg';
+import replace from '@rollup/plugin-replace';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -31,28 +32,31 @@ function serve() {
 }
 
 export default {
-  input: 'src/main.js',
+  input: "src/main.js",
   output: {
     sourcemap: true,
-    format: 'umd',
-    name: 'app',
-    file: 'public/build/bundle.js'
+    format: "umd",
+    name: "app",
+    file: "public/build/bundle.js",
   },
   plugins: [
     inlineSvg({
       removeTags: false,
-      removingTags: ['title', 'desc', 'defs', 'style']
+      removingTags: ["title", "desc", "defs", "style"],
     }),
     svelte({
       compilerOptions: {
         // enable run-time checks when not in production
         dev: !production,
       },
-      preprocess: preprocess()
+      preprocess: preprocess(),
     }),
+    // Resolve the public domain path
+    replace({ PUBLIC_URL: production ? "/gam-changer" : "" }),
+
     // we'll extract any component CSS out into
     // a separate file - better for performance
-    css({ output: 'bundle.css' }),
+    css({ output: "bundle.css" }),
 
     // If you have external dependencies installed from
     // npm, you'll most likely need these plugins. In
@@ -61,7 +65,7 @@ export default {
     // https://github.com/rollup/plugins/tree/master/packages/commonjs
     resolve({
       browser: true,
-      dedupe: ['svelte']
+      dedupe: ["svelte"],
     }),
     commonjs(),
 
@@ -71,13 +75,13 @@ export default {
 
     // Watch the `public` directory and refresh the
     // browser on changes when not in production
-    !production && livereload('public'),
+    !production && livereload("public"),
 
     // If we're building for production (npm run build
     // instead of npm run dev), minify
-    production && terser()
+    production && terser(),
   ],
   watch: {
-    clearScreen: false
-  }
+    clearScreen: false,
+  },
 };

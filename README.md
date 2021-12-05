@@ -8,7 +8,7 @@ An interactive visualization system designed to helps domain experts responsibly
 [![pypi](https://img.shields.io/pypi/v/gamchanger?color=blue)](https://pypi.org/project/gamchanger/)
 [![license](https://img.shields.io/pypi/l/gamchanger?color=orange)](https://github.com/interpretml/gam-changer/blob/master/LICENSE)
 
-<a href="https://youtu.be/2gVSoPoSeJ8" target="_blank"><img src="https://i.imgur.com/DaZq0GC.png" style="max-width:100%;"></a>
+<a href="https://youtu.be/2gVSoPoSeJ8" target="_blank"><img src="https://i.imgur.com/FvZJDKg.png" style="max-width:100%;"></a>
 
 ## Running Locally
 

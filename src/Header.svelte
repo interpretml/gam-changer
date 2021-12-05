@@ -63,13 +63,13 @@
     <!-- <div id="logo-text">
       GAM Changer
     </div> -->
-    
+
     <div id='logo-icon'>
-      <img src='/img/logo.svg' alt='logo img'>
+      <img src='PUBLIC_URL/img/logo.svg' alt='logo img'>
     </div>
 
     <!-- <div id='logo-tagline'>
-      Exploring transformer models in your browser! 
+      Exploring transformer models in your browser!
     </div> -->
   </div>
 

@@ -12,7 +12,7 @@
   <meta property="og:title" content="GAM Changer">
   <meta property="og:description"
     content="Interactive visualization system designed to help domain experts align machine learning model behaviors with their knowledge.">
-  <meta property="og:image" content="/img/preview.png">
+  <meta property="og:image" content="PUBLIC_URL/img/preview.png">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
@@ -20,7 +20,7 @@
   <meta property="twitter:title" content="GAM Changer">
   <meta property="twitter:description"
     content="Interactive visualization system designed to help domain experts align machine learning model behaviors with their knowledge.">
-  <meta property="twitter:image" content="/img/preview.png">
+  <meta property="twitter:image" content="PUBLIC_URL/img/preview.png">
   <meta property="twitter:site" content="@jay4w">
   <meta property="twitter:creator" content="@jay4w">
 </svelte:head>
@@ -345,7 +345,7 @@
 
     <div class='logo-container'>
       <div class='logo-icon'>
-        <img src='/img/logo.svg' alt='logo img'>
+        <img src='PUBLIC_URL/img/logo.svg' alt='logo img'>
       </div>
     </div>
 
@@ -505,7 +505,7 @@
 
     <div class='video'>
       <video autoplay loop muted playsinline class='loop-video'>
-        <source src="video/drag.mp4" type="video/mp4">
+        <source src="PUBLIC_URL/video/drag.mp4" type="video/mp4">
       </video>
       <div class="figure-caption">
         Figure 2.  In the <a href='#top' style='font-variant: small-caps;'>my model</a> tab, users can use simple drag-and-drop to start editing their GAM models.
@@ -528,7 +528,7 @@
 
     <div class='video'>
       <video autoplay loop muted playsinline class='loop-video'>
-        <source src="video/editing.mp4" type="video/mp4">
+        <source src="PUBLIC_URL/video/editing.mp4" type="video/mp4">
       </video>
       <div class="figure-caption">
         Figure 3.  In the <em>GAM Canvas</em>, you can inspect the shape function with zooming and panning.
@@ -546,7 +546,7 @@
 
     <div class='video'>
       <video autoplay loop muted playsinline class='loop-video'>
-        <source src="video/performance.mp4" type="video/mp4">
+        <source src="PUBLIC_URL/video/performance.mp4" type="video/mp4">
       </video>
       <div class="figure-caption">
         Figure 4. There is a "live" GAM model running in your browser.
@@ -567,7 +567,7 @@
 
     <div class='video'>
       <video autoplay loop muted playsinline class='loop-video'>
-        <source src="video/feature.mp4" type="video/mp4">
+        <source src="PUBLIC_URL/video/feature.mp4" type="video/mp4">
       </video>
       <div class="figure-caption">
         Figure 5. By identifying correlated features, GAM Changer helps you get an overview of the samples that are affected by your edits.
@@ -596,7 +596,7 @@
 
     <div class='video'>
       <video autoplay loop muted playsinline class='loop-video'>
-        <source src="video/history.mp4" type="video/mp4">
+        <source src="PUBLIC_URL/video/history.mp4" type="video/mp4">
       </video>
       <div class="figure-caption">
         Figure 6. With GAM Changer, you are safe to explore different editing options, as all edits are reversible.
