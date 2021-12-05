@@ -1,28 +1,5 @@
 <svelte:head>
   <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
-
-  <!-- Primary Meta Tags -->
-  <meta name="title" content="GAM Changer">
-  <meta name="description"
-    content="Interactive visualization system designed to help domain experts align machine learning model behaviors with their knowledge.">
-
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="interpret.ml/">
-  <meta property="og:title" content="GAM Changer">
-  <meta property="og:description"
-    content="Interactive visualization system designed to help domain experts align machine learning model behaviors with their knowledge.">
-  <meta property="og:image" content="PUBLIC_URL/img/preview.png">
-
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="interpret.ml/">
-  <meta property="twitter:title" content="GAM Changer">
-  <meta property="twitter:description"
-    content="Interactive visualization system designed to help domain experts align machine learning model behaviors with their knowledge.">
-  <meta property="twitter:image" content="PUBLIC_URL/img/preview.png">
-  <meta property="twitter:site" content="@jay4w">
-  <meta property="twitter:creator" content="@jay4w">
 </svelte:head>
 
 <script>
@@ -359,7 +336,7 @@
     {/key}
 
     <div class='icon-container'>
-      <a target="_blank" href="https://interpret.ml">
+      <a target="_blank" href="https://github.com/interpretml/gam-changer">
         <div class="svg-icon icon-github" title="Open-source code">
         </div>
         <span>Code</span>

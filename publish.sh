@@ -10,5 +10,5 @@ cp -r ./public/global.css ./dist
 
 cd ./dist
 git add ./*
-git commit -m "Deploy: $(git log '--format=format:%H' master -1)"
+git commit -s -m "Deploy: $(git log '--format=format:%H' master -1)"
 git push origin gh-pages
