@@ -67,7 +67,10 @@
       .attr('width', svgWidth)
       .attr('height', svgHeight)
       // WebKit bug workaround (see https://bugs.webkit.org/show_bug.cgi?id=226683)
-      .on('wheel', () => {});
+      .on('wheel', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
 
     // Draw a border for the svg
     svgSelect.append('rect')
@@ -129,7 +132,7 @@
       .attr('y', chartHeight)
       .attr('width', chartWidth)
       .attr('height', densityHeight);
-    
+
     histChart.attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-hist-chart-clip)`);
 
     let additiveData = transpose2dArray(featureData.additive);
@@ -158,7 +161,7 @@
       .append('rect')
       .attr('width', chartWidth)
       .attr('height', chartHeight - 1);
-    
+
     let barChartContent = barChart.append('g')
       .attr('class', 'bar-chart-content-group')
       .attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-chart-clip)`)
@@ -205,7 +208,7 @@
       .attr('class', 'x-axis')
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`)
       .call(d3.axisBottom(xScale));
-    
+
     xAxisGroup.attr('font-family', defaultFont);
 
     // Add x axis label
@@ -218,12 +221,12 @@
       .attr('class', 'x-axis-text')
       .text(featureData.name1)
       .style('fill', 'black');
-    
+
     // Draw the line chart Y axis
     let yAxisGroup = axisGroup.append('g')
       .attr('class', 'y-axis')
       .attr('transform', `translate(${yAxisWidth}, 0)`);
-    
+
     yAxisGroup.call(d3.axisLeft(yScale));
     yAxisGroup.attr('font-family', defaultFont);
 
@@ -233,18 +236,18 @@
       .attr('class', 'y-axis-text')
       .text(featureData.name2)
       .style('fill', 'black');
-    
+
     // Draw a color legend
     let legendGroup = content.append('g')
       .attr('class', 'legend-group')
       .attr('transform', `translate(${width - legendConfig.width -
         svgPadding.right - svgPadding.left}, ${-20})`);
-    
+
     drawHorizontalColorLegend(legendGroup, legendConfig, maxAbsScore);
 
     // Draw the cont histograms at the bottom
     let histData = [];
-    
+
     // Transform the count to frequency (percentage)
     let histCountSum = d3.sum(featureData.histCount1);
     let histFrequency = featureData.histCount1.map(d => d / histCountSum);
@@ -261,7 +264,7 @@
       .domain(d3.extent(histFrequency))
       .range([0, densityHeight]);
 
-    // Draw the density histogram 
+    // Draw the density histogram
     let histChartContent = histChart.append('g')
       .attr('class', 'hist-chart-content-group')
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight + legendHeight})`);
@@ -275,12 +278,12 @@
       .attr('width', d => xScale(d.x2) - xScale(d.x1))
       .attr('height', d => histYScale(d.height))
       .style('fill', colors.hist);
-    
+
     // Draw a Y axis for the histogram chart
     let yAxisHistGroup = barChart.append('g')
       .attr('class', 'y-axis')
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`);
-    
+
     yAxisHistGroup.call(
       d3.axisLeft(histYScale)
         .ticks(2)
@@ -323,7 +326,7 @@
       .call(zoom.transform, d3.zoomIdentity);
 
     barChartContent.on('dblclick.zoom', null);
-    
+
     // Listen to double click to reset zoom
     barChartContent.on('dblclick', () => {
       barChartContent.transition('reset')
@@ -354,7 +357,7 @@
     let lineChartContent = d3.select(svg)
       .select('g.scatter-plot-content-group')
       .classed('select-mode', selectMode);
-    
+
     lineChartContent.select('g.brush rect.overlay')
       .attr('cursor', null);
   };
@@ -382,7 +385,7 @@
 <div class='explain-panel' bind:this={component}>
 
   <!-- <div class='context-menu-container hidden' bind:this={multiMenu}>
-    <ContextMenu 
+    <ContextMenu
       bind:controlInfo={multiMenuControlInfo}
       bind:this={myContextMenu}
       type='cat'
@@ -394,11 +397,11 @@
       on:moveCancelClicked={multiMenuMoveCancelClicked}
       on:subItemCheckClicked={multiMenuSubItemCheckClicked}
       on:subItemCancelClicked={multiMenuSubItemCancelClicked}
-    /> 
+    />
   </div> -->
 
   <div class='svg-container'>
     <svg class='svg-explainer' bind:this={svg}></svg>
   </div>
-  
+
 </div>

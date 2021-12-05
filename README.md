@@ -4,21 +4,21 @@
 
 An interactive visualization system designed to helps domain experts responsibly edit Generalized Additive Models (GAMs).
 
-[![build](https://github.com/interpretml/GAMChanger/workflows/build/badge.svg)](https://github.com/interpretml/GAMChanger/actions)
+[![build](https://github.com/interpretml/GAMChanger/workflows/build/badge.svg)](https://github.com/interpretml/gam-changer/actions)
 [![pypi](https://img.shields.io/pypi/v/gamchanger?color=blue)](https://pypi.org/project/gamchanger/)
-[![license](https://img.shields.io/pypi/l/gamchanger?color=orange)](https://github.com/interpretml/GAMChanger/blob/master/LICENSE)
+[![license](https://img.shields.io/pypi/l/gamchanger?color=orange)](https://github.com/interpretml/gam-changer/blob/master/LICENSE)
 
-<a href="https://youtu.be/2gVSoPoSeJ8" target="_blank"><img src="https://i.imgur.com/OocpG9I.png" style="max-width:100%;"></a>
+<a href="https://youtu.be/2gVSoPoSeJ8" target="_blank"><img src="https://i.imgur.com/DaZq0GC.png" style="max-width:100%;"></a>
 
 ## Running Locally
 
 Clone or download this repository:
 
 ```bash
-git clone git@github.com:interpretml/GAMChanger.git
+git clone git@github.com:interpretml/gam-changer.git
 
 # use degit if you don't want to download commit histories
-degit interpretml/GAMChanger.git
+degit interpretml/gam-changer.git
 ```
 
 Install the dependencies:
@@ -58,4 +58,4 @@ The software is available under the [MIT License](./LICENSE).
 
 ## Contact
 
-If you have any questions, feel free to [open an issue](https://github.com/interpretml/GAMChanger/issues/new) or contact [Jay Wang](https://zijie.wang).
+If you have any questions, feel free to [open an issue](https://github.com/interpretml/gam-changer/issues/new) or contact [Jay Wang](https://zijie.wang).

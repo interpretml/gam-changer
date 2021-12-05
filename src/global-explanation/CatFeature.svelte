@@ -171,7 +171,7 @@
       // Step 2.2: Last edit
       if (sidebarInfo.historyHead - 1 >= 0 &&
         historyList[sidebarInfo.historyHead - 1].type !== 'original' &&
-        historyList[sidebarInfo.historyHead - 1].featureName === state.featureName) { 
+        historyList[sidebarInfo.historyHead - 1].featureName === state.featureName) {
         await setEBM(state, ebm, 'last-only', historyList[sidebarInfo.historyHead - 1].state.pointData,
           sidebarStore, sidebarInfo);
       }
@@ -206,7 +206,7 @@
   let footerValue = null;
   let footerValueUnsubscribe = footerStore.subscribe(value => {
     footerValue = value;
-  });  
+  });
 
   // Listen to footer buttons
   let footerActionUnsubscribe = footerActionStore.subscribe(message => {
@@ -230,7 +230,7 @@
       }
       break;
     }
-    
+
     case 'save':
       console.log('save clicked');
       break;
@@ -248,7 +248,7 @@
           brush, nullifyMetrics, computeSelectedEffects, footerStore, ebm);
       }
       break;
-    
+
     default:
       break;
     }
@@ -294,7 +294,7 @@
       x: xScale(d.x),
       y: yScale(d.y - d.error)
     };
-    
+
     // Draw the top line
     let pathStr = `M ${topMid.x - width}, ${topMid.y} L ${topMid.x + width}, ${topMid.y} `;
 
@@ -350,7 +350,10 @@
       .attr('width', svgWidth)
       .attr('height', svgHeight)
       // WebKit bug workaround (see https://bugs.webkit.org/show_bug.cgi?id=226683)
-      .on('wheel', () => {});
+      .on('wheel', () => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
 
     // Some constant lengths of different elements
     const chartHeight = height - svgPadding.top - svgPadding.bottom - densityHeight;
@@ -371,7 +374,7 @@
     let content = svgSelect.append('g')
       .attr('class', 'content')
       .attr('transform', `translate(${svgPadding.left}, ${svgPadding.top})`);
-    
+
     let binValues = featureData.binLabel.map(d => labelEncoder[d]);
 
     let xScale = d3.scalePoint()
@@ -423,9 +426,9 @@
       .attr('y', chartHeight)
       .attr('width', chartWidth)
       .attr('height', densityHeight);
-    
+
     histChart.attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-hist-chart-clip)`);
-    
+
     // Draw the dot plot
     let scatterPlot = content.append('g')
       .attr('class', 'scatter-plot-group');
@@ -447,7 +450,7 @@
     // Create axis group early so it shows up at the bottom
     let axisGroup = scatterPlot.append('g')
       .attr('class', 'axis-group');
-    
+
     let scatterPlotContent = scatterPlot.append('g')
       .attr('class', 'scatter-plot-content-group')
       .attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-chart-clip)`)
@@ -527,7 +530,7 @@
       .style('fill', 'hsl(0, 0%, 85%)')
       .style('opacity', 1)
       .lower();
-    
+
     // Add level lines to the original bar group
     let originalFront = barGroup.clone(true)
       .classed('original-front', true)
@@ -548,7 +551,7 @@
     confidenceGroup.raise();
     scatterGroup.raise();
     gridGroup.lower();
-    
+
 
     // Draw the chart X axis
     // Hack: create a wrapper so we can apply clip before transformation
@@ -559,7 +562,7 @@
       .attr('class', 'x-axis')
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`)
       .call(d3.axisBottom(xScale));
-    
+
     xAxisGroup.attr('font-family', defaultFont)
       .select('path')
       .style('stroke-width', 1.5);
@@ -584,12 +587,12 @@
       .attr('class', 'x-axis-text')
       .text(featureData.name)
       .style('fill', 'black');
-    
+
     // Draw the chart Y axis
     let yAxisGroup = axisGroup.append('g')
       .attr('class', 'y-axis')
       .attr('transform', `translate(${yAxisWidth}, 0)`);
-    
+
     yAxisGroup.call(d3.axisLeft(yScale).tickFormat(d => Math.abs(d) >= 1000 ? d / 1000 + 'K' : d));
     yAxisGroup.attr('font-family', defaultFont);
 
@@ -602,7 +605,7 @@
 
     // Draw the histograms at the bottom
     let histData = [];
-    
+
     // Transform the count to frequency (percentage)
     let histCountSum = d3.sum(featureData.histCount);
     let histFrequency = featureData.histCount.map(d => d / histCountSum);
@@ -621,7 +624,7 @@
 
     let histWidth = Math.min(30, xScale(histData[0].x2) - xScale(histData[0].x1));
 
-    // Draw the density histogram 
+    // Draw the density histogram
     let histChartContent = histChart.append('g')
       .attr('class', 'hist-chart-content-group')
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`);
@@ -635,12 +638,12 @@
       .attr('width', histWidth)
       .attr('height', d => histYScale(d.height))
       .style('fill', colors.hist);
-    
+
     // Draw a Y axis for the histogram chart
     let yAxisHistGroup = scatterPlot.append('g')
       .attr('class', 'y-axis')
       .attr('transform', `translate(${yAxisWidth}, ${chartHeight})`);
-    
+
     yAxisHistGroup.call(
       d3.axisLeft(histYScale)
         .ticks(2)
@@ -684,7 +687,7 @@
     let brushGroup = scatterPlotContent.append('g')
       .attr('class', 'brush')
       .call(brush);
-    
+
     // Change the style of the select box
     brushGroup.select('rect.overlay')
       .attr('cursor', null);
@@ -709,7 +712,7 @@
       .call(zoom.transform, d3.zoomIdentity);
 
     scatterPlotContent.on('dblclick.zoom', null);
-    
+
     // Listen to double click to reset zoom
     scatterPlotContent.on('dblclick', () => {
       scatterPlotContent.transition('reset')
@@ -816,10 +819,10 @@
         .on('drag', (e) => dragged(e, state, svg, sidebarStore, sidebarInfo,
           ebm, setEBM, footerStore))
       );
-    
+
     bboxGroup.select('rect.original-bbox')
       .classed('animated', true);
-    
+
     // Show the last edit
     if (state.pointDataLastEdit !== undefined) {
       drawLastEdit(state, svg, barWidth);
@@ -989,7 +992,7 @@
       .select('g.scatter-plot-content-group g.select-bbox-group')
       .style('cursor', null)
       .on('.drag', null);
-    
+
     // stop the animation
     bboxGroup.select('rect.original-bbox')
       .classed('animated', false);
@@ -1074,11 +1077,11 @@
       .select('g.scatter-plot-content-group g.select-bbox-group')
       .style('cursor', null)
       .on('.drag', null);
-    
+
     // stop the animation
     bboxGroup.select('rect.original-bbox')
       .classed('animated', false);
-    
+
     // Redraw the last edit if possible
     if (state.pointDataLastLastEdit !== undefined){
       state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointDataLastLastEdit));
@@ -1086,7 +1089,7 @@
       // Prepare for next redrawing after recovering the last last edit graph
       state.pointDataLastEdit = JSON.parse(JSON.stringify(state.pointData));
     }
-    
+
     // Update the footer message
     footerStore.update(value => {
       // Reset the baseline
@@ -1145,7 +1148,7 @@
     // Move the menu bar
     d3.select(multiMenu)
       .call(moveMenubar, svg, component);
-    
+
     // Exit the sub-item mode
     multiMenuControlInfo.subItemMode = null;
     multiMenuControlInfo.setValue = null;
@@ -1277,7 +1280,7 @@
     let lineChartContent = d3.select(svg)
       .select('g.scatter-plot-content-group')
       .classed('select-mode', selectMode);
-    
+
     lineChartContent.select('g.brush rect.overlay')
       .attr('cursor', null);
   };
@@ -1432,7 +1435,7 @@
 <div class='explain-panel' bind:this={component}>
 
   <div class='context-menu-container hidden' bind:this={multiMenu}>
-    <ContextMenu 
+    <ContextMenu
       bind:controlInfo={multiMenuControlInfo}
       bind:this={myContextMenu}
       type='cat'
@@ -1445,11 +1448,11 @@
       on:moveCancelClicked={multiMenuMoveCancelClicked}
       on:subItemCheckClicked={multiMenuSubItemCheckClicked}
       on:subItemCancelClicked={multiMenuSubItemCancelClicked}
-    /> 
+    />
   </div>
 
   <div class='svg-container'>
     <svg class='svg-explainer' bind:this={svg}></svg>
   </div>
-  
+
 </div>

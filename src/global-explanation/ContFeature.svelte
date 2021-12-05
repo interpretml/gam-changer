@@ -218,7 +218,7 @@
       // Step 2.2: Last edit
       if (sidebarInfo.historyHead - 1 >= 0 &&
         historyList[sidebarInfo.historyHead - 1].type !== 'original' &&
-        historyList[sidebarInfo.historyHead - 1].featureName === state.featureName) { 
+        historyList[sidebarInfo.historyHead - 1].featureName === state.featureName) {
         await setEBM('last-only', historyList[sidebarInfo.historyHead - 1].state.pointData);
       }
 
@@ -276,7 +276,7 @@
       }
       break;
     }
-    
+
     case 'save':
       console.log('save clicked');
       break;
@@ -295,7 +295,7 @@
           footerStore, ebm);
       }
       break;
-    
+
     default:
       break;
     }
@@ -338,8 +338,11 @@
       .attr('width', svgWidth)
       .attr('height', svgHeight)
       // WebKit bug workaround (see https://bugs.webkit.org/show_bug.cgi?id=226683)
-      .on('wheel', () => {});
-    
+      .on('wheel', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+
     // Disable the default context menu when right click
     svgSelect.on('contextmenu', (event) => {
       event.preventDefault();
@@ -382,7 +385,7 @@
     let xScale = d3.scaleLinear()
       .domain([xMin, xMax])
       .range([0, lineChartWidth]);
-    
+
     state.oriXScale = xScale;
     state.oriYScale = yScale;
     state.curXScale = xScale;
@@ -391,10 +394,10 @@
     // Use the # of ticks and y score range to set the default change unit for
     // the up and down in the context menu bar
     multiMenuControlInfo.changeUnit = round((scoreRange[1] - scoreRange[0]) / yScale.ticks().length, 4);
-    
+
     // Store the initial domain for zooming
     initXDomain = [xMin, xMax];
-    initYDomain = scoreRange; 
+    initYDomain = scoreRange;
 
     // Create a data array by combining the bin edge and additive terms
     state.additiveData = createAdditiveData(featureData);
@@ -413,7 +416,7 @@
     // Create histogram chart group
     let histChart = content.append('g')
       .attr('class', 'hist-chart-group');
-    
+
     // Draw the line chart
     let lineChart = content.append('g')
       .attr('class', 'line-chart-group');
@@ -441,7 +444,7 @@
       .attr('height', densityHeight);
 
     histChart.attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-hist-chart-clip)`);
-    
+
     let lineChartContent = lineChart.append('g')
       .attr('class', 'line-chart-content-group')
       .attr('clip-path', `url(#${featureData.name.replace(/\s/g, '')}-line-chart-clip)`)
@@ -489,12 +492,12 @@
 
     confidenceGroup.lower();
     gridGroup.lower();
-    
+
     // Draw nodes for editing
     let nodeGroup = lineChartContent.append('g')
       .attr('class', 'line-chart-node-group')
       .style('visibility', 'hidden');
-    
+
     nodeGroup.selectAll('circle')
       .data(Object.values(state.pointData), d => d.id)
       .join('circle')
@@ -504,7 +507,7 @@
       .attr('cy', d => yScale(d.y))
       .attr('r', rExtent[0])
       .style('stroke-width', nodeStrokeWidth);
-    
+
     // Draw the underlying confidence interval
     confidenceGroup.selectAll('rect')
       .data(confidenceData)
@@ -522,7 +525,7 @@
       .attr('class', 'x-axis')
       .attr('transform', `translate(${yAxisWidth}, ${lineChartHeight})`)
       .call(d3.axisBottom(xScale));
-    
+
     xAxisGroup.attr('font-family', defaultFont);
 
     // Add x axis label
@@ -535,12 +538,12 @@
       .attr('class', 'x-axis-text')
       .text(featureData.name)
       .style('fill', 'black');
-    
+
     // Draw the line chart Y axis
     let yAxisGroup = axisGroup.append('g')
       .attr('class', 'y-axis')
       .attr('transform', `translate(${yAxisWidth}, 0)`);
-    
+
     yAxisGroup.call(
       d3.axisLeft(yScale).tickFormat(d => Math.abs(d) >= 1000 ? d / 1000 + 'K' : d)
     );
@@ -556,7 +559,7 @@
 
     // Draw the histograms at the bottom
     let histData = [];
-    
+
     // Transform the count to frequency (percentage)
     let histCountSum = d3.sum(featureData.histCount);
     let histFrequency = featureData.histCount.map(d => d / histCountSum);
@@ -573,7 +576,7 @@
       .domain(d3.extent(histFrequency))
       .range([0, densityHeight]);
 
-    // Draw the density histogram 
+    // Draw the density histogram
     let histChartContent = histChart.append('g')
       .attr('class', 'hist-chart-content-group')
       .attr('transform', `translate(${yAxisWidth}, ${lineChartHeight})`);
@@ -587,12 +590,12 @@
       .attr('width', d => xScale(d.x2) - xScale(d.x1))
       .attr('height', d => histYScale(d.height))
       .style('fill', colors.hist);
-    
+
     // Draw a Y axis for the histogram chart
     let yAxisHistGroup = lineChart.append('g')
       .attr('class', 'y-axis')
       .attr('transform', `translate(${yAxisWidth}, ${lineChartHeight})`);
-    
+
     yAxisHistGroup.call(
       d3.axisLeft(histYScale)
         .ticks(2)
@@ -637,7 +640,7 @@
     let brushGroup = lineChartContent.append('g')
       .attr('class', 'brush')
       .call(brush);
-    
+
     // Change the style of the select box
     brushGroup.select('rect.overlay')
       .attr('cursor', null);
@@ -662,7 +665,7 @@
       .call(zoom.transform, d3.zoomIdentity);
 
     lineChartContent.on('dblclick.zoom', null);
-    
+
     // Listen to double click to reset zoom
     lineChartContent.on('dblclick', () => {
       lineChartContent.transition('reset')
@@ -1004,7 +1007,7 @@
     let lineChartContent = d3.select(svg)
       .select('g.line-chart-content-group')
       .classed('select-mode', selectMode);
-    
+
     lineChartContent.select('g.brush rect.overlay')
       .attr('cursor', null);
 
@@ -1057,10 +1060,10 @@
         .on('drag', (e) => dragged(e, state, svg, sidebarInfo.totalSampleNum > 2000,
           footerStore, updateEBM))
       );
-    
+
     bboxGroup.select('rect.original-bbox')
       .classed('animated', true);
-    
+
     // Show the last edit
     if (state.additiveDataLastEdit !== undefined) {
       drawLastEdit(state, svg);
@@ -1104,7 +1107,7 @@
       .select('g.line-chart-content-group g.select-bbox-group')
       .style('cursor', null)
       .on('.drag', null);
-    
+
     // stop the animation
     bboxGroup.select('rect.original-bbox')
       .classed('animated', false);
@@ -1193,11 +1196,11 @@
       .select('g.line-chart-content-group g.select-bbox-group')
       .style('cursor', null)
       .on('.drag', null);
-    
+
     // stop the animation
     bboxGroup.select('rect.original-bbox')
       .classed('animated', false);
-    
+
     // Redraw the last edit if possible
     if (state.additiveDataLastLastEdit !== undefined){
       state.additiveDataLastEdit = JSON.parse(JSON.stringify(state.additiveDataLastLastEdit));
@@ -1273,7 +1276,7 @@
       return value;
     });
   };
-  
+
   /**
    * Event handler when user clicks the decreasing button
    */
@@ -1317,7 +1320,7 @@
       sidebarInfo.hasUpdatedLastMetrics = true;
       sidebarStore.set(sidebarInfo);
     }
-    
+
     // Update the footer message
     footerStore.update(value => {
       value.state = `Made ${xs.length} bins <b>monotonically decreasing</b>`;
@@ -1641,7 +1644,7 @@
     // Move the menu bar
     d3.select(multiMenu)
       .call(moveMenubar, svg, component);
-    
+
     // Exit the sub-item mode
     multiMenuControlInfo.subItemMode = null;
     multiMenuControlInfo.setValue = null;
@@ -1887,9 +1890,9 @@
     <a id="download-anchor" style="display:none"> </a>
 
     <div class='context-menu-container hidden' bind:this={multiMenu}>
-      <ContextMenu 
+      <ContextMenu
         bind:controlInfo={multiMenuControlInfo}
-        bind:this={myContextMenu} 
+        bind:this={myContextMenu}
         on:inputChanged={multiMenuInputChanged}
         on:moveButtonClicked={multiMenuMoveClicked}
         on:increasingClicked={multiMenuIncreasingClicked}
@@ -1903,11 +1906,11 @@
         on:subItemCheckClicked={multiMenuSubItemCheckClicked}
         on:subItemCancelClicked={multiMenuSubItemCancelClicked}
         on:interpolateUpdated={multiMenuInterpolateUpdated}
-      /> 
+      />
     </div>
 
   <div class='svg-container'>
     <svg class='svg-explainer' width={svgWidth} height={svgHeight} bind:this={svg}></svg>
   </div>
-  
+
 </div>
