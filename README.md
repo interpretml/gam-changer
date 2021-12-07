@@ -13,7 +13,7 @@ An interactive visualization system designed to helps domain experts responsibly
 
 For more information, check out our manuscript:
 
-[**GAM Changer: Editing Generalized Additive Models with Interactive Visualization**](https://arxiv.org/abs/2004.15004).
+[**GAM Changer: Editing Generalized Additive Models with Interactive Visualization**](https://arxiv.org/abs/2112.03245).
 Zijie J. Wang, Alex Kale, Harsha Nori, Peter Stella, Mark Nunnally, Duen Horng Chau, Mihaela Vorvoreanu, Jennifer Wortman Vaughan, Rich Caruana.
 *Research2Clinics Workshop at NeurIPS, 2021.*
 
