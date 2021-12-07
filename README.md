@@ -11,6 +11,16 @@ An interactive visualization system designed to helps domain experts responsibly
 
 <a href="https://youtu.be/2gVSoPoSeJ8" target="_blank"><img src="https://i.imgur.com/TqQQ8gH.png" style="max-width:100%;"></a>
 
+For more information, check out our manuscript:
+
+[**GAM Changer: Editing Generalized Additive Models with Interactive Visualization**](https://arxiv.org/abs/2004.15004).
+Zijie J. Wang, Alex Kale, Harsha Nori, Peter Stella, Mark Nunnally, Duen Horng Chau, Mihaela Vorvoreanu, Jennifer Wortman Vaughan, Rich Caruana.
+*Research2Clinics Workshop at NeurIPS, 2021.*
+
+## Live Demo
+
+For a live demo, visit: http://interpret.ml/gam-changer/
+
 ## Running Locally
 
 Clone or download this repository:
@@ -52,6 +62,21 @@ Microsoft Research, NYU Langone Health, Georgia Tech and University of Washingto
 Jay Wang and Alex Kale were summer interns at Microsoft Research.
 
 We thank Steven Drucker, Adam Fourney, Saleema Amershi, Dean Carignan, Rob DeLine, and the InterpretML team for their support and constructive feedback.
+
+## Citation
+
+```bibTeX
+@article{wangGAMChangerEditing2021,
+  title = {{{GAM Changer}}: {{Editing Generalized Additive Models}} with {{Interactive Visualization}}},
+  shorttitle = {{{GAM Changer}}},
+  author = {Wang, Zijie J. and Kale, Alex and Nori, Harsha and Stella, Peter and Nunnally, Mark and Chau, Duen Horng and Vorvoreanu, Mihaela and Vaughan, Jennifer Wortman and Caruana, Rich},
+  year = {2021},
+  month = dec,
+  journal = {arXiv:2112.03245 [cs]},
+  url = {https://interpret.ml/gam-changer},
+  archiveprefix = {arXiv}
+}
+```
 
 ## License
 
