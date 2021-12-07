@@ -348,7 +348,7 @@
         <span>Video</span>
       </a>
 
-      <a target="_blank" href="https://interpret.ml">
+      <a target="_blank" href="https://arxiv.org/abs/2112.03245">
         <div class="svg-icon icon-pdf" title="Paper">
         </div>
         <span>Paper</span>

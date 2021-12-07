@@ -6,9 +6,10 @@ An interactive visualization system designed to helps domain experts responsibly
 
 [![build](https://github.com/interpretml/GAMChanger/workflows/build/badge.svg)](https://github.com/interpretml/gam-changer/actions)
 [![pypi](https://img.shields.io/pypi/v/gamchanger?color=blue)](https://pypi.org/project/gamchanger/)
-[![license](https://img.shields.io/pypi/l/gamchanger?color=orange)](https://github.com/interpretml/gam-changer/blob/master/LICENSE)
+[![license](https://img.shields.io/pypi/l/gamchanger?color=blue)](https://github.com/interpretml/gam-changer/blob/master/LICENSE)
+[![arxiv badge](https://img.shields.io/badge/arXiv-2112.03245-red)](https://arxiv.org/abs/2112.03245)
 
-<a href="https://youtu.be/2gVSoPoSeJ8" target="_blank"><img src="https://i.imgur.com/e6cAMqX.png" style="max-width:100%;"></a>
+<a href="https://youtu.be/2gVSoPoSeJ8" target="_blank"><img src="https://i.imgur.com/TqQQ8gH.png" style="max-width:100%;"></a>
 
 ## Running Locally
 
