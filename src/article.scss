@@ -118,6 +118,13 @@
   // border: 3px solid hsl(0, 0%, 60%);
   box-shadow: 0px 0px 8px hsla(0, 0%, 0%, 0.1);
   border-radius: 12px;
+
+  &.no-shadow {
+    box-shadow: none;
+    border-radius: 4px;
+    border-bottom-width: 3px;
+    border: 1px solid #B4B4B4;
+  }
 }
 
 .figure,

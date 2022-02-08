@@ -1,27 +1,81 @@
 <h1>
-<a href="https://interpret.ml/gam-changer/"><img src='https://i.imgur.com/WMwT193.png' width='100%'></a>
+<a href="https://interpret.ml/gam-changer/"><img src='https://i.imgur.com/njlqCrQ.png' width='100%'></a>
 </h1>
 
-An interactive visualization system designed to helps domain experts responsibly edit Generalized Additive Models (GAMs).
+Interactive visualization tool to help domain experts and data scientist easily and responsibly edit Generalized Additive Models (GAMs).
 
 [![build](https://github.com/interpretml/GAMChanger/workflows/build/badge.svg)](https://github.com/interpretml/gam-changer/actions)
 [![pypi](https://img.shields.io/pypi/v/gamchanger?color=blue)](https://pypi.org/project/gamchanger/)
 [![license](https://img.shields.io/pypi/l/gamchanger?color=blue)](https://github.com/interpretml/gam-changer/blob/master/LICENSE)
 [![arxiv badge](https://img.shields.io/badge/arXiv-2112.03245-red)](https://arxiv.org/abs/2112.03245)
 
-<a href="https://youtu.be/2gVSoPoSeJ8" target="_blank"><img src="https://i.imgur.com/TqQQ8gH.png" style="max-width:100%;"></a>
+<a href="https://youtu.be/D6whtfInqTc" target="_blank"><img src="https://i.imgur.com/xNS1dWt.png" style="max-width:100%;"></a>
 
-For more information, check out our manuscript:
+<!-- For more information, check out our manuscript:
 
 [**GAM Changer: Editing Generalized Additive Models with Interactive Visualization**](https://arxiv.org/abs/2112.03245).
 Zijie J. Wang, Alex Kale, Harsha Nori, Peter Stella, Mark Nunnally, Duen Horng Chau, Mihaela Vorvoreanu, Jennifer Wortman Vaughan, Rich Caruana.
-*Research2Clinics Workshop at NeurIPS, 2021.*
+*arXiv:2112.03245, 2021.* -->
 
 ## Live Demo
 
 For a live demo, visit: http://interpret.ml/gam-changer/
 
-## Running Locally
+You can use the demo to change your models: choose the `my model` tab and upload the `model.json` (model weights) and `sample.json` (sample data to evaluate the model).
+
+If you use [EBM](https://github.com/interpretml/interpret), you can generate these two files easily with the GAM Changer python package.
+
+```shell
+# First install the GAM Changer python package
+pip install gamchanger
+```
+
+```python
+import gc from gamchanger
+
+# Extract model weights
+model_data = gc.get_model_data(ebm)
+
+# Generate sample data
+sample_data = get_sample_data(ebm, x_test, y_test)
+
+# Save to `model.json` and `sample.json`
+dump(model_data, open('./model.json', 'w'))
+dump(sample_data, open('./sample.json', 'w'))
+```
+
+## In Computational Notebooks
+
+You can use GAM Changer directly in your computational notebooks (e.g., Jupyter Notebook, Google Colab).
+
+```ipython
+# Install the GAM Changer python package
+!pip install gamchanger
+
+import gamchanger as gc
+
+# Load GAM Changer with the model and sample data
+gc.visualize(ebm, x_feed, y_feed)
+```
+
+Example notebook: [Use GAM Changer in Google Colab](https://colab.research.google.com/drive/1OgAVZKqs2VwmY13QuOjCxlOEyexsYjtm?usp=sharing).
+
+## Load Edited Models
+
+After finishing editing a model, you can save the new model along with all the editing history to a `*.gamchanger` file by clicking the save button. You can load the new model in Python:
+
+```python
+from json import load
+import gamchanger as gc
+
+# Load the `*.gamchanger` file
+gc_dict = load(open('./edit-8-27-2021.gamchanger', 'r'))
+
+# This will return a deep copy of your original EBM where edits are applied
+new_ebm = gc.get_edited_model(ebm, gc_dict)
+```
+
+## Development
 
 Clone or download this repository:
 
@@ -44,7 +98,7 @@ Then run GAM Changer:
 npm run dev
 ```
 
-Navigate to [localhost:5000](https://localhost:5000). You should see GAM Changer running in your browser :)
+Navigate to [localhost:5000](https://localhost:5005). You should see GAM Changer running in your browser :)
 
 ## Credits
 
@@ -61,7 +115,7 @@ which was the result of a research collaboration between
 Microsoft Research, NYU Langone Health, Georgia Tech and University of Washington.
 Jay Wang and Alex Kale were summer interns at Microsoft Research.
 
-We thank Steven Drucker, Adam Fourney, Saleema Amershi, Dean Carignan, Rob DeLine, and the InterpretML team for their support and constructive feedback.
+We thank Steven Drucker, Adam Fourney, Saleema Amershi, Dean Carignan, Rob DeLine, Haekyu Park, and the InterpretML team for their support and constructive feedback.
 
 ## Citation
 

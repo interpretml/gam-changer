@@ -342,17 +342,17 @@
         <span>Code</span>
       </a>
 
-      <a target="_blank" href="https://youtu.be/2gVSoPoSeJ8">
+      <a target="_blank" href="https://youtu.be/D6whtfInqTc">
         <div class="svg-icon icon-youtube" title="Demo video">
         </div>
         <span>Video</span>
       </a>
 
-      <a target="_blank" href="https://arxiv.org/abs/2112.03245">
+      <!-- <a target="_blank" href="https://arxiv.org/abs/2112.03245">
         <div class="svg-icon icon-pdf" title="Paper">
         </div>
         <span>Paper</span>
-      </a>
+      </a> -->
 
     </div>
 
@@ -444,7 +444,7 @@
     <p>&quot;All models are wrong, and some are harmful&quot; is a modern realization of George Box’s <a href="https://en.wikipedia.org/wiki/All_models_are_wrong">famous quote</a>.
       This is particularly true for ML-powered systems in high-stake domains (e.g., healthcare, finance, and criminal justice),
       as a simple mistake can lead to catastrophic impacts on countless individuals.
-      These model mistakes can be caused by human label error, questionable training data, or even the training stochasticity.
+      These model mistakes can be caused by human label error, questionable training data, or even training stochasticity.
       With interpretable ML models, we see many models exploit problematic patterns in the training data to make predictions.
     </p>
     <p>
@@ -458,21 +458,21 @@
       <img src="https://i.imgur.com/1jtTWUj.png" alt="Shape function of age on pneumonia risk prediction EBM" width=90% align="middle"/>
       <div class="figure-caption">
         Figure 1.  The shape function of age in an EBM model trained to predict the risk of dying from pneumonia.
-        The curve shows that the model overall predicts older patients to have higher risk, but the predicted risk mysteriously drops when the patients are older than 100 years old.
+        The curve shows that the model predicts older patients to have a higher risk, but the predicted risk mysteriously drops when the patients are older than 100 years old.
         This prediction pattern can deprive needy patients of care and cause harm in deployment.
       </div>
     </div>
 
     <p>The shape function visualization shows that the model predicts younger patients to have lower risk, and the risk increases when patients grow older.
       However, the predicted risk suddenly plunges when the age passes 100—leading to a similar risk score as if the patient is 30 years younger!
-      One hypothesis to explain this dangerous pattern is that it might be due to outliers in this age range, especially the range has a small sample size.
+      One hypothesis is that this dangerous pattern might be due to outliers in this age range, especially the range with a small sample size.
       To identify the true impact of age on pneumonia risk, additional causal experiments and analysis are needed.
       Without robust evidence that people over 100 are truly at lower risk, doctors might fear that they may be injuring patients by depriving needy older people of care,
       and violating their primary obligation to <strong>do no harm</strong>.
-      Therefore, some doctors would like to manually set the risk of older patients to be equal to that of their slightly younger neighbors.
+      Therefore, some doctors would like to manually set the risk of older patients equal to that of their slightly younger neighbors.
     </p>
-    <p>Interpretability helps us discover model errors like the sudden drop of predicted risk of older patients, however,
-      it is yet unclear how we can fix these dangerous patterns.
+    <p>Interpretability helps us discover model errors like the sudden drop of predicted risk of older patients; however,
+      it is unclear how we can fix these dangerous patterns.
       GAM Changer aims to address this practical challenge.
       With this tool, you can easily <em>investigate</em>, <em>validate</em>, and <em>align</em> GAM behaviors with your domain knowledge
       and values through interactively editing model parameters.
@@ -485,22 +485,31 @@
         <source src="PUBLIC_URL/video/drag.mp4" type="video/mp4">
       </video>
       <div class="figure-caption">
-        Figure 2.  In the <a href='#top' style='font-variant: small-caps;'>my model</a> tab, users can use simple drag-and-drop to start editing their GAM models.
+        Figure 2-1.  In the <a href='#top' style='font-variant: small-caps;'>my model</a> tab, users can use simple drag-and-drop to start editing their GAM models.
       </div>
     </div>
 
     <p>We provide two options to use GAM Changer to edit your GAM models.
-      The first option is to select <a href='#top' style='font-variant: small-caps;'>my model</a> on the top of this page, and then upload your model and sample data by dragging them to the interface (Figure 2).
+      The first option is to select <a href='#top' style='font-variant: small-caps;'>my model</a> on the top of this page, and then upload your model and sample data by dragging them to the interface (Figure 2-1).
       You can follow <a href="https://gist.github.com/xiaohk/875b5374840c66689eb42a4b8820c3b5">this instruction</a> to export GAM model and sample data.
       Alternatively, you can directly use GAM Changer in any computational notebooks (e.g., <a href='https://jupyter.org/'>Jupyter Notebook/Lab</a>, <a href='https://colab.research.google.com'>Google Colab</a>).
-      You can follow the steps in this <a href="https://colab.research.google.com/drive/1OgAVZKqs2VwmY13QuOjCxlOEyexsYjtm?usp=sharing">example notebook</a>.
+      You can follow the steps in this <a href="https://colab.research.google.com/drive/1OgAVZKqs2VwmY13QuOjCxlOEyexsYjtm?usp=sharing">example notebook</a> (Figure 2-2).
     </p>
+
+    <div class='video' style='margin-top: 20px;'>
+      <video autoplay loop muted playsinline class='loop-video no-shadow'>
+        <source src="PUBLIC_URL/video/jupyter.mp4" type="video/mp4">
+      </video>
+      <div class="figure-caption">
+        Figure 2-2.  You can also use GAM Changer directly from your computational notebooks (e.g., Jupyter Notebook, Google Colab).
+      </div>
+    </div>
 
     <h4 id="gam-canvas">GAM Canvas</h4>
     <p>The GAM Canvas (Figure 3) is the primary view of GAM Changer.
-      It is visualizes one input feature’s contribution to the model’s prediction by plotting its shape function.
+      It visualizes one input feature’s contribution to the model’s prediction by plotting its shape function.
       As a GAM’s inference varies by feature type, we apply different visualization designs for different feature types.
-      You can use the feature selection drop-down to switch features. At start, GAM Changer chooses the feature with the highest importance score for you.
+      You can use the feature selection drop-down to switch features. To start, GAM Changer chooses the feature with the highest importance score for you.
     </p>
 
     <div class='video'>
@@ -509,7 +518,7 @@
       </video>
       <div class="figure-caption">
         Figure 3.  In the <em>GAM Canvas</em>, you can inspect the shape function with zooming and panning.
-        In the Selection Mode, you apply various editing tools to modify the shape function and therefore change the model prediction behaviors.
+        In the Selection Mode, you apply various editing tools to modify the shape function and change the model prediction behaviors.
       </div>
     </div>
 
@@ -527,17 +536,17 @@
       </video>
       <div class="figure-caption">
         Figure 4. There is a "live" GAM model running in your browser.
-        GAM Changer modifies this model as you change the shape function, and tests the new model the sample data.
+        As you change the shape function, GAM Changer modifies this model and immediately tests the new model the sample data.
         The model performance is visualized in real-time in the <em>Metric Panel</em>.
       </div>
     </div>
 
     <p>Model editing empowers domain experts and data scientists to exercise human agency, but <strong>demands caution</strong>.
       Changing an ML model can have serious consequences—you should only edit the model when you are confident that it would improve the model.
-      Fortunately, GAMs are glass-box models, so you can identify the effects of model changes.
+      Fortunately, GAMs are glass-box models so that you can identify the effects of model changes.
       To help you keep track of the editing effects on the model performance over the sample dataset, we have developed the <em>Metric Panel</em> (Figure 4).
-      In real-time, it visualizes the model performance metrics of the original model, last version, and the current version.
-      You can also choose different metric scopes to focus on the selected bins or a slice of dataset (e.g., houses with paved alley).
+      In real-time, it visualizes the model performance metrics of the original model, the last version, and the current version.
+      You can also choose different metric scopes to focus on the selected bins or a dataset slice (e.g., houses with paved alley).
     </p>
 
     <h4 id="feature-panel">Feature Panel</h4>
@@ -555,12 +564,12 @@
 
     <p>Besides model performance, we also hope you to <strong>be mindful about fairness issues</strong> during model editing;
       some edits can disproportionally affect certain sub-groups in the dataset.
-      For example, in a house price prediction model (Figure 5), editing model's prediction on high-quality houses is implicitly affecting houses built in recent years.
+      For example, in a house price prediction model (Figure 5), editing the model's prediction on high-quality houses would implicitly affect houses built in recent years.
       This is because the house quality is correlated with when the house was built.
       In healthcare, model edits created for older patients tend to affect women more than men, because in average women live longer than men.
       To help you be aware of the characteristics of samples that are affected by your edits, we have designed the <em>Feature Panel</em> (Figure 5).
-      Every time you select an editing region on the <em>GAM Canvas</em>, the <em>Feature Panel</em> automatically identifies other correlated features (both continuous and categorical) and sort them based on the correlation.
-      It also visualizes the distribution of the affected samples vs. the all samples in the dataset.
+      Every time you select an editing region on the <em>GAM Canvas</em>, the <em>Feature Panel</em> automatically identifies other correlated features (both continuous and categorical) and sorts them based on the correlation.
+      It also visualizes the distribution of the affected samples vs. all samples in the dataset.
       You can also hover over the histogram bins in the Categorical tab to view their labels.
     </p>
 
@@ -645,7 +654,7 @@
     </ul>
 
     <div class="video" style='margin-bottom: 2em;'>
-      <Youtube videoId="2gVSoPoSeJ8" playerId="demo_video" bind:this={currentPlayer}/>
+      <Youtube videoId="D6whtfInqTc" playerId="demo_video" bind:this={currentPlayer}/>
     </div>
 
     <h2 id="how-is-gam-changer-developed">How is <span class='tool-text'>GAM Changer</span> Developed?</h2>
@@ -656,8 +665,8 @@
     </p>
 
     <h2 id="who-developed-gam-changer">Who Developed <span class='tool-text'>GAM Changer</span>?</h2>
-    <p>Led by <a href="https://zijie.wang">Jay Wang</a>, GAM Changer started as a research intern project at <a href="https://www.microsoft.com/en-us/research/">Microsoft Research</a>.
-      The design is a result of a collaboration between Human-computer Interaction, Visualization, and Machine Learning researchers, data scientists, and doctors.
+    <p>Led by <a href="https://zijie.wang">Jay Wang</a>, GAM Changer started as an intern project at <a href="https://www.microsoft.com/en-us/research/">Microsoft Research</a>.
+      The work is a result of a collaboration between ML and Human-computer Interaction researchers, data scientists, and doctors.
       GAM Changer is created by <a href="https://zijie.wang">Jay Wang</a>,
       <a href="http://students.washington.edu/kalea/">Alex Kale</a>,
       <a href="https://www.linkedin.com/in/harshanori/">Harsha Nori</a>,
@@ -670,25 +679,35 @@
     </p>
 
     <p>
-      We thank <a href="https://scottlundberg.com">Scott Lundberg</a> for insightful conversations.
+      <!-- We thank <a href="https://scottlundberg.com">Scott Lundberg</a> for insightful conversations.
       We are also grateful to <a href="https://www.microsoft.com/en-us/research/people/sdrucker/">Steven Drucker</a>,
       <a href="https://www.adamfourney.com">Adam Fourney</a>,
       <a href="https://www.microsoft.com/en-us/research/people/samershi/">Saleema Amershi</a>,
       <a href="https://www.linkedin.com/in/deancarignan/">Dean Carignan</a>,
       <a href="https://www.microsoft.com/en-us/research/people/rdeline/">Rob DeLine</a>,
       and the <a href="https://github.com/interpretml/interpret/">InterpretML team</a> for their helpful feedback.
+      We appreciate anonymous user study participants for their valuable feedback. -->
+      We thank Scott Lundberg for insightful conversations.
+      We are also grateful to Steven Drucker,
+      Adam Fourney,
+      Saleema Amershi,
+      Dean Carignan,
+      Rob DeLine,
+      Haekyu Park,
+      and the InterpretML team for their helpful feedback.
       We appreciate anonymous user study participants for their valuable feedback.
     </p>
 
     <h2 id="how-can-i-contribute">How Can I Contribute?</h2>
     <p>
-      If you have any questions or feedback, feel free to <a href='https://github.com/interpretml/interpret/issues'>open an issue</a> or contact <a href="https://zijie.wang">Jay Wang</a>.
+      If you have any questions or feedback, feel free to <a href='https://github.com/interpretml/gam-changer/issues'>open an issue</a> or contact <a href="https://zijie.wang">Jay Wang</a>.
     </p>
 
     <p>
       We’d love to learn more about your experience with GAM Changer!
       If you’d like to share (e.g., why you use GAM Changer, what functions you find most helpful),
-      please reach out to <a href="https://zijie.wang">Jay Wang</a>.
+      please reach out to us.
+      GAM Changer is an open-source project, and we welcome <a href='https://github.com/interpretml/gam-changer/pulls'>pull requests</a> for new feature implementation, bug fixing, etc.
     </p>
 
   </div>

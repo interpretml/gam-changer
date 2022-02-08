@@ -42,6 +42,7 @@
   // Visualization constants
   const svgPadding = config.svgPadding;
   const densityHeight = 90;
+  // const densityHeight = 60;
 
   // Viewbox width and height
   let width = 600;
@@ -488,6 +489,7 @@
     lineGroup.clone(true)
       .classed('real', false)
       .style('stroke', 'hsl(0, 0%, 82%)')
+      // .style('stroke', 'hsl(0, 0%, 70%)')
       .lower();
 
     confidenceGroup.lower();
