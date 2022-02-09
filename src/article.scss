@@ -122,8 +122,10 @@
   &.no-shadow {
     box-shadow: none;
     border-radius: 4px;
+    border: 1px solid #BDBDBD;
     border-bottom-width: 3px;
-    border: 1px solid #B4B4B4;
+    border-top-width: 3px;
+    background: #BDBDBD;
   }
 }
 
