@@ -72,7 +72,7 @@ export const brushDuring = (event, state, svg, multiMenu, ebm, footerStore) => {
       });
 
     selectedBinIDs.sort((a, b) => a[1] - b[1]);
-      
+
     svgSelect.select('g.line-chart-line-group.real')
       .selectAll('path.additive-line-segment')
       .classed('selected', false);
@@ -98,7 +98,7 @@ export const brushDuring = (event, state, svg, multiMenu, ebm, footerStore) => {
     // Update the footer message
     footerStore.update(value => {
       let sampleNum = ebm.getSelectedSampleNum(selectedBinIndexes);
-      value.sample = `<b>${sampleNum}/${value.totalSampleNum}</b> test samples selected`;
+      value.sample = `<b>${sampleNum}/${value.totalSampleNum}</b> validation samples selected`;
       return value;
     });
   }
@@ -173,9 +173,9 @@ export const brushEndSelect = (event, state, svg, multiMenu, myContextMenu,
         callBack = () => {
           setEBM('current', state.pointData);
         };
-        
+
       } else if (modeInfo.moveMode || modeInfo.subItemMode !== null) {
-        
+
         callBack = () => {
           // We are using lastSelectedInfo here because selectedInfo is purged
           // in brushDuring
@@ -396,7 +396,7 @@ export const selectAllBins = (svg, state, bboxStrokeWidth, multiMenu, component,
   // Update the footer message
   footerStore.update(value => {
     let sampleNum = ebm.getSelectedSampleNum(selectedBinIndexes);
-    value.sample = `<b>${sampleNum}/${value.totalSampleNum}</b> test samples selected`;
+    value.sample = `<b>${sampleNum}/${value.totalSampleNum}</b> validation samples selected`;
     return value;
   });
 

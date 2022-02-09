@@ -43,7 +43,7 @@
       .select('.bar-svg')
       .node()
       .parentNode;
-    
+
     let scrollBarWidth = svgInstance.offsetWidth - svgInstance.clientWidth;
 
     console.log(`effect tab: [${width}, ${height}, ${scrollBarWidth}]`);
@@ -164,7 +164,7 @@
       sidebarInfo.sliceOptions.forEach(optionGroup => {
         let optGroup = selectElement.append('optgroup')
           .attr('label', optionGroup[0].name);
-        
+
         optionGroup.forEach(opt => {
           optGroup.append('option')
             .attr('value', opt.featureID)
@@ -207,7 +207,7 @@
       // sidebar update with 'last'
       break;
 
-    case 'commit': 
+    case 'commit':
 
       // Copy last to last last
       copyMetricData(barData, confusionMatrixData, 1, 3);
@@ -217,13 +217,13 @@
       if (sidebarInfo.effectScope === 'global') {
         sidebarInfo.barData = JSON.parse(JSON.stringify(barData));
         sidebarInfo.confusionMatrixData = JSON.parse(JSON.stringify(confusionMatrixData));
-        
+
         sidebarInfo.curGroup = 'commitCompleted';
         sidebarStore.set(sidebarInfo);
       }
 
       break;
-    
+
     case 'commit-not-global': {
       let globalBarData = sidebarInfo.barData;
       let globalConfusionMatrixData = sidebarInfo.confusionMatrixData;
@@ -234,7 +234,7 @@
       // Copy current to last
       copyMetricData(globalBarData, globalConfusionMatrixData, 2, 1);
 
-      // Update the current 
+      // Update the current
       updateData(2, globalBarData, globalConfusionMatrixData, sidebarInfo);
 
       // Save into the history stack
@@ -293,7 +293,7 @@
     case 'current-only':
       updateData(2, barData, confusionMatrixData, sidebarInfo);
       break;
-    
+
     default:
       break;
     }
@@ -302,7 +302,7 @@
     if (sidebarInfo.selectedTab === 'effect' && sidebarInfo.isClassification !== null) {
       if (sidebarInfo.isClassification) {
         drawClassificationBarChart(width, svgPadding, component, barData);
-        drawConfusionMatrix(width, svgPadding, component, confusionMatrixData); 
+        drawConfusionMatrix(width, svgPadding, component, confusionMatrixData);
       } else {
         drawRegressionBarChart(width, svgPadding, component, barData);
       }
@@ -456,7 +456,7 @@
   :global(.metrics-tab .dominant-middle) {
     dominant-baseline: middle;
   }
-  
+
 
 </style>
 
@@ -465,7 +465,7 @@
     <div class='scope-selection field has-addons'>
 
       <div class='control'>
-        <button class='button' title='Show model performance across all test samples'
+        <button class='button' title='Show model performance across all validation samples'
           class:selected={sidebarInfo.effectScope === 'global'}
           on:click={() => tabClicked('global')}
         >
@@ -476,7 +476,7 @@
       </div>
 
       <div class='control'>
-        <button class='button' title='Show model performance on the selected test samples'
+        <button class='button' title='Show model performance on the selected validation samples'
           class:selected={sidebarInfo.effectScope === 'selected'}
           on:click={() => tabClicked('selected')}
         >
@@ -490,7 +490,7 @@
         <select class='button right-button select' name='slice'
           bind:this={sliceSelect}
           id='slice-select'
-          title='Show model performance on the sliced test samples'
+          title='Show model performance on the sliced validation samples'
           class:selected={sidebarInfo.effectScope === 'slice'}
           on:click={() => tabClicked('slice')}
           on:blur={() => {}}

@@ -77,7 +77,7 @@ export const brushDuring = (event, state, svg, multiMenu, ebm, footerStore) => {
     // Update the footer message
     footerStore.update(value => {
       let sampleNum = ebm.getSelectedSampleNum(selectedBinIndexes);
-      value.sample = `<b>${sampleNum}/${value.totalSampleNum}</b> test samples selected`;
+      value.sample = `<b>${sampleNum}/${value.totalSampleNum}</b> validation samples selected`;
       return value;
     });
   }
@@ -290,7 +290,7 @@ export const selectAllBins = (svg, state, multiMenu, component, updateFeatureSid
   // Update the footer message
   footerStore.update(value => {
     let sampleNum = ebm.getSelectedSampleNum(selectedBinIndexes);
-    value.sample = `<b>${sampleNum}/${value.totalSampleNum}</b> test samples selected`;
+    value.sample = `<b>${sampleNum}/${value.totalSampleNum}</b> validation samples selected`;
     return value;
   });
 

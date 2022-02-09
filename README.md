@@ -9,7 +9,7 @@ Interactive visualization tool to help domain experts and data scientist easily 
 [![license](https://img.shields.io/pypi/l/gamchanger?color=blue)](https://github.com/interpretml/gam-changer/blob/master/LICENSE)
 [![arxiv badge](https://img.shields.io/badge/arXiv-2112.03245-red)](https://arxiv.org/abs/2112.03245)
 
-<a href="https://youtu.be/D6whtfInqTc" target="_blank"><img src="https://i.imgur.com/HhPLdt0.png" style="max-width:100%;"></a>
+<a href="https://youtu.be/D6whtfInqTc" target="_blank"><img src="https://i.imgur.com/J3C0aov.png" style="max-width:100%;"></a>
 
 <!-- For more information, check out our manuscript:
 

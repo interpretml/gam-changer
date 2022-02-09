@@ -333,7 +333,7 @@
 
     footerStore.update(value => {
       value.totalSampleNum = sidebarInfo.totalSampleNum;
-      value.sample = `<b>0/${sidebarInfo.totalSampleNum }</b> test samples selected`;
+      value.sample = `<b>0/${sidebarInfo.totalSampleNum }</b> validation samples selected`;
       return value;
     });
   };
@@ -413,7 +413,7 @@
     sidebarInfo.totalSampleNum = sampleData.samples.length;
     footerStore.update(value => {
       value.totalSampleNum = sidebarInfo.totalSampleNum;
-      value.sample = `<b>0/${sidebarInfo.totalSampleNum }</b> test samples selected`;
+      value.sample = `<b>0/${sidebarInfo.totalSampleNum }</b> validation samples selected`;
       return value;
     });
 
