@@ -489,21 +489,21 @@
       </div>
     </div>
 
+    <div class='video' style='margin-top: 30px;'>
+      <video autoplay loop muted playsinline class='loop-video no-shadow'>
+        <source src="PUBLIC_URL/video/jupyter.mp4" type="video/mp4">
+      </video>
+      <div class="figure-caption">
+        Figure 2-2.  Users can use GAM Changer directly in computational notebooks (e.g., Jupyter Notebook, Google Colab).
+      </div>
+    </div>
+
     <p>We provide two options to use GAM Changer to edit your GAM models.
       The first option is to select <a href='#top' style='font-variant: small-caps;'>my model</a> on the top of this page, and then upload your model and sample data by dragging them to the interface (Figure 2-1).
       You can follow <a href="https://gist.github.com/xiaohk/875b5374840c66689eb42a4b8820c3b5">this instruction</a> to export GAM model and sample data.
       Alternatively, you can directly use GAM Changer in any computational notebooks (e.g., <a href='https://jupyter.org/'>Jupyter Notebook/Lab</a>, <a href='https://colab.research.google.com'>Google Colab</a>).
       You can follow the steps in this <a href="https://colab.research.google.com/drive/1OgAVZKqs2VwmY13QuOjCxlOEyexsYjtm?usp=sharing">example notebook</a> (Figure 2-2).
     </p>
-
-    <div class='video' style='margin-top: 20px;'>
-      <video autoplay loop muted playsinline class='loop-video no-shadow'>
-        <source src="PUBLIC_URL/video/jupyter.mp4" type="video/mp4">
-      </video>
-      <div class="figure-caption">
-        Figure 2-2.  You can also use GAM Changer directly from your computational notebooks (e.g., Jupyter Notebook, Google Colab).
-      </div>
-    </div>
 
     <h4 id="gam-canvas">GAM Canvas</h4>
     <p>The GAM Canvas (Figure 3) is the primary view of GAM Changer.
@@ -535,8 +535,8 @@
         <source src="PUBLIC_URL/video/performance.mp4" type="video/mp4">
       </video>
       <div class="figure-caption">
-        Figure 4. There is a "live" GAM model running in your browser.
-        As you change the shape function, GAM Changer modifies this model and immediately tests the new model the sample data.
+        Figure 4. A "live" GAM model is running in your browser.
+        As you modify the shape function, GAM Changer changes this model and immediately evaluates it on the sample data.
         The model performance is visualized in real-time in the <em>Metric Panel</em>.
       </div>
     </div>
@@ -687,15 +687,17 @@
       <a href="https://www.microsoft.com/en-us/research/people/rdeline/">Rob DeLine</a>,
       and the <a href="https://github.com/interpretml/interpret/">InterpretML team</a> for their helpful feedback.
       We appreciate anonymous user study participants for their valuable feedback. -->
-      We thank Scott Lundberg for insightful conversations.
-      We are also grateful to Steven Drucker,
+      We are also grateful to Scott Lundberg,
+      Steven Drucker,
       Adam Fourney,
       Saleema Amershi,
       Dean Carignan,
       Rob DeLine,
       Haekyu Park,
-      and the InterpretML team for their helpful feedback.
-      We appreciate anonymous user study participants for their valuable feedback.
+      the InterpretML team,
+      user study participants,
+      and anonymous reviewers
+      for their helpful feedback.
     </p>
 
     <h2 id="how-can-i-contribute">How Can I Contribute?</h2>
@@ -704,10 +706,10 @@
     </p>
 
     <p>
-      We’d love to learn more about your experience with GAM Changer!
+      We’d love to hear your experience with GAM Changer!
       If you’d like to share (e.g., why you use GAM Changer, what functions you find most helpful),
       please reach out to us.
-      GAM Changer is an open-source project, and we welcome <a href='https://github.com/interpretml/gam-changer/pulls'>pull requests</a> for new feature implementation, bug fixing, etc.
+      GAM Changer is an open-source project, and we welcome <a href='https://github.com/interpretml/gam-changer/pulls'>pull requests</a> for new feature implementations and bug fixes, etc.
     </p>
 
   </div>
