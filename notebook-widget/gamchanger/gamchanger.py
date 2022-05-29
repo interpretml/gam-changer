@@ -4,6 +4,7 @@ import random
 import html
 import base64
 import pkgutil
+import warnings
 
 from IPython.display import display_html
 from copy import deepcopy
@@ -14,10 +15,10 @@ def _resort_categorical_level(col_mapping):
     """
     Resort the levels in the categorical encoders if all levels can be converted
     to numbers (integer or float).
-    
+
     Args:
         col_mapping: the dictionary that maps level string to int
-    
+
     Returns:
         New col_mapping if all levels can be converted to numbers, otherwise
         the original col_mapping
@@ -263,6 +264,17 @@ def get_sample_data(ebm, x_test, y_test, resort_categorical=False):
     if isinstance(y_test, pd.Series):
         y_test_copy = y_test.to_numpy()
 
+    # Drop all rows with any NA values
+    if np.isnan(x_test_copy).any():
+        na_row_indexes = np.isnan(x_test_copy).any(axis=1)
+        x_test_copy = x_test_copy[~na_row_indexes]
+        y_test_copy = y_test_copy[~na_row_indexes]
+
+        warnings.warn(
+            'Sample data contains missing values. Currently GAM Changer does ' +
+            f'not support missing values. Dropped {np.sum(na_row_indexes)} rows with NAs.'
+        )
+
     # Encode the categorical variables as integers
     for i in range(len(feature_types)):
         if (feature_types[i] == 'categorical'):
@@ -296,13 +308,13 @@ def get_sample_data(ebm, x_test, y_test, resort_categorical=False):
 def _overwrite_bin_definition(ebm, index_id, new_bins, new_scores):
     """
     Overwrite the bin definitions and scores for continuous variables.
-    
+
     Args:
         ebm: EBM object
         index_id: Feature's index id in the ebm object
         new_bins: New bin definition
         new_score: New bin scores
-        
+
     In python, to overwrite the bins, we want to overwrite pair
     `edge[:] with score[2:]` and pair `col_min_ with score [1]`.
 
@@ -316,15 +328,15 @@ def _overwrite_bin_definition(ebm, index_id, new_bins, new_scores):
 
     newScores[:] => additive_terms_[1:]
     ```
-    
+
     We also want to update the standard deviation information:
-    
+
     Case 1: Bin definition has not changed:
         We zero out the SDs of bins that have been modified
-    
+
     Case 2: Bin definition has changed (even just a subset):
         We zero out all the SDs of bins
-        
+
     In Python, SDs share the same index as scores.
     """
 
@@ -346,7 +358,7 @@ def _overwrite_bin_definition(ebm, index_id, new_bins, new_scores):
     if binDefChanged:
         ebm.term_standard_deviations_[index_id] = np.zeros(len(new_scores) + 1)
     else:
-        # Itereate through the scores to zero out SDs of modified bins
+        # Iterate through the scores to zero out SDs of modified bins
         for i in range(1, len(ebm.additive_terms_[index_id])):
             if round(ebm.additive_terms_[index_id][i], 4) != new_scores[i - 1]:
                 ebm.term_standard_deviations_[index_id][i] = 0
@@ -390,9 +402,9 @@ def get_edited_model(ebm, gamchanger_export):
     updated_features = set()
 
     # Use the ebm's mapping to map level name to bin index
-    ebm_col_mpaaing = ebm_copy.pair_preprocessor_.col_mapping_
+    ebm_col_mapping = ebm_copy.pair_preprocessor_.col_mapping_
 
-    # We iterate through the history list from the newest edit to the oldes edit
+    # We iterate through the history list from the newest edit to the older edit
     # For each modified feature, we overwrite the bin definitions/scores on an EBM
     # copy using the latest edit info on that feature.
     # Note that GAM Changer can only change the bin definitions of continuous features
@@ -416,7 +428,7 @@ def get_edited_model(ebm, gamchanger_export):
             bin_data = cur_history['state']['pointData']
             bin_edges, bin_scores = [], []
 
-            # bin_data is a linked list, bin_data[0] is gauranteed to be the start
+            # bin_data is a linked list, bin_data[0] is guaranteed to be the start
             # point of all bins
             cur_bin = bin_data['0']
 
@@ -431,13 +443,13 @@ def get_edited_model(ebm, gamchanger_export):
 
             assert(len(bin_edges) == len(bin_data))
 
-            # Overwrite EBM bin defintions/additive terms with bin_edges and bin_scores
+            # Overwrite EBM bin definitions/additive terms with bin_edges and bin_scores
             _overwrite_bin_definition(ebm_copy, cur_index, bin_edges, bin_scores)
             updated_features.add(cur_name)
 
         elif feature_name_to_type[cur_name] == 'categorical':
             # Get the current level mapping
-            cur_mapping = ebm_col_mpaaing[cur_index]
+            cur_mapping = ebm_col_mapping[cur_index]
 
             # Collect bin edges and scores
             bin_data = cur_history['state']['pointData']

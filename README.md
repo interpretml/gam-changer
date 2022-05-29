@@ -32,12 +32,13 @@ pip install gamchanger
 
 ```python
 import gc from gamchanger
+from json import dump
 
 # Extract model weights
 model_data = gc.get_model_data(ebm)
 
 # Generate sample data
-sample_data = get_sample_data(ebm, x_test, y_test)
+sample_data = gc.get_sample_data(ebm, x_test, y_test)
 
 # Save to `model.json` and `sample.json`
 dump(model_data, open('./model.json', 'w'))
