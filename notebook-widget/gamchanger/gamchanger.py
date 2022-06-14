@@ -265,8 +265,8 @@ def get_sample_data(ebm, x_test, y_test, resort_categorical=False):
         y_test_copy = y_test.to_numpy()
 
     # Drop all rows with any NA values
-    if np.isnan(x_test_copy).any():
-        na_row_indexes = np.isnan(x_test_copy).any(axis=1)
+    if pd.isnull(x_test_copy).any():
+        na_row_indexes = pd.isnull(x_test_copy).any(axis=1)
         x_test_copy = x_test_copy[~na_row_indexes]
         y_test_copy = y_test_copy[~na_row_indexes]
 
