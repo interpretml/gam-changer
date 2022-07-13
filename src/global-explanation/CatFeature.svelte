@@ -350,7 +350,7 @@
       .attr('width', svgWidth)
       .attr('height', svgHeight)
       // WebKit bug workaround (see https://bugs.webkit.org/show_bug.cgi?id=226683)
-      .on('wheel', () => {
+      .on('wheel', (e) => {
         e.preventDefault();
         e.stopPropagation();
       });
