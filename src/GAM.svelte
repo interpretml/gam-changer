@@ -263,12 +263,16 @@
     } else {
       // Initialize GAM Changer using the continuous variable with the highest importance
 
-      targetFeatureIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
-      tempSelectedFeature.type = 'continuous';
-
-      // targetFeatureIndex = d3.maxIndex(featureSelectList.categorical, d => d.importance);
-      // tempSelectedFeature.type = 'categorical';
+      if(featureSelectList.continuous.length !== 0) {
+        targetFeatureIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
+        tempSelectedFeature.type = 'continuous';
+      } else {
+        targetFeatureIndex = d3.maxIndex(featureSelectList.categorical, d => d.importance);
+        tempSelectedFeature.type = 'categorical';
+      }
     }
+
+    
 
     tempSelectedFeature.data = data.features[featureSelectList[tempSelectedFeature.type][targetFeatureIndex].featureID];
     tempSelectedFeature.id = featureSelectList[tempSelectedFeature.type][targetFeatureIndex].featureID;
