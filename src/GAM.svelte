@@ -261,18 +261,17 @@
       });
       targetFeatureIndex = featureSelectList[tempSelectedFeature.type].map(d => d.name).indexOf(lastEditName);
     } else {
-      // Initialize GAM Changer using the continuous variable with the highest importance
-
       if(featureSelectList.continuous.length !== 0) {
+        // Initialize GAM Changer using the continuous variable with the highest importance
         targetFeatureIndex = d3.maxIndex(featureSelectList.continuous, d => d.importance);
         tempSelectedFeature.type = 'continuous';
       } else {
+        // If there is no continuous variable, initialize GAM Changer using
+        // the categorical variable with the highest importance
         targetFeatureIndex = d3.maxIndex(featureSelectList.categorical, d => d.importance);
         tempSelectedFeature.type = 'categorical';
       }
     }
-
-    
 
     tempSelectedFeature.data = data.features[featureSelectList[tempSelectedFeature.type][targetFeatureIndex].featureID];
     tempSelectedFeature.id = featureSelectList[tempSelectedFeature.type][targetFeatureIndex].featureID;
