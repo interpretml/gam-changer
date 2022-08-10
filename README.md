@@ -31,7 +31,7 @@ pip install gamchanger
 ```
 
 ```python
-import gc from gamchanger
+import gamchanger as gc
 from json import dump
 
 # Extract model weights
