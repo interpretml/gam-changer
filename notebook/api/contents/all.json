@@ -1,0 +1,61 @@
+{
+  "content": [
+    {
+      "content": null,
+      "created": "2022-08-12T14:55:25.204178Z",
+      "format": null,
+      "last_modified": "2021-08-03T17:26:00.221712Z",
+      "mimetype": "application/json",
+      "name": "adult-model.json",
+      "path": "adult-model.json",
+      "size": 108298,
+      "type": "file",
+      "writable": true
+    },
+    {
+      "content": null,
+      "created": "2022-08-12T14:55:25.206720Z",
+      "format": null,
+      "last_modified": "2021-08-03T17:26:02.445863Z",
+      "mimetype": "application/json",
+      "name": "adult-sample.json",
+      "path": "adult-sample.json",
+      "size": 114155,
+      "type": "file",
+      "writable": true
+    },
+    {
+      "content": null,
+      "created": "2022-08-12T14:55:25.217537Z",
+      "format": null,
+      "last_modified": "2022-08-12T14:53:33.889628Z",
+      "mimetype": null,
+      "name": "gam_changer_adult.ipynb",
+      "path": "gam_changer_adult.ipynb",
+      "size": 983443,
+      "type": "notebook",
+      "writable": true
+    },
+    {
+      "content": null,
+      "created": "2022-08-12T14:55:25.210945Z",
+      "format": null,
+      "last_modified": "2022-08-12T11:07:31.932089Z",
+      "mimetype": null,
+      "name": "example-adult.ipynb",
+      "path": "example-adult.ipynb",
+      "size": 330788,
+      "type": "notebook",
+      "writable": true
+    }
+  ],
+  "created": "2022-08-12T14:55:25.211720Z",
+  "format": "json",
+  "last_modified": "2022-08-12T14:55:25.211720Z",
+  "mimetype": null,
+  "name": "",
+  "path": "",
+  "size": null,
+  "type": "directory",
+  "writable": true
+}
