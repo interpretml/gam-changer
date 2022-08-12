@@ -1,0 +1,11 @@
+{
+  "[svelte]": {
+    "editor.defaultFormatter": "svelte.svelte-vscode",
+    "editor.formatOnPaste": false,
+    "editor.formatOnSave": false,
+  },
+  "[javascript]": {
+    "editor.formatOnPaste": false,
+    "editor.formatOnSave": false,
+  },
+}

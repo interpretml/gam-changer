@@ -1,4 +1,4 @@
-@import 'define';
+@import "define";
 
 .article {
   margin-bottom: 60px;
@@ -69,7 +69,7 @@
 }
 
 .article .video-link {
-  color: #3273DC;
+  color: #3273dc;
   cursor: pointer;
   font-weight: normal;
   text-decoration: none;
@@ -93,10 +93,10 @@
 }
 
 .article code {
-  padding: .2em .2em;
+  padding: 0.2em 0.2em;
   margin: 0;
   font-size: 85%;
-  background-color: rgba(27, 31, 35, .05);
+  background-color: rgba(27, 31, 35, 0.05);
   border-radius: 3px;
   color: hsl(0, 0%, 50%);
 }
@@ -122,10 +122,10 @@
   &.no-shadow {
     box-shadow: none;
     border-radius: 4px;
-    border: 1px solid #BDBDBD;
+    border: 1px solid #bdbdbd;
     border-bottom-width: 3px;
     border-top-width: 3px;
-    background: #BDBDBD;
+    background: #bdbdbd;
   }
 }
 

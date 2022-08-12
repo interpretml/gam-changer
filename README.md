@@ -17,11 +17,15 @@ Interactive visualization tool to help domain experts and data scientist easily 
 Zijie J. Wang, Alex Kale, Harsha Nori, Peter Stella, Mark Nunnally, Duen Horng Chau, Mihaela Vorvoreanu, Jennifer Wortman Vaughan, Rich Caruana.
 *arXiv:2112.03245, 2021.* -->
 
+## Features
+
+<img align="center" width="600px" src="https://user-images.githubusercontent.com/15007159/184291928-c675b83e-be82-4206-bd30-47dc93008fec.gif">
+
 ## Live Demo
 
 For a live demo, visit: http://interpret.ml/gam-changer/
 
-You can use the demo to change your models: choose the `my model` tab and upload the `model.json` (model weights) and `sample.json` (sample data to evaluate the model).
+You can use this demo to edit your own GAMs: choose the `my model` tab and upload the `model.json` (model weights) and `sample.json` (sample data to evaluate the model).
 
 If you use [EBM](https://github.com/interpretml/interpret), you can generate these two files easily with the GAM Changer python package.
 
