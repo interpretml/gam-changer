@@ -587,7 +587,74 @@ def _make_html(ebm, x_test, y_test, resort_categorical):
     return html.escape(html_str)
 
 
-def visualize(ebm, x_test=None, y_test=None, resort_categorical=False):
+def _make_html_with_data(model_data, sample_data):
+    """
+    Function to create an HTML string to bundle GAM Changer's html, css, and js.
+    We use base64 to encode the js so that we can use inline defer for <script>
+
+    We add another script to pass Python data as inline json, and dispatch an
+    event to transfer the data
+
+    Args:
+        model_data: A dictionary of the EBM model weights.
+        sample_data: A dictionary of the test samples.
+
+    Return:
+        HTML code with deferred JS code in base64 format
+    """
+    # HTML template for GAM Changer widget
+    html_top = """<!DOCTYPE html><html lang="en"><head><meta charset='utf-8'><meta name='viewport' content='width = device-width, initial-scale = 1'><title>GAM Changer</title><style>html,body{position:relative;width:100%;height:100%}body{color:#333;margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif}a{color:rgb(0,100,200);text-decoration:none}a:hover{text-decoration:underline}a:visited{color:rgb(0,80,160)}label{display:block}input,button,select,textarea{font-family:inherit;font-size:inherit;-webkit-padding:0.4em 0;padding:0.4em;margin:0 0 0.5em 0;box-sizing:border-box;border:1px solid #ccc;border-radius:2px}input:disabled{color:#ccc}</style>"""
+    html_bottom = """</head><body></body></html>"""
+
+    # Read the bundled JS file
+    js_string = pkgutil.get_data(__name__, "gamchanger.js")
+    # js_b = bytes(js_string, encoding='utf-8')
+
+    # Encode the JS & CSS with base 64
+    js_base64 = base64.b64encode(js_string).decode("utf-8")
+
+    # Pass the data to GAM Changer using message event
+    data_json = dumps({"model": model_data, "sample": sample_data})
+
+    # Pass data into JS by using another script to dispatch an event
+    messenger_js = """
+        (function() {{
+            let data = {data};
+            let event = new Event('gamchangerData');
+            event.data = data;
+            console.log('before');
+            console.log(data);
+            document.dispatchEvent(event);
+        }}())
+    """.format(
+        data=data_json
+    )
+    messenger_js = messenger_js.encode()
+    messenger_js_base64 = base64.b64encode(messenger_js).decode("utf-8")
+
+    # Inject the JS to the html template
+    html_str = (
+        html_top
+        + """<script defer src='data:text/javascript;base64,{}'></script>""".format(
+            js_base64
+        )
+        + """<script defer src='data:text/javascript;base64,{}'></script>""".format(
+            messenger_js_base64
+        )
+        + html_bottom
+    )
+
+    return html.escape(html_str)
+
+
+def visualize(
+    ebm,
+    x_test=None,
+    y_test=None,
+    resort_categorical=False,
+    model_data=None,
+    sample_data=None,
+):
     """
     Render GAM Changer in the output cell.
 
@@ -597,10 +664,15 @@ def visualize(ebm, x_test=None, y_test=None, resort_categorical=False):
         x_test: Sample features. 2D np.ndarray or pd.DataFrame with dimension [n, k]:
             n samples and k features.
         y_test: Sample labels. 1D np.ndarray or pd.Series with size = n samples.
+        model_data: Pre-generated EBM weights in a dictionary
+        sample_data: Pre-generated sample data in a dictionary
         resort_categorical: Whether to sort the levels in categorical variable
             by increasing order if all levels can be converted to numbers.
     """
-    html_str = _make_html(ebm, x_test, y_test, resort_categorical)
+    if model_data is None and sample_data is None:
+        html_str = _make_html(ebm, x_test, y_test, resort_categorical)
+    else:
+        html_str = _make_html_with_data(model_data, sample_data)
 
     # Randomly generate an ID for the iframe to avoid collision
     iframe_id = "gam-changer-iframe-" + str(int(random.random() * 1e8))

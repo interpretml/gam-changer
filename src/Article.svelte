@@ -348,11 +348,11 @@
         <span>Video</span>
       </a>
 
-      <!-- <a target="_blank" href="https://arxiv.org/abs/2112.03245">
+      <a target="_blank" href="http://arxiv.org/abs/2206.15465">
         <div class="svg-icon icon-pdf" title="Paper">
         </div>
         <span>Paper</span>
-      </a> -->
+      </a>
 
     </div>
 
