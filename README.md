@@ -6,6 +6,8 @@ Interactive visualization tool to help domain experts and data scientists easily
 
 [![build](https://github.com/interpretml/GAMChanger/workflows/build/badge.svg)](https://github.com/interpretml/gam-changer/actions)
 [![pypi](https://img.shields.io/pypi/v/gamchanger?color=blue)](https://pypi.org/project/gamchanger/)
+[![Lite](https://gist.githubusercontent.com/xiaohk/9b9f7c8fa162b2c3bc3251a5c9a799b2/raw/a7fca1d0a2d62c2b49f60c0217dffbd0fe404471/lite-badge-launch-small.svg)](https://interpret.ml/gam-changer/notebook/retro/notebooks/?path=gam_changer_adult.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/interpretml/gam-changer/master?urlpath=lab/tree/examples/gam_changer_adult.ipynb)
 [![license](https://img.shields.io/pypi/l/gamchanger?color=blue)](https://github.com/interpretml/gam-changer/blob/master/LICENSE)
 [![arxiv badge](https://img.shields.io/badge/arXiv-2206.15465-red)](https://arxiv.org/abs/2206.15465)
 
@@ -72,9 +74,9 @@ Check out three live notebook demos below.
 
 |Jupyter Lite|Binder|Google Colab|
 |:---:|:---:|:---:|
-|[![Lite](https://gist.githubusercontent.com/xiaohk/9b9f7c8fa162b2c3bc3251a5c9a799b2/raw/a7fca1d0a2d62c2b49f60c0217dffbd0fe404471/lite-badge-launch-small.svg)](https://poloclub.github.io/timbertrek/notebook)|[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/interpretml/gam-changer/master?urlpath=lab/tree/examples/gam_changer_adult.ipynb)|[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1OgAVZKqs2VwmY13QuOjCxlOEyexsYjtm?usp=sharing)|
+|[![Lite](https://gist.githubusercontent.com/xiaohk/9b9f7c8fa162b2c3bc3251a5c9a799b2/raw/a7fca1d0a2d62c2b49f60c0217dffbd0fe404471/lite-badge-launch-small.svg)](https://interpret.ml/gam-changer/notebook/retro/notebooks/?path=gam_changer_adult.ipynb)|[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/interpretml/gam-changer/master?urlpath=lab/tree/examples/gam_changer_adult.ipynb)|[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1OgAVZKqs2VwmY13QuOjCxlOEyexsYjtm?usp=sharing)|
 
-Use the following snippet to load GAM Changer in your notebooks:
+Use the following snippet to load GAM Changer in your favorite notebooks:
 
 ```python
 # Install the GAM Changer python package
