@@ -2,14 +2,25 @@
 <a href="https://interpret.ml/gam-changer/"><img src='https://i.imgur.com/njlqCrQ.png' width='100%'></a>
 </h1>
 
-Interactive visualization tool to help domain experts and data scientist easily and responsibly edit Generalized Additive Models (GAMs).
+Interactive visualization tool to help domain experts and data scientists easily and responsibly edit Generalized Additive Models (GAMs).
 
 [![build](https://github.com/interpretml/GAMChanger/workflows/build/badge.svg)](https://github.com/interpretml/gam-changer/actions)
 [![pypi](https://img.shields.io/pypi/v/gamchanger?color=blue)](https://pypi.org/project/gamchanger/)
 [![license](https://img.shields.io/pypi/l/gamchanger?color=blue)](https://github.com/interpretml/gam-changer/blob/master/LICENSE)
-[![arxiv badge](https://img.shields.io/badge/arXiv-2112.03245-red)](https://arxiv.org/abs/2112.03245)
+[![arxiv badge](https://img.shields.io/badge/arXiv-2206.15465-red)](https://arxiv.org/abs/2206.15465)
 
-<a href="https://youtu.be/D6whtfInqTc" target="_blank"><img src="https://i.imgur.com/J3C0aov.png" style="max-width:100%;"></a>
+<!-- <a href="https://youtu.be/D6whtfInqTc" target="_blank"><img src="https://i.imgur.com/J3C0aov.png" style="max-width:100%;"></a> -->
+
+<table>
+  <tr>
+    <td colspan="2"><img src='https://i.imgur.com/eKzKJfl.png'></td>
+  </tr>
+  <tr></tr>
+  <tr>
+    <td><a href="https://youtu.be/D6whtfInqTc">📺 Video</a></td>
+    <td><a href="http://arxiv.org/abs/2206.15465">📖 "Interpretability, Then What? Editing Machine Learning Models to Reflect Human Knowledge and Values"</a></td>
+  </tr>
+</table>
 
 <!-- For more information, check out our manuscript:
 
@@ -17,13 +28,17 @@ Interactive visualization tool to help domain experts and data scientist easily 
 Zijie J. Wang, Alex Kale, Harsha Nori, Peter Stella, Mark Nunnally, Duen Horng Chau, Mihaela Vorvoreanu, Jennifer Wortman Vaughan, Rich Caruana.
 *arXiv:2112.03245, 2021.* -->
 
-## Features
+## GAM Changer Features
 
 <img align="center" width="600px" src="https://user-images.githubusercontent.com/15007159/184291928-c675b83e-be82-4206-bd30-47dc93008fec.gif">
 
-## Live Demo
+---
+
+## Get Started
 
 For a live demo, visit: http://interpret.ml/gam-changer/
+
+### How to Edit My Own GAMs?
 
 You can use this demo to edit your own GAMs: choose the `my model` tab and upload the `model.json` (model weights) and `sample.json` (sample data to evaluate the model).
 
@@ -49,9 +64,17 @@ dump(model_data, open('./model.json', 'w'))
 dump(sample_data, open('./sample.json', 'w'))
 ```
 
-## In Computational Notebooks
+### Computational Notebook Widget
 
-You can use GAM Changer directly in your computational notebooks (e.g., Jupyter Notebook, Google Colab).
+You can use GAM Changer directly in your computational notebooks (e.g., Jupyter Notebook, VSCode Notebook, Google Colab).
+
+Check out three live notebook demos below.
+
+|Jupyter Lite|Binder|Google Colab|
+|:---:|:---:|:---:|
+|[![Lite](https://gist.githubusercontent.com/xiaohk/9b9f7c8fa162b2c3bc3251a5c9a799b2/raw/a7fca1d0a2d62c2b49f60c0217dffbd0fe404471/lite-badge-launch-small.svg)](https://poloclub.github.io/timbertrek/notebook)|[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/interpretml/gam-changer/master?urlpath=lab/tree/examples/gam_changer_adult.ipynb)|[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1OgAVZKqs2VwmY13QuOjCxlOEyexsYjtm?usp=sharing)|
+
+Use the following snippet to load GAM Changer in your notebooks:
 
 ```python
 # Install the GAM Changer python package
@@ -63,9 +86,7 @@ import gamchanger as gc
 gc.visualize(ebm, x_feed, y_feed)
 ```
 
-Example notebook: [Use GAM Changer in Google Colab](https://colab.research.google.com/drive/1OgAVZKqs2VwmY13QuOjCxlOEyexsYjtm?usp=sharing).
-
-## Load Edited Models
+### Load Edited Models
 
 After finishing editing a model, you can save the new model along with all the editing history to a `*.gamchanger` file by clicking the save button. You can load the new model in Python:
 
@@ -125,15 +146,13 @@ We thank Steven Drucker, Adam Fourney, Saleema Amershi, Dean Carignan, Rob DeLin
 ## Citation
 
 ```bibTeX
-@article{wangGAMChangerEditing2021,
-  title = {{{GAM Changer}}: {{Editing Generalized Additive Models}} with {{Interactive Visualization}}},
-  shorttitle = {{{GAM Changer}}},
-  author = {Wang, Zijie J. and Kale, Alex and Nori, Harsha and Stella, Peter and Nunnally, Mark and Chau, Duen Horng and Vorvoreanu, Mihaela and Vaughan, Jennifer Wortman and Caruana, Rich},
-  year = {2021},
-  month = dec,
-  journal = {arXiv:2112.03245 [cs]},
+@inproceedings{wangInterpretabilityThenWhat2022,
+  title = {Interpretability, {{Then What}}? {{Editing Machine Learning Models}} to {{Reflect Human Knowledge}} and {{Values}}},
+  shorttitle = {Interpretability, {{Then What}}?},
+  booktitle = {Proceedings of the 28th {{ACM SIGKDD International Conference}} on {{Knowledge Discovery}} \& {{Data Mining}}},
+  author = {Wang, Zijie J. and Kale, Alex and Nori, Harsha and Stella, Peter and Nunnally, Mark E. and Chau, Duen Horng and Vorvoreanu, Mihaela and Vaughan, Jennifer Wortman and Caruana, Rich},
+  year = {2022},
   url = {https://interpret.ml/gam-changer},
-  archiveprefix = {arXiv}
 }
 ```
 
