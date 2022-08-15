@@ -348,7 +348,7 @@
         <span>Video</span>
       </a>
 
-      <a target="_blank" href="http://arxiv.org/abs/2206.15465">
+      <a target="_blank" href="https://dl.acm.org/doi/10.1145/3534678.3539074">
         <div class="svg-icon icon-pdf" title="Paper">
         </div>
         <span>Paper</span>

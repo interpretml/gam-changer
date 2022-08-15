@@ -4,11 +4,13 @@
 
 Interactive visualization tool to help domain experts and data scientists easily and responsibly edit Generalized Additive Models (GAMs).
 
+<!-- [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/interpretml/gam-changer/master?urlpath=lab/tree/examples/gam_changer_adult.ipynb) -->
+
 [![build](https://github.com/interpretml/GAMChanger/workflows/build/badge.svg)](https://github.com/interpretml/gam-changer/actions)
 [![pypi](https://img.shields.io/pypi/v/gamchanger?color=blue)](https://pypi.org/project/gamchanger/)
 [![Lite](https://gist.githubusercontent.com/xiaohk/9b9f7c8fa162b2c3bc3251a5c9a799b2/raw/a7fca1d0a2d62c2b49f60c0217dffbd0fe404471/lite-badge-launch-small.svg)](https://interpret.ml/gam-changer/notebook/retro/notebooks/?path=gam_changer_adult.ipynb)
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/interpretml/gam-changer/master?urlpath=lab/tree/examples/gam_changer_adult.ipynb)
-[![license](https://img.shields.io/pypi/l/gamchanger?color=blue)](https://github.com/interpretml/gam-changer/blob/master/LICENSE)
+[![license](https://img.shields.io/pypi/l/gamchanger?color=brightgreen)](https://github.com/interpretml/gam-changer/blob/master/LICENSE)
+[![DOI:10.1145/3534678.3539074](https://img.shields.io/badge/DOI-10.1145/3534678.3539074-blue)](https://doi.org/10.1145/3534678.3539074)
 [![arxiv badge](https://img.shields.io/badge/arXiv-2206.15465-red)](https://arxiv.org/abs/2206.15465)
 
 <!-- <a href="https://youtu.be/D6whtfInqTc" target="_blank"><img src="https://i.imgur.com/J3C0aov.png" style="max-width:100%;"></a> -->
@@ -20,7 +22,7 @@ Interactive visualization tool to help domain experts and data scientists easily
   <tr></tr>
   <tr>
     <td><a href="https://youtu.be/D6whtfInqTc">📺 Video</a></td>
-    <td><a href="http://arxiv.org/abs/2206.15465">📖 "Interpretability, Then What? Editing Machine Learning Models to Reflect Human Knowledge and Values"</a></td>
+    <td><a href="https://dl.acm.org/doi/10.1145/3534678.3539074">📖 "Interpretability, Then What? Editing Machine Learning Models to Reflect Human Knowledge and Values"</a></td>
   </tr>
 </table>
 
