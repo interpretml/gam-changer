@@ -740,7 +740,7 @@
       </div>
 
       <div class='footer-cp'>
-        <div>Copyright © {new Date().getFullYear()} Microsoft</div>
+        <div>Copyright © {new Date().getFullYear()} The InterpretML Contributors</div>
         <div>All rights reserved</div>
       </div>
 
