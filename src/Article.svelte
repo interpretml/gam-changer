@@ -709,7 +709,7 @@
       We’d love to hear your experience with GAM Changer!
       If you’d like to share (e.g., why you use GAM Changer, what functions you find most helpful),
       please reach out to us.
-      GAM Changer is an open-source project, and we welcome <a href='https://github.com/interpretml/gam-changer/pulls'>pull requests</a> for new feature implementations and bug fixes, etc.
+      GAM Changer is open-source, and we welcome <a href='https://github.com/interpretml/gam-changer/pulls'>pull requests</a> for new feature implementations and bug fixes.
     </p>
 
   </div>
