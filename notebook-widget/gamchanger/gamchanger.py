@@ -6,9 +6,18 @@ import base64
 import pkgutil
 import warnings
 
+from tqdm import tqdm
 from IPython.display import display_html
 from copy import deepcopy
 from json import dump, load, dumps
+
+# We don't need need interpret  in runtime
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from interpret.glassbox import ExplainableBoostingClassifier
+
+ROUND = 4
 
 
 def _resort_categorical_level(col_mapping):
@@ -49,7 +58,86 @@ def _resort_categorical_level(col_mapping):
         return col_mapping
 
 
-def get_model_data(ebm, resort_categorical=False):
+def _get_feature_type(ebm, feature_index):
+    col_type = ebm.feature_types_in_[feature_index]
+    if col_type == "continuous":
+        return "continuous"
+    elif col_type == "nominal":
+        return "categorical"
+    else:
+        raise Exception("Unsupported feature type", col_type)
+
+
+def _get_main_bin_labels(ebm, feature_index):
+    """Returns main effect bin labels for a given feature index.
+    Args:
+        feature_index: An integer for feature index.
+    Returns:
+        List of labels for bins.
+    """
+
+    col_type = ebm.feature_types_in_[feature_index]
+    if col_type == "continuous":
+        min_val = ebm.feature_bounds_[feature_index][0]
+        cuts = ebm.bins_[feature_index][0]
+        max_val = ebm.feature_bounds_[feature_index][1]
+        return list(np.concatenate(([min_val], cuts, [max_val])))
+    elif col_type == "nominal":
+        cur_map = ebm.bins_[feature_index][0]
+        return list(cur_map.keys())
+    else:  # pragma: no cover
+        raise Exception("Unknown column type")
+
+
+def _get_pair_bin_labels(ebm, feature_index):
+    """Returns pair interaction effect bin labels for a given feature index.
+    Args:
+        feature_index: An integer for feature index.
+    Returns:
+        List of labels for bins.
+    """
+
+    col_type = ebm.feature_types_in_[feature_index]
+    if col_type == "continuous":
+        min_val = ebm.feature_bounds_[feature_index][0]
+        # The first element is main effect bin cuts
+        # If there is a second element, then the pair effect bin cuts are
+        # different and are stored there.
+        if len(ebm.bins_[feature_index]) > 1:
+            cuts = ebm.bins_[feature_index][1]
+        else:
+            cuts = ebm.bins_[feature_index][0]
+        max_val = ebm.feature_bounds_[feature_index][1]
+        return list(np.concatenate(([min_val], cuts, [max_val])))
+    elif col_type == "nominal":
+        cur_map = ebm.bins_[feature_index][0]
+        return list(cur_map.keys())
+    else:  # pragma: no cover
+        raise Exception("Unknown column type")
+
+
+def _get_hist_counts(ebm, feature_index):
+    col_type = ebm.feature_types_in_[feature_index]
+    if col_type == "continuous":
+        return list(ebm.histogram_counts_[feature_index][1:-1])
+    elif col_type == "nominal":
+        return list(ebm.histogram_counts_[feature_index][1:-1])
+    else:  # pragma: no cover
+        raise Exception("Cannot get counts for type: {0}".format(col_type))
+
+
+def _get_hist_edges(ebm, feature_index):
+    col_type = ebm.feature_types_in_[feature_index]
+    if col_type == "continuous":
+        return list(ebm.histogram_edges_[feature_index])
+    elif col_type == "nominal":
+        cur_map = ebm.bins_[feature_index][0]
+        return list(cur_map.keys())
+    else:  # pragma: no cover
+        raise Exception("Cannot get counts for type: {0}".format(col_type))
+
+
+def get_model_data(ebm: "ExplainableBoostingClassifier", resort_categorical=False):
     """
     Get the model data for GAM Changer.
     Args:
@@ -70,118 +158,127 @@ def get_model_data(ebm, resort_categorical=False):
     # Track the score range
     score_range = [np.inf, -np.inf]
 
-    for i in range(len(ebm.feature_names)):
+    for (i, term) in tqdm(enumerate(ebm.term_features_)):
         cur_feature = {}
-        cur_feature["name"] = ebm.feature_names[i]
-        cur_feature["type"] = ebm.feature_types[i]
-        cur_feature["importance"] = ebm.feature_importances_[i]
+        cur_feature["importance"] = float(ebm.term_importances()[i])
 
         # Handle interaction term differently from cont/cat
-        if cur_feature["type"] == "interaction":
-            cur_id = ebm.feature_groups_[i]
+        if i >= len(ebm.feature_names_in_):
+            cur_feature["type"] = "interaction"
+
+            cur_id = term
             cur_feature["id"] = list(cur_id)
 
             # Info for each individual feature
-            cur_feature["name1"] = ebm.feature_names[cur_id[0]]
-            cur_feature["name2"] = ebm.feature_names[cur_id[1]]
+            cur_feature["name1"] = ebm.feature_names_in_[cur_id[0]]
+            cur_feature["name2"] = ebm.feature_names_in_[cur_id[1]]
+            cur_feature["name"] = f'{cur_feature["name1"]} x {cur_feature["name2"]}'
 
-            cur_feature["type1"] = ebm.feature_types[cur_id[0]]
-            cur_feature["type2"] = ebm.feature_types[cur_id[1]]
+            cur_feature["type1"] = _get_feature_type(ebm, cur_id[0])
+            cur_feature["type2"] = _get_feature_type(ebm, cur_id[1])
 
             # Skip the first item from both dimensions
-            cur_feature["additive"] = np.round(ebm.additive_terms_[i], 4)[
-                1:, 1:
+            cur_feature["additive"] = np.round(ebm.term_scores_[i], ROUND)[
+                1:-1, 1:-1
             ].tolist()
-            cur_feature["error"] = np.round(ebm.term_standard_deviations_[i], 4)[
-                1:, 1:
+            cur_feature["error"] = np.round(ebm.standard_deviations_[i], ROUND)[
+                1:-1, 1:-1
             ].tolist()
 
             # Get the bin label info
-            cur_feature["binLabel1"] = ebm.pair_preprocessor_._get_bin_labels(cur_id[0])
-            cur_feature["binLabel2"] = ebm.pair_preprocessor_._get_bin_labels(cur_id[1])
+            cur_feature["binLabel1"] = _get_pair_bin_labels(ebm, cur_id[0])
+            cur_feature["binLabel2"] = _get_pair_bin_labels(ebm, cur_id[1])
 
             # Encode categorical levels as integers
             if cur_feature["type1"] == "categorical":
-                level_str_to_int = ebm.pair_preprocessor_.col_mapping_[cur_id[0]]
+                level_str_to_int = ebm.bins_[cur_id[0]][0]
                 cur_feature["binLabel1"] = list(
                     map(lambda x: level_str_to_int[x], cur_feature["binLabel1"])
                 )
 
             if cur_feature["type2"] == "categorical":
-                level_str_to_int = ebm.pair_preprocessor_.col_mapping_[cur_id[1]]
+                level_str_to_int = ebm.bins_[cur_id[1]][0]
                 cur_feature["binLabel2"] = list(
                     map(lambda x: level_str_to_int[x], cur_feature["binLabel2"])
                 )
 
             # Get density info
             if cur_feature["type1"] == "categorical":
-                level_str_to_int = ebm.pair_preprocessor_.col_mapping_[cur_id[0]]
-                cur_feature["histEdge1"] = ebm.preprocessor_._get_hist_edges(cur_id[0])
+                level_str_to_int = ebm.bins_[cur_id[0]][0]
+                cur_feature["histEdge1"] = _get_hist_edges(ebm, cur_id[0])
                 cur_feature["histEdge1"] = list(
                     map(lambda x: level_str_to_int[x], cur_feature["histEdge1"])
                 )
             else:
                 cur_feature["histEdge1"] = np.round(
-                    ebm.preprocessor_._get_hist_edges(cur_id[0]), 4
+                    _get_hist_edges(ebm, cur_id[0]), ROUND
                 ).tolist()
+
             cur_feature["histCount1"] = np.round(
-                ebm.preprocessor_._get_hist_counts(cur_id[0]), 4
+                _get_hist_counts(ebm, cur_id[0]), ROUND
             ).tolist()
 
             if cur_feature["type2"] == "categorical":
-                level_str_to_int = ebm.pair_preprocessor_.col_mapping_[cur_id[1]]
-                cur_feature["histEdge2"] = ebm.preprocessor_._get_hist_edges(cur_id[1])
+                level_str_to_int = ebm.bins_[cur_id[1]][0]
+                cur_feature["histEdge2"] = _get_hist_edges(ebm, cur_id[1])
                 cur_feature["histEdge2"] = list(
                     map(lambda x: level_str_to_int[x], cur_feature["histEdge2"])
                 )
             else:
                 cur_feature["histEdge2"] = np.round(
-                    ebm.preprocessor_._get_hist_edges(cur_id[1]), 4
+                    _get_hist_edges(ebm, cur_id[1]), ROUND
                 ).tolist()
+
             cur_feature["histCount2"] = np.round(
-                ebm.preprocessor_._get_hist_counts(cur_id[1]), 4
+                _get_hist_counts(ebm, cur_id[1]), ROUND
             ).tolist()
 
         else:
+            # Main effects here
+            cur_feature["name"] = ebm.feature_names_in_[i]
+            cur_feature["type"] = _get_feature_type(ebm, i)
+
             # Skip the first item (reserved for missing value)
-            cur_feature["additive"] = np.round(ebm.additive_terms_[i], 4).tolist()[1:]
-            cur_feature["error"] = np.round(
-                ebm.term_standard_deviations_[i], 4
-            ).tolist()[1:]
-            cur_feature["id"] = ebm.feature_groups_[i]
-            cur_id = ebm.feature_groups_[i][0]
-            cur_feature["count"] = ebm.preprocessor_.col_bin_counts_[cur_id].tolist()[
-                1:
+            cur_feature["additive"] = np.round(ebm.term_scores_[i], ROUND).tolist()[
+                1:-1
             ]
+            cur_feature["error"] = np.round(
+                ebm.standard_deviations_[i], ROUND
+            ).tolist()[1:-1]
+            cur_id = term[0]
+            cur_feature["id"] = [cur_id]
+            cur_feature["count"] = ebm.bin_weights_[cur_id].tolist()[1:-1]
 
             # Track the global score range
-            score_range[0] = min(
-                score_range[0],
-                np.min(ebm.additive_terms_[i] - ebm.term_standard_deviations_[i]),
+            score_range[0] = float(
+                min(
+                    score_range[0],
+                    np.min(ebm.term_scores_[i] - ebm.standard_deviations_[i]),
+                )
             )
-            score_range[1] = max(
-                score_range[1],
-                np.max(ebm.additive_terms_[i] + ebm.term_standard_deviations_[i]),
+            score_range[1] = float(
+                max(
+                    score_range[1],
+                    np.max(ebm.term_scores_[i] + ebm.standard_deviations_[i]),
+                )
             )
 
             # Add the binning information for continuous features
             if cur_feature["type"] == "continuous":
                 # Add the bin information
-                cur_feature["binEdge"] = np.round(
-                    ebm.preprocessor_._get_bin_labels(cur_id), 4
-                ).tolist()
+                cur_feature["binEdge"] = _get_main_bin_labels(ebm, cur_id)
 
                 # Add the hist information
                 cur_feature["histEdge"] = np.round(
-                    ebm.preprocessor_._get_hist_edges(cur_id), 4
+                    _get_hist_edges(ebm, cur_id), ROUND
                 ).tolist()
                 cur_feature["histCount"] = np.round(
-                    ebm.preprocessor_._get_hist_counts(cur_id), 4
+                    _get_hist_counts(ebm, cur_id), ROUND
                 ).tolist()
 
             elif cur_feature["type"] == "categorical":
                 # Get the level value mapping
-                level_str_to_int = ebm.preprocessor_.col_mapping_[cur_id]
+                level_str_to_int = ebm.bins_[cur_id][0]
 
                 if resort_categorical:
                     level_str_to_int = _resort_categorical_level(level_str_to_int)
@@ -189,7 +286,7 @@ def get_model_data(ebm, resort_categorical=False):
                 cur_feature["binLabel"] = list(
                     map(
                         lambda x: level_str_to_int[x],
-                        ebm.preprocessor_._get_bin_labels(cur_id),
+                        _get_main_bin_labels(ebm, cur_id),
                     )
                 )
 
@@ -198,12 +295,12 @@ def get_model_data(ebm, resort_categorical=False):
                 cur_feature["histEdge"] = list(
                     map(
                         lambda x: level_str_to_int[x],
-                        ebm.preprocessor_._get_hist_edges(cur_id),
+                        _get_hist_edges(ebm, cur_id),
                     )
                 )
 
                 cur_feature["histCount"] = np.round(
-                    ebm.preprocessor_._get_hist_counts(cur_id), 4
+                    _get_hist_counts(ebm, cur_id), ROUND
                 ).tolist()
 
                 if resort_categorical:
@@ -232,7 +329,7 @@ def get_model_data(ebm, resort_categorical=False):
 
                 # Add the label encoding information
                 labelEncoder[cur_feature["name"]] = {
-                    i: s for s, i in level_str_to_int.items()
+                    str(i): s for s, i in level_str_to_int.items()
                 }
 
         features.append(cur_feature)
@@ -240,7 +337,9 @@ def get_model_data(ebm, resort_categorical=False):
     score_range = list(map(lambda x: round(x, 4), score_range))
 
     data = {
-        "intercept": ebm.intercept_[0] if hasattr(ebm, "classes_") else ebm.intercept_,
+        "intercept": float(ebm.intercept_[0])
+        if hasattr(ebm, "classes_")
+        else float(ebm.intercept_),
         "isClassifier": hasattr(ebm, "classes_"),
         "features": features,
         "labelEncoder": labelEncoder,
@@ -250,7 +349,9 @@ def get_model_data(ebm, resort_categorical=False):
     return data
 
 
-def get_sample_data(ebm, x_test, y_test, resort_categorical=False):
+def get_sample_data(
+    ebm: "ExplainableBoostingClassifier", x_test, y_test, resort_categorical=False
+):
     """
     Get the sample data for GAM Changer.
     Args:
@@ -272,10 +373,9 @@ def get_sample_data(ebm, x_test, y_test, resort_categorical=False):
     feature_types = []
 
     # Sample data does not record interaction features
-    for i in range(len(ebm.feature_names)):
-        if ebm.feature_types[i] != "interaction":
-            feature_names.append(ebm.feature_names[i])
-            feature_types.append(ebm.feature_types[i])
+    for (i, name) in enumerate(ebm.feature_names_in_):
+        feature_names.append(name)
+        feature_types.append(_get_feature_type(ebm, i))
 
     # Transform the dataframe to object array
     x_test_copy = deepcopy(x_test)
@@ -299,9 +399,9 @@ def get_sample_data(ebm, x_test, y_test, resort_categorical=False):
         )
 
     # Encode the categorical variables as integers
-    for i in range(len(feature_types)):
-        if feature_types[i] == "categorical":
-            level_str_to_int = ebm.preprocessor_.col_mapping_[i]
+    for (i, cur_type) in enumerate(feature_types):
+        if cur_type == "categorical":
+            level_str_to_int = ebm.bins_[i][0]
 
             if resort_categorical:
                 level_str_to_int = _resort_categorical_level(level_str_to_int)
@@ -327,7 +427,9 @@ def get_sample_data(ebm, x_test, y_test, resort_categorical=False):
     return sample_data
 
 
-def _overwrite_bin_definition(ebm, index_id, new_bins, new_scores):
+def _overwrite_bin_definition(
+    ebm: "ExplainableBoostingClassifier", index_id, new_bins, new_scores
+):
     """
     Overwrite the bin definitions and scores for continuous variables.
 
@@ -367,29 +469,27 @@ def _overwrite_bin_definition(ebm, index_id, new_bins, new_scores):
     # Check if GAM Changer has changed the bin definition
     binDefChanged = False
 
-    if len(new_bins) - 1 != len(ebm.preprocessor_.col_bin_edges_[index_id]):
+    if len(new_bins) - 1 != len(ebm.bins_[index_id][0]):
         binDefChanged = True
 
     else:
         for i in range(1, len(new_bins)):
-            if new_bins[i] != round(
-                ebm.preprocessor_.col_bin_edges_[index_id][i - 1], 4
-            ):
+            if new_bins[i] != round(ebm.bins_[index_id][0][i - 1], ROUND):
                 binDefChanged = True
                 break
 
     # Update the SDs
     if binDefChanged:
-        ebm.term_standard_deviations_[index_id] = np.zeros(len(new_scores) + 1)
+        ebm.standard_deviations_[index_id] = np.zeros(len(new_scores) + 1)
     else:
         # Iterate through the scores to zero out SDs of modified bins
-        for i in range(1, len(ebm.additive_terms_[index_id])):
-            if round(ebm.additive_terms_[index_id][i], 4) != new_scores[i - 1]:
-                ebm.term_standard_deviations_[index_id][i] = 0
+        for i in range(1, len(ebm.term_scores_[index_id]) - 1):
+            if round(ebm.term_scores_[index_id][i], ROUND) != new_scores[i - 1]:
+                ebm.standard_deviations_[index_id][i] = 0
 
     # Overwrite the scores
-    ebm.additive_terms_[index_id] = np.array(
-        [ebm.additive_terms_[index_id][0]] + new_scores
+    ebm.term_scores_[index_id] = np.array(
+        [ebm.term_scores_[index_id][0]] + new_scores + [ebm.term_scores_[index_id][-1]]
     ).astype(np.float64)
 
     # Overwrite the bin edges
@@ -397,13 +497,11 @@ def _overwrite_bin_definition(ebm, index_id, new_bins, new_scores):
     # GAM Changer won't change the edge for col_min_, because it
     # will always be one of the end points in any interpolations
     # So we don't really need to change col_min_, change here for testing purpose
-    ebm.preprocessor_.col_min_[index_id] = new_bins[0]
-    ebm.preprocessor_.col_bin_edges_[index_id] = np.array(new_bins[1:]).astype(
-        np.float64
-    )
+    ebm.feature_bounds_[index_id][0] = new_bins[0]
+    ebm.bins_[index_id][0] = np.array(new_bins[1:]).astype(np.float64)
 
 
-def get_edited_model(ebm, gamchanger_export):
+def get_edited_model(ebm: "ExplainableBoostingClassifier", gamchanger_export):
     """
     Return a copy of ebm that is modified based on the edits from GAM Changer.
 
@@ -415,19 +513,20 @@ def get_edited_model(ebm, gamchanger_export):
     Returns:
         An edited deep copy of ebm object.
     """
-
     ebm_copy = deepcopy(ebm)
 
     history = gamchanger_export["historyList"]
 
     # Mapping from feature name to feature type
-    feature_name_to_type = dict(zip(ebm_copy.feature_names, ebm_copy.feature_types))
+    feature_name_to_type = dict(
+        zip(ebm_copy.feature_names_in_, ebm_copy.feature_types_in_)
+    )
 
     # Keep track which feature has been updated in ebm_copy
     updated_features = set()
 
     # Use the ebm's mapping to map level name to bin index
-    ebm_col_mapping = ebm_copy.pair_preprocessor_.col_mapping_
+    ebm_col_mapping = ebm_copy.bins_
 
     # We iterate through the history list from the newest edit to the older edit
     # For each modified feature, we overwrite the bin definitions/scores on an EBM
@@ -442,7 +541,7 @@ def get_edited_model(ebm, gamchanger_export):
             continue
 
         cur_name = cur_history["featureName"]
-        cur_index = ebm_copy.feature_names.index(cur_name)
+        cur_index = ebm_copy.feature_names_in_.index(cur_name)
 
         # If we have already updated EBM on this feature, skip earlier edits
         if cur_name in updated_features:
@@ -472,9 +571,9 @@ def get_edited_model(ebm, gamchanger_export):
             _overwrite_bin_definition(ebm_copy, cur_index, bin_edges, bin_scores)
             updated_features.add(cur_name)
 
-        elif feature_name_to_type[cur_name] == "categorical":
+        elif feature_name_to_type[cur_name] == "nominal":
             # Get the current level mapping
-            cur_mapping = ebm_col_mapping[cur_index]
+            cur_mapping = ebm_col_mapping[cur_index][0]
 
             # Collect bin edges and scores
             bin_data = cur_history["state"]["pointData"]
@@ -488,20 +587,18 @@ def get_edited_model(ebm, gamchanger_export):
             assert len(bin_edges) == len(bin_scores)
 
             # Update the additive term
-            for j in range(len(bin_edges)):
+            for (j, edge) in enumerate(bin_edges):
                 cur_score = bin_scores[j]
-                cur_bin_index = cur_mapping[bin_edges[j]]
+                cur_bin_index = cur_mapping[edge]
 
                 if (
-                    round(ebm_copy.additive_terms_[cur_index][cur_bin_index], 4)
+                    round(ebm_copy.term_scores_[cur_index][cur_bin_index], ROUND)
                     != cur_score
                 ):
-                    ebm_copy.additive_terms_[cur_index][cur_bin_index] = cur_score
+                    ebm_copy.term_scores_[cur_index][cur_bin_index] = cur_score
 
             updated_features.add(cur_name)
 
-        elif feature_name_to_type[cur_name] == "interaction":
-            pass
         else:
             raise ValueError(
                 "Encounter unknown feature type {}".format(
