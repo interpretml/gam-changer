@@ -41,7 +41,6 @@ def _resort_categorical_level(col_mapping):
             return False
 
     if all(map(is_number, col_mapping.keys())):
-
         key_tuples = [(k, float(k)) for k in col_mapping.keys()]
         sorted_key_tuples = sorted(key_tuples, key=lambda x: x[1])
 
@@ -119,9 +118,9 @@ def _get_pair_bin_labels(ebm, feature_index):
 def _get_hist_counts(ebm, feature_index):
     col_type = ebm.feature_types_in_[feature_index]
     if col_type == "continuous":
-        return list(ebm.histogram_counts_[feature_index][1:-1])
+        return list(ebm.histogram_weights_[feature_index][1:-1])
     elif col_type == "nominal":
-        return list(ebm.histogram_counts_[feature_index][1:-1])
+        return list(ebm.histogram_weights_[feature_index][1:-1])
     else:  # pragma: no cover
         raise Exception("Cannot get counts for type: {0}".format(col_type))
 
@@ -158,7 +157,7 @@ def get_model_data(ebm: "ExplainableBoostingClassifier", resort_categorical=Fals
     # Track the score range
     score_range = [np.inf, -np.inf]
 
-    for (i, term) in tqdm(enumerate(ebm.term_features_)):
+    for i, term in tqdm(enumerate(ebm.term_features_)):
         cur_feature = {}
         cur_feature["importance"] = float(ebm.term_importances()[i])
 
@@ -373,7 +372,7 @@ def get_sample_data(
     feature_types = []
 
     # Sample data does not record interaction features
-    for (i, name) in enumerate(ebm.feature_names_in_):
+    for i, name in enumerate(ebm.feature_names_in_):
         feature_names.append(name)
         feature_types.append(_get_feature_type(ebm, i))
 
@@ -399,7 +398,7 @@ def get_sample_data(
         )
 
     # Encode the categorical variables as integers
-    for (i, cur_type) in enumerate(feature_types):
+    for i, cur_type in enumerate(feature_types):
         if cur_type == "categorical":
             level_str_to_int = ebm.bins_[i][0]
 
@@ -407,7 +406,6 @@ def get_sample_data(
                 level_str_to_int = _resort_categorical_level(level_str_to_int)
 
             def get_level_int(x):
-
                 if str(x) in level_str_to_int:
                     return level_str_to_int[str(x)]
                 else:
@@ -587,7 +585,7 @@ def get_edited_model(ebm: "ExplainableBoostingClassifier", gamchanger_export):
             assert len(bin_edges) == len(bin_scores)
 
             # Update the additive term
-            for (j, edge) in enumerate(bin_edges):
+            for j, edge in enumerate(bin_edges):
                 cur_score = bin_scores[j]
                 cur_bin_index = cur_mapping[edge]
 
