@@ -1,16 +1,13 @@
 #!/bin/bash
 
 npm run build
-cp -r ./public/*png ./dist
-cp -r ./public/data ./dist
-cp -r ./public/img ./dist
-cp -r ./public/video ./dist
-cp -r ./public/build ./dist
-cp -r ./public/global.css ./dist
+cp -r ./public/*png ./gh-page
+cp -r ./public/data ./gh-page
+cp -r ./public/img ./gh-page
+cp -r ./public/video ./gh-page
+cp -r ./public/build ./gh-page
+cp -r ./public/global.css ./gh-page
 
-cp -r lite/output ./dist/notebook
+cp -r lite/output ./gh-page/notebook
 
-cd ./dist
-git add ./*
-git commit -s -m "Deploy: $(git log '--format=format:%H' master -1)"
-git push origin gh-pages
+npx gh-pages -m "Deploy $(git log '--format=format:%H' master -1)" -d ./gh-page

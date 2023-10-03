@@ -12,3 +12,5 @@ dist/
 
 toy-*
 lite
+pnpm-lock.yaml
+gh-page

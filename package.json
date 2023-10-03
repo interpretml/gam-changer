@@ -15,6 +15,7 @@
     "babel-eslint": "^10.1.0",
     "eslint": "^7.26.0",
     "eslint-plugin-svelte3": "^3.2.0",
+    "gh-pages": "^6.0.0",
     "rollup": "^2.3.4",
     "rollup-plugin-css-only": "^3.1.0",
     "rollup-plugin-inline-svg": "^2.0.0",
