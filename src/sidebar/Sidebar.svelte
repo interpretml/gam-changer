@@ -25,7 +25,7 @@
 
 </script>
 
-<style type='text/scss'>
+<style lang='scss'>
 
   @import '../define';
 
@@ -170,7 +170,7 @@
     <div class='tab' class:hidden={sidebarInfo.selectedTab !== 'history'}>
       <History sidebarStore={sidebarStore} historyStore={historyStore} ebm={ebm}/>
     </div>
-    
+
   </div>
 
 </div>

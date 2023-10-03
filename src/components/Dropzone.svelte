@@ -65,7 +65,7 @@
 
   const readJSON = (file) => {
     return new Promise((resolve, reject) => {
-      let fr = new FileReader();  
+      let fr = new FileReader();
       fr.onload = () => {
         resolve(JSON.parse(fr.result));
       };
@@ -174,7 +174,7 @@
 
 </script>
 
-<style type='text/scss'>
+<style lang='scss'>
 
   @import '../define';
 
@@ -269,7 +269,7 @@
     {:else}
       <div class='svg-icon icon-two'></div>
     {/if}
-    
+
     <div class='drop-message'>
       {#if dataType === 'modelData'}
         Drop a <u>model file</u> (.json) or a <u>GAM Changer document</u> (.gamchanger) here to start

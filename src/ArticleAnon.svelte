@@ -131,11 +131,11 @@
 
 </script>
 
-<style type='text/scss'>
+<style lang='scss'>
 
   @import 'define';
   @import 'article';
-  
+
   .page {
     display: flex;
     flex-direction: column;
@@ -649,7 +649,7 @@
     <div class='footer-main'>
       Thanks for reviewing GAM Changer!
     </div>
-    
+
   </div>
 
 </div>

@@ -12,10 +12,10 @@
 
 </script>
 
-<style type='text/scss'>
+<style lang='scss'>
 
   @import 'define';
-  
+
   .main-standalone {
     display: flex;
     flex-direction: column;
@@ -56,6 +56,6 @@
     <GAM />
 
   </div>
-  
+
 
 </div>

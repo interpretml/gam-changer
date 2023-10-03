@@ -85,7 +85,7 @@
 
 </script>
 
-<style type='text/scss'>
+<style lang='scss'>
   @import '../define';
 
   $secondary-color: hsl(0, 0%, 40%);
@@ -111,7 +111,7 @@
 
   .toggle {
     display: none;
-    
+
     &:checked + .toggle-button .dot {
       left: 50%;
     }

@@ -5,7 +5,7 @@
   import { quadInOut, expoInOut, cubicInOut } from 'svelte/easing';
   import { round, shuffle } from '../utils/utils';
   import { bindInlineSVG } from '../utils/svg-icon-binding';
-  
+
   export let sidebarStore;
   export let historyStore;
   export let ebm;
@@ -202,7 +202,7 @@
 
 </script>
 
-<style type='text/scss'>
+<style lang='scss'>
 
   @import '../define';
 

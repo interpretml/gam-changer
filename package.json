@@ -27,9 +27,8 @@
   "dependencies": {
     "as-console": "^5.0.3",
     "d3": "^6.7.0",
-    "node-sass": "^6.0.0",
     "sass": "^1.32.13",
     "sirv-cli": "^1.0.0",
-    "svelte-preprocess": "^4.7.3"
+    "svelte-preprocess": "^5.0.4"
   }
 }

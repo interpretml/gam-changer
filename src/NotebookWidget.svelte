@@ -68,7 +68,7 @@ onMount(() => {
 
 </script>
 
-<style type='text/scss'>
+<style lang='scss'>
   @import 'define';
 
 	.stand-alone-page {
@@ -173,7 +173,7 @@ onMount(() => {
 <div class='stand-alone-page' bind:this={component}>
   <div class='page'>
     <Tooltip bind:this={tooltip}/>
-    
+
     <div class='gam-changer'>
       <div class='widget-wrapper'>
         <div class='notebook-header'>

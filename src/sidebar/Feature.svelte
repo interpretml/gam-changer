@@ -14,7 +14,7 @@
   $: curTabHeight = tabHeights[selectedTab];
   let featureInitialized = false;
   let waitingToDrawDIV = false;
-  
+
   let height = 0;
 
   const svgHeight = 40;
@@ -37,7 +37,7 @@
     let instance = d3.select(component)
       .select('.feature-list')
       .node();
-    
+
     let scrollBarWidth = instance.offsetWidth - instance.clientWidth;
 
     console.log(`effect tab: [${width}, ${height}, ${scrollBarWidth}]`);
@@ -129,7 +129,7 @@
       } else {
         sortedCatFeatures = tempSortedCatFeatures;
       }
-      
+
       sidebarInfo.curGroup = '';
       sidebarStore.set(sidebarInfo);
     }
@@ -138,7 +138,7 @@
 
 </script>
 
-<style type='text/scss'>
+<style lang='scss'>
 
   @import '../define';
 

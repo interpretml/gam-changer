@@ -264,7 +264,7 @@
 
       componentSelect.select('.items')
         .style('overflow', 'visible');
-      
+
       componentSelect.select(`.sub-item-${option}`)
         .classed('hidden', false);
     }, delay);
@@ -276,7 +276,7 @@
 
       componentSelect.select('.items')
         .style('overflow', 'hidden');
-      
+
       componentSelect.select(`.sub-item-${option}`)
         .classed('hidden', true);
     };
@@ -348,7 +348,7 @@
 
 </script>
 
-<style type='text/scss'>
+<style lang='scss'>
   @import '../define';
 
   $secondary-color: hsl(0, 0%, 40%);
@@ -556,7 +556,7 @@
 
     &.selected {
       border: 2px solid change-color($blue-reg, $lightness: 70%);
-      
+
       .sub-item-child .svg-icon {
         color: $blue-reg;
 
@@ -681,7 +681,7 @@
       on:mouseleave={mouseleaveHandler}
     >
       <div class='svg-icon icon-increasing'></div>
-      
+
       <div class='sub-item sub-item-increasing hidden'>
         <!-- Check button -->
         <div class='item sub-item-child show-tooltip' on:click={subItemCheckClicked}

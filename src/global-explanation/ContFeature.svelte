@@ -1796,7 +1796,7 @@
 
 </script>
 
-<style type='text/scss'>
+<style lang='scss'>
   @import '../define';
   @import './common.scss';
 

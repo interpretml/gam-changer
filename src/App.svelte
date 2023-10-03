@@ -2,6 +2,11 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.1/css/bulma.min.css"
 		integrity="sha512-ZRv40llEogRmoWgZwnsqke3HNzJ0kiI0+pcMgiz2bxO6Ew1DVBtWjVn0qjrXdT3+u+pSN36gLgmJiiQ3cQtyzA=="
 		crossorigin="anonymous" />
+
+	<script
+		type="module"
+		src="https://unpkg.com/recommender-overlay/dist/recommender-overlay.es.js"
+	></script>
 </svelte:head>
 
 <script>
@@ -10,7 +15,7 @@
 	// import Article from './ArticleAnon.svelte';
 </script>
 
-<style type='text/scss'>
+<style lang='scss'>
 	.stand-alone-page {
 		color: #333;
 		box-sizing: border-box;
@@ -30,5 +35,12 @@
 
 <div class='stand-alone-page'>
 	<!-- <Main /> -->
+	<recommender-overlay
+		my-brand="GAM Changer"
+		recommended-brands="GAM Coach, WebSHAP, TimberTrek, StickyLand"
+		position-left="20"
+		display-delay="30000"
+		homepage-url=""
+	/>
 	<Article />
 </div>
